@@ -1,0 +1,9 @@
+import { ProductsService } from '../products/products.service';
+import { DashboardSummaryDto, DashboardQueryDto, InventoryGraphQueryDto, InventoryGraphDataDto } from '@/common/dto/dashboard.dto';
+export declare class DashboardService {
+    private readonly productsService;
+    constructor(productsService: ProductsService);
+    getSummary(query: DashboardQueryDto): Promise<DashboardSummaryDto>;
+    getInventoryGraphData(query: InventoryGraphQueryDto): Promise<InventoryGraphDataDto>;
+    private generateMockTimeSeriesData;
+}

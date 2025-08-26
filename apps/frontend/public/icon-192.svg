@@ -1,0 +1,9 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="#2563eb"/>
+  <g transform="translate(48, 48)">
+    <rect width="96" height="96" rx="12" fill="#ffffff" fill-opacity="0.1"/>
+    <path d="M48 24C59.05 24 68 32.95 68 44V52C68 63.05 59.05 72 48 72C36.95 72 28 63.05 28 52V44C28 32.95 36.95 24 48 24Z" fill="#ffffff"/>
+    <path d="M48 36C52.42 36 56 39.58 56 44V52C56 56.42 52.42 60 48 60C43.58 60 40 56.42 40 52V44C40 39.58 43.58 36 48 36Z" fill="#2563eb"/>
+    <text x="48" y="88" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="12" font-weight="bold">OMNIX</text>
+  </g>
+</svg>

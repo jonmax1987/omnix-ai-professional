@@ -1,0 +1,45 @@
+{
+  "name": "omnix-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OMNIX AI - Professional Enterprise-Grade Customer Analytics Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "infrastructure"
+  ],
+  "scripts": {
+    "setup": "npm install && echo '✅ Professional OMNIX AI setup complete!'",
+    "dev": "make dev",
+    "build": "make build",
+    "test": "make test",
+    "deploy": "make deploy-staging",
+    "deploy:staging": "make deploy-staging",
+    "deploy:production": "make deploy-production",
+    "clean": "make clean",
+    "lint": "make lint",
+    "format": "make format"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0",
+    "concurrently": "^8.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "omnix-ai",
+    "inventory-management",
+    "customer-analytics", 
+    "ai-platform",
+    "aws-serverless",
+    "react",
+    "nestjs"
+  ],
+  "author": "OMNIX AI Team",
+  "license": "UNLICENSED"
+}

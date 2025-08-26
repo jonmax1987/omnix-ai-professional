@@ -1,0 +1,32 @@
+{
+  "name": "omnix-ai-lambda",
+  "version": "1.0.0",
+  "description": "OMNIX AI Demand Forecasting Lambda Functions",
+  "scripts": {
+    "test": "python -m pytest tests/ -v",
+    "test-local": "python lambda_function.py",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove:dev": "serverless remove --stage dev",
+    "remove:prod": "serverless remove --stage prod",
+    "logs": "serverless logs -f forecast --tail",
+    "invoke:local": "serverless invoke local -f forecast -p test_event.json",
+    "package": "serverless package",
+    "offline": "serverless offline start"
+  },
+  "keywords": [
+    "ai",
+    "machine-learning",
+    "forecasting",
+    "inventory",
+    "lambda",
+    "aws"
+  ],
+  "author": "OMNIX AI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-offline": "^13.3.2",
+    "serverless-python-requirements": "^6.0.0"
+  }
+}

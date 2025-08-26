@@ -1,0 +1,571 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "add": "Add",
+    "create": "Create",
+    "refresh": "Refresh",
+    "viewAll": "View All",
+    "noDataFound": "No data found",
+    "lastUpdated": "Last updated",
+    "dashboardReportTitle": "OMNIX AI Dashboard Report",
+    "vsLastPeriod": "vs last period",
+    "minutesAgoShort": "m ago",
+    "hoursAgoShort": "h ago",
+    "daysAgoShort": "d ago",
+    "lastUpdatedLabel": "Last updated:",
+    "noDataAvailable": "No data available",
+    "justNow": "Just now",
+    "noData": "No Data",
+    "vsLastHour": "vs last hour",
+    "vsPrevious": "vs Previous",
+    "updatedMinutesAgo": "Updated 5 minutes ago",
+    "filters": "Filters",
+    "clearAll": "Clear all",
+    "first": "First",
+    "last": "Last",
+    "pagination": {
+      "showing": "Showing",
+      "of": "of",
+      "items": "items",
+      "page": "Page",
+      "perPage": "per page"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "alerts": "Alerts",
+    "recommendations": "Recommendations",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your account preferences and application settings.",
+    "resetToDefault": "Reset to Default",
+    "saveChanges": "Save Changes",
+    "navigation": {
+      "profile": "Profile",
+      "notifications": "Notifications",
+      "preferences": "Preferences",
+      "security": "Security",
+      "integrations": "Integrations",
+      "billing": "Billing",
+      "team": "Team"
+    },
+    "profile": {
+      "title": "Profile Settings",
+      "description": "Manage your personal information and account details.",
+      "changePhoto": "Change Photo",
+      "fullName": "Full Name",
+      "email": "Email",
+      "phone": "Phone",
+      "role": "Role",
+      "company": "Company",
+      "timezone": "Timezone",
+      "timezones": {
+        "utc-8": "Pacific Time (UTC-8)",
+        "utc-7": "Mountain Time (UTC-7)",
+        "utc-6": "Central Time (UTC-6)",
+        "utc-5": "Eastern Time (UTC-5)"
+      },
+      "dangerZone": "Danger Zone",
+      "dangerZoneDescription": "These actions are irreversible. Please proceed with caution.",
+      "deleteAccount": "Delete Account",
+      "exportData": "Export Data"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "description": "Configure how you receive alerts and updates.",
+      "deliveryMethods": "Delivery Methods",
+      "alertTypes": "Alert Types",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive notifications via email",
+      "pushNotifications": "Push Notifications",
+      "pushNotificationsDesc": "Browser and mobile notifications",
+      "browserPushNotifications": "Browser Push Notifications",
+      "smsNotifications": "SMS Notifications",
+      "smsNotificationsDesc": "Text message alerts for critical issues",
+      "lowStockAlerts": "Low Stock Alerts",
+      "lowStockAlertsDesc": "When products reach minimum stock levels",
+      "priceChanges": "Price Changes",
+      "priceChangesDesc": "Supplier price updates and market changes",
+      "reportGeneration": "Report Generation",
+      "reportGenerationDesc": "When scheduled reports are ready",
+      "pushStatus": {
+        "active": "Active",
+        "blocked": "Blocked",
+        "notConfigured": "Not configured",
+        "permissionGranted": "Permission granted",
+        "inactive": "Inactive"
+      },
+      "enableNotifications": "Enable Notifications",
+      "disableNotifications": "Disable Notifications",
+      "sendTest": "Send Test",
+      "notificationsBlocked": "Notifications are blocked. Please enable them in your browser settings.",
+      "pushNotSupported": "Push notifications are not supported in this browser.",
+      "testNotificationTitle": "Test Notification",
+      "testNotificationBody": "This is a test notification from OMNIX AI"
+    },
+    "preferences": {
+      "title": "Application Preferences",
+      "description": "Customize your application experience.",
+      "theme": "Theme",
+      "currency": "Currency",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format",
+      "language": "Language",
+      "themes": {
+        "light": "Light Theme",
+        "dark": "Dark Theme",
+        "auto": "Auto (System)"
+      },
+      "currencies": {
+        "usd": "US Dollar (USD)",
+        "eur": "Euro (EUR)",
+        "gbp": "British Pound (GBP)",
+        "cad": "Canadian Dollar (CAD)"
+      },
+      "dateFormats": {
+        "us": "MM/dd/yyyy (US)",
+        "uk": "dd/MM/yyyy (UK)",
+        "iso": "yyyy-MM-dd (ISO)"
+      },
+      "timeFormats": {
+        "12h": "12-hour (AM/PM)",
+        "24h": "24-hour"
+      },
+      "languages": {
+        "en": "English",
+        "he": "עברית (Hebrew)"
+      }
+    },
+    "security": {
+      "title": "Security Settings",
+      "description": "Manage your account security and access controls.",
+      "twoFactorAuth": "Two-Factor Authentication",
+      "twoFactorAuthDesc": "Add an extra layer of security to your account",
+      "sessionTimeout": "Session Timeout (minutes)",
+      "sessionTimeoutDesc": "Automatically log out after inactivity",
+      "passwordExpiry": "Password Expiry (days)",
+      "passwordExpiryDesc": "Require password change after this period",
+      "changePassword": "Change Password",
+      "downloadBackupCodes": "Download Backup Codes"
+    },
+    "integrations": {
+      "title": "Integrations & API",
+      "description": "Configure third-party integrations and API access.",
+      "apiAccess": "API Access",
+      "apiAccessDesc": "Enable REST API access for external integrations",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "Send real-time updates to external systems",
+      "exportAccess": "Export Access",
+      "exportAccessDesc": "Allow data export in various formats",
+      "generateApiKey": "Generate API Key",
+      "viewDocumentation": "View Documentation"
+    },
+    "comingSoon": "Coming Soon",
+    "comingSoonDesc": "This section is under development."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalValue": "Total Inventory Value",
+    "totalItems": "Total Items",
+    "lowStock": "Low Stock Items",
+    "outOfStock": "Out of Stock",
+    "expiredItems": "Expired Items",
+    "activeAlerts": "Active Alerts",
+    "totalRevenue": "Total Revenue",
+    "totalOrders": "Total Orders",
+    "inventoryTurnover": "Inventory Turnover",
+    "criticalAlerts": "Critical Alerts",
+    "noAlerts": "No alerts to display",
+    "allGood": "All systems are running smoothly",
+    "welcomeMessage": "Welcome back! Here's what's happening with your inventory.",
+    "newBadge": "new",
+    "minutesAgo": "min ago",
+    "pullToRefresh": "Pull to refresh dashboard",
+    "refreshingData": "Refreshing dashboard data...",
+    "chartsSection": "Charts",
+    "timeRange": {
+      "24h": "Last 24 Hours",
+      "7d": "Last 7 Days",
+      "30d": "Last 30 Days",
+      "90d": "Last 90 Days"
+    },
+    "charts": {
+      "inventoryValueTrend": "Inventory Value Trend",
+      "inventoryValueTrendDesc": "Total inventory value over time",
+      "inventoryValueOverTime": "Inventory Value Over Time",
+      "inventoryValueOverTimeDesc": "Total inventory value trend",
+      "categoryBreakdown": "Category Breakdown",
+      "categoryBreakdownDesc": "Inventory distribution by category",
+      "stockLevelsByLocation": "Stock Levels by Location",
+      "stockLevelsByLocationDesc": "Current stock distribution",
+      "demandForecast": "Demand Forecast",
+      "demandForecastDesc": "AI-powered demand predictions",
+      "lineChartPlaceholder": "Line Chart Placeholder",
+      "pieChartPlaceholder": "Pie Chart Placeholder",
+      "barChartPlaceholder": "Bar Chart Placeholder",
+      "areaChartPlaceholder": "Area Chart Placeholder"
+    },
+    "categories": {
+      "electronics": "Electronics",
+      "clothing": "Clothing",
+      "food": "Food",
+      "books": "Books"
+    },
+    "chartLegends": {
+      "currentValue": "Current Value",
+      "projected": "Projected",
+      "actualDemand": "Actual Demand",
+      "forecasted": "Forecasted",
+      "confidenceRange": "Confidence Range"
+    },
+    "alertTypes": {
+      "criticalStockLevel": "Critical Stock Level",
+      "supplierDelay": "Supplier Delay",
+      "priceUpdate": "Price Update"
+    },
+    "alertCategories": {
+      "inventory": "Inventory",
+      "supplyChain": "Supply Chain",
+      "pricing": "Pricing"
+    },
+    "badges": {
+      "live": "Live",
+      "ai": "AI"
+    },
+    "alertMessages": {
+      "criticalStock": "iPhone 14 Pro has only 2 units remaining",
+      "supplierDelay": "Samsung Galaxy S23 shipment delayed by 3 days",
+      "priceUpdate": "Laptop prices updated for Q4 2024"
+    }
+  },
+  "products": {
+    "title": "Products",
+    "name": "Product Name",
+    "sku": "SKU",
+    "category": "Category",
+    "quantity": "Quantity",
+    "price": "Price",
+    "supplier": "Supplier",
+    "lastUpdated": "Last Updated",
+    "productInventory": "Product Inventory",
+    "description": "Complete list of products with stock levels and details",
+    "addProduct": "Add Product",
+    "bulkActions": "Bulk Actions",
+    "stockLevel": {
+      "high": "In Stock",
+      "medium": "Medium Stock", 
+      "low": "Low Stock",
+      "out": "Out of Stock"
+    },
+    "filters": {
+      "category": "Filter by category",
+      "supplier": "Filter by supplier",
+      "location": "Filter by location",
+      "status": "Filter by status"
+    },
+    "emptyState": "No products found",
+    "emptyStateDescription": "Get started by adding your first product or adjusting your filters.",
+    "searchPlaceholder": "Search products, SKUs, or suppliers...",
+    "location": "Location",
+    "status": "Status",
+    "cost": "Cost",
+    "actions": {
+      "viewDetails": "View Details",
+      "editProduct": "Edit Product",
+      "moreActions": "More Actions",
+      "duplicate": "Duplicate",
+      "export": "Export",
+      "archive": "Archive",
+      "delete": "Delete"
+    },
+    "bulkActions": {
+      "updateStatus": "Update Status",
+      "updateLocation": "Update Location",
+      "exportSelected": "Export Selected"
+    },
+    "categories": {
+      "electronics": "Electronics",
+      "footwear": "Footwear"
+    },
+    "suppliers": {
+      "apple": "Apple Inc.",
+      "samsung": "Samsung Electronics",
+      "nike": "Nike Inc.",
+      "sony": "Sony Corporation"
+    }
+  },
+  "alerts": {
+    "title": "Alerts",
+    "lowStock": "Low Stock",
+    "outOfStock": "Out of Stock",
+    "expired": "Expired",
+    "forecastWarning": "Forecast Warning",
+    "dismiss": "Dismiss",
+    "acknowledge": "Acknowledge",
+    "markAsRead": "Mark as Read",
+    "description": "Monitor and manage system alerts, notifications, and warnings.",
+    "unread": "unread",
+    "total": "total",
+    "critical": "critical",
+    "warnings": "warnings",
+    "createRule": "Create Rule",
+    "settings": "Settings",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    },
+    "alertTitles": {
+      "criticalStockLevel": "Critical Stock Level",
+      "productOutOfStock": "Product Out of Stock",
+      "supplierDelay": "Supplier Delay Notification",
+      "reorderPoint": "Reorder Point Reached",
+      "priceChange": "Price Change Alert",
+      "bulkOrderProcessed": "Bulk Order Processed",
+      "inventoryReport": "Inventory Report Generated",
+      "stockAdjustment": "Stock Adjustment Completed",
+      "newProduct": "New Product Added",
+      "temperatureAlert": "Storage Temperature Alert"
+    },
+    "alertMessages": {
+      "criticalStockLevel": "iPhone 14 Pro has only 2 units remaining. Immediate restocking required.",
+      "productOutOfStock": "Sony WH-1000XM4 is completely out of stock. Customer orders are pending.",
+      "supplierDelay": "Samsung Galaxy S23 shipment has been delayed by 3 days due to logistics issues.",
+      "reorderPoint": "MacBook Air M2 stock has reached the reorder point. Consider placing a new order.",
+      "priceChange": "Supplier has increased prices for Nike Air Max 90 by 8%. Review pricing strategy.",
+      "bulkOrderProcessed": "Successfully processed bulk order of 50 iPhone 14 Pro units from supplier.",
+      "inventoryReport": "Monthly inventory report has been generated and is ready for review.",
+      "stockAdjustment": "Stock levels for Samsung Galaxy S23 have been successfully adjusted.",
+      "newProduct": "Successfully added AirPods Pro 2nd Gen to the product catalog.",
+      "temperatureAlert": "Warehouse Section B temperature has exceeded optimal range for electronics."
+    },
+    "categories": {
+      "inventory": "Inventory",
+      "supplyChain": "Supply Chain",
+      "reorder": "Reorder",
+      "pricing": "Pricing",
+      "orders": "Orders",
+      "reports": "Reports",
+      "products": "Products",
+      "warehouse": "Warehouse"
+    },
+    "filters": {
+      "allAlerts": "All Alerts",
+      "resolved": "Resolved",
+      "unread": "Unread",
+      "read": "Read",
+      "archived": "Archived"
+    },
+    "actions": {
+      "markAsRead": "Mark as Read",
+      "markAsUnread": "Mark as Unread",
+      "markRead": "Mark Read",
+      "markUnread": "Mark Unread",
+      "archive": "Archive",
+      "delete": "Delete"
+    },
+    "states": {
+      "loading": "Loading alerts...",
+      "noAlertsFound": "No alerts found",
+      "adjustFilters": "Try adjusting your filters or search terms",
+      "allCaughtUp": "All caught up! No new alerts at the moment."
+    },
+    "alertCenter": "Alert Center",
+    "searchPlaceholder": "Search alerts..."
+  },
+  "recommendations": {
+    "title": "AI Recommendations",
+    "currentStock": "Current Stock",
+    "recommendedQuantity": "Recommended Quantity",
+    "urgency": "Urgency",
+    "estimatedCost": "Estimated Cost",
+    "description": "Smart insights and suggestions to optimize your inventory management.",
+    "aiPowered": "AI-Powered",
+    "aiSettings": "AI Settings",
+    "refresh": "Refresh",
+    "priorityRecommendations": "Priority Recommendations",
+    "urgent": "urgent",
+    "allRecommendations": "All Recommendations",
+    "tableTitle": "AI-Generated Recommendations",
+    "tableDescription": "Complete list of optimization suggestions",
+    "searchPlaceholder": "Search recommendations...",
+    "emptyStateTitle": "No recommendations available",
+    "emptyStateDescription": "AI analysis is complete. Check back later for new suggestions.",
+    "apply": "Apply",
+    "dismiss": "Dismiss",
+    "viewDetails": "View Details",
+    "impact": "Impact",
+    "confidence": "Confidence",
+    "metrics": {
+      "totalRecommendations": "Total Recommendations",
+      "highPriority": "High Priority",
+      "potentialSavings": "Potential Savings",
+      "avgConfidence": "Avg. Confidence"
+    },
+    "columns": {
+      "type": "Type",
+      "recommendation": "Recommendation",
+      "priority": "Priority",
+      "confidence": "Confidence",
+      "estValue": "Est. Value",
+      "urgency": "Urgency"
+    },
+    "priority": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "types": {
+      "reorder": "reorder",
+      "pricing": "pricing",
+      "inventory": "inventory",
+      "demand": "demand",
+      "supplier": "supplier"
+    },
+    "charts": {
+      "recommendationAccuracy": "Recommendation Accuracy",
+      "recommendationAccuracyDesc": "AI prediction accuracy over time",
+      "savingsImpact": "Savings Impact",
+      "savingsImpactDesc": "Financial impact of applied recommendations",
+      "accuracyTrend": "Accuracy Trend",
+      "savingsByCategory": "Savings by Category",
+      "accuracy": "Accuracy %",
+      "target": "Target"
+    },
+    "mockData": {
+      "immediateReorderRequired": "Immediate Reorder Required",
+      "immediateReorderDesc": "iPhone 14 Pro is critically low on stock and has high demand. Immediate reordering recommended to prevent stockouts.",
+      "preventLostSales": "Prevent $25,000 in lost sales",
+      "reorderUnits": "Reorder 50 units",
+      "within24Hours": "Within 24 hours",
+      "priceOptimization": "Price Optimization Opportunity",
+      "priceOptimizationDesc": "Samsung Galaxy S23 pricing can be optimized based on competitor analysis and demand patterns.",
+      "increaseProfitMargin": "Increase profit margin by 12%",
+      "increasePrice": "Increase price by $50",
+      "within7Days": "Within 7 days",
+      "inventoryRebalancing": "Inventory Rebalancing",
+      "inventoryRebalancingDesc": "Nike Air Max 90 has excess stock in one location but shortage in another. Rebalancing recommended.",
+      "optimizeStorageCosts": "Optimize storage costs",
+      "transferUnits": "Transfer 15 units",
+      "within14Days": "Within 14 days",
+      "seasonalDemandPreparation": "Seasonal Demand Preparation",
+      "seasonalDemandDesc": "Based on historical data, demand for MacBook Air M2 will increase by 40% in the next month.",
+      "captureSeasonalDemand": "Capture seasonal demand",
+      "stockUpUnits": "Stock up 25 units",
+      "within10Days": "Within 10 days",
+      "supplierDiversification": "Supplier Diversification",
+      "supplierDiversificationDesc": "Consider adding alternative suppliers for Sony WH-1000XM4 to reduce supply chain risk.",
+      "reduceSupplyRisk": "Reduce supply risk",
+      "contactSuppliers": "Contact 2 new suppliers",
+      "within30Days": "Within 30 days"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "overallDemandForecast": "Overall Demand Forecast",
+    "categoryBreakdown": "Category Breakdown",
+    "demandDistribution": "Demand distribution by product category",
+    "seasonalTrends": "Seasonal Trends",
+    "seasonalPatterns": "Seasonal demand patterns and cycles",
+    "inventoryValueTrend": "Inventory Value Trend",
+    "totalInventoryValue": "Total inventory value over time",
+    "stockLevelDistribution": "Stock Level Distribution",
+    "currentStockLevels": "Current stock levels across all products",
+    "turnoverRateAnalysis": "Turnover Rate Analysis",
+    "aiPowered": "AI-Powered",
+    "description": "Advanced analytics and demand forecasting for data-driven decisions.",
+    "schedule": "Schedule",
+    "settings": "Settings",
+    "sections": {
+      "demandForecasting": "Demand Forecasting",
+      "inventoryAnalytics": "Inventory Analytics",
+      "performanceAnalysis": "Performance Analysis",
+      "advancedAnalytics": "Advanced Analytics"
+    },
+    "forecastPeriod": "Forecast Period:",
+    "periodOptions": {
+      "30d": "30 days",
+      "90d": "90 days",
+      "180d": "6 months",
+      "1y": "1 year"
+    },
+    "metrics": {
+      "forecastAccuracy": "Forecast Accuracy",
+      "demandVolatility": "Demand Volatility",
+      "stockoutRisk": "Stockout Risk",
+      "inventoryTurnover": "Inventory Turnover"
+    },
+    "charts": {
+      "overallDemandForecast": "Overall Demand Forecast",
+      "overallDemandForecastDesc": "AI-powered demand predictions across all product categories",
+      "categoryBreakdown": "Category Breakdown",
+      "categoryBreakdownDesc": "Demand distribution by product category",
+      "seasonalTrends": "Seasonal Trends",
+      "seasonalTrendsDesc": "Seasonal demand patterns and cycles",
+      "inventoryValueTrend": "Inventory Value Trend",
+      "inventoryValueTrendDesc": "Total inventory value over time",
+      "stockLevelDistribution": "Stock Level Distribution",
+      "stockLevelDistributionDesc": "Current stock levels across all products",
+      "turnoverRateAnalysis": "Turnover Rate Analysis",
+      "turnoverRateAnalysisDesc": "Inventory turnover by category",
+      "forecastAccuracyOverTime": "Forecast Accuracy Over Time",
+      "forecastAccuracyOverTimeDesc": "Historical accuracy of demand predictions",
+      "riskAnalysis": "Risk Analysis",
+      "riskAnalysisDesc": "Stockout risk assessment by product category",
+      "salesVsForecast": "Sales vs Forecast Comparison",
+      "salesVsForecastDesc": "Actual sales performance compared to predictions",
+      "marketTrends": "Market Trends Analysis",
+      "marketTrendsDesc": "External market factors and their impact",
+      "supplierPerformance": "Supplier Performance",
+      "supplierPerformanceDesc": "Delivery reliability and quality metrics"
+    },
+    "legends": {
+      "historicalDemand": "Historical Demand",
+      "forecastedDemand": "Forecasted Demand",
+      "upperConfidence": "Upper Confidence",
+      "lowerConfidence": "Lower Confidence",
+      "foodAndBeverages": "Food & Beverages",
+      "homeAndGarden": "Home & Garden",
+      "inventoryValue": "Inventory Value",
+      "targetLevel": "Target Level",
+      "forecastAccuracy": "Forecast Accuracy",
+      "targetAccuracy": "Target Accuracy",
+      "industryAverage": "Industry Average",
+      "highRisk": "High Risk",
+      "mediumRisk": "Medium Risk",
+      "lowRisk": "Low Risk",
+      "actualSales": "Actual Sales",
+      "forecastedSales": "Forecasted Sales",
+      "variance": "Variance"
+    },
+    "badges": {
+      "ai": "AI",
+      "performance": "Performance",
+      "externalData": "External Data"
+    }
+  },
+  "offline": {
+    "message": "You are currently offline. Some features may be limited.",
+    "cacheNotice": "Showing cached data",
+    "noData": "No offline data available"
+  },
+  "update": {
+    "available": "A new version is available.",
+    "apply": "Update",
+    "installing": "Installing update...",
+    "success": "Update applied successfully"
+  }
+}

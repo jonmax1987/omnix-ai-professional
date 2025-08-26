@@ -1,0 +1,2178 @@
+openapi: 3.0.3
+info:
+  title: OMNIX AI Complete API Specification
+  description: |
+    OMNIX AI is an advanced smart inventory management platform with AI-powered customer analytics.
+    This specification matches the live backend API including customer analytics, streaming, and A/B testing.
+    
+    **Live Backend API**: http://localhost:3001/api/docs
+    **Total Endpoints**: 80+ endpoints
+    **Major Features**:
+    - Product & Inventory Management
+    - Customer Analytics with AI Insights
+    - Real-time Streaming Analytics  
+    - A/B Testing for AI Models (Haiku vs Sonnet)
+    - Dashboard & Reporting
+    - WebSocket Real-time Updates
+  version: 2.0.0
+  contact:
+    name: OMNIX AI Team
+    email: api@omnix-ai.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001/v1
+    description: Live backend development server
+  - url: https://api.omnix-ai.com/v1
+    description: Production API
+  - url: https://staging-api.omnix-ai.com/v1
+    description: Staging API
+
+# WebSocket Endpoints (Real-time communication)
+webSocketEndpoints:
+  - url: wss://5oo31khrrj.execute-api.eu-central-1.amazonaws.com/dev
+    description: AWS API Gateway WebSocket for production
+  - url: ws://localhost:3001/ws
+    description: Local Socket.IO WebSocket development server
+
+# WebSocket Events Documentation
+webSocketEvents:
+  authentication:
+    - event: authenticate
+      direction: client-to-server
+      description: Authenticate WebSocket connection with JWT token
+    - event: auth_success
+      direction: server-to-client
+      description: Authentication successful confirmation
+    - event: auth_failed
+      direction: server-to-client
+      description: Authentication failed notification
+  
+  realTimeUpdates:
+    - event: inventory_update
+      direction: server-to-client
+      description: Real-time inventory changes
+    - event: notification
+      direction: server-to-client
+      description: Push notifications to clients
+    - event: customer_activity
+      direction: server-to-client
+      description: Real-time customer behavior updates
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  # Authentication API (from live backend)
+  /auth/login:
+    post:
+      summary: User login with email and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token using refresh token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+      responses:
+        '200':
+          description: Token refreshed successfully
+        '401':
+          description: Invalid refresh token
+
+  /auth/logout:
+    post:
+      summary: User logout - invalidate refresh token
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+      responses:
+        '200':
+          description: Logout successful
+
+  # User Management API (from live backend)
+  /user/profile:
+    get:
+      summary: Get current user profile
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+    patch:
+      summary: Update user profile information
+      tags:
+        - User Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileDto'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  # Products API (from live backend)
+  /products:
+    get:
+      summary: Get all products
+      description: Retrieve a paginated list of products with optional filtering and sorting
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: number
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search by product name, SKU, or barcode
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter by product category
+          schema:
+            type: string
+        - name: supplier
+          in: query
+          description: Filter by supplier
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [name, sku, quantity, price, lastUpdated]
+            default: name
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: lowStock
+          in: query
+          description: Filter products with low stock
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponseDto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Create a new product
+      description: Add a new product to the inventory
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductDto'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponseDto'
+
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponseDto'
+    put:
+      summary: Update product
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductDto'
+      responses:
+        '200':
+          description: Product updated successfully
+    patch:
+      summary: Partially update product
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductDto'
+      responses:
+        '200':
+          description: Product updated successfully
+    delete:
+      summary: Delete product
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product deleted successfully
+
+  # Dashboard API (from live backend)
+  /dashboard/summary:
+    get:
+      summary: Get dashboard summary
+      description: Retrieve key metrics for the dashboard
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [today, week, month, quarter, year]
+            default: month
+      responses:
+        '200':
+          description: Dashboard summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponseDto'
+
+  /dashboard/inventory-graph:
+    get:
+      summary: Get inventory graph data
+      description: Retrieve time-series data for inventory
+      tags:
+        - Dashboard
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter, year]
+            default: month
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: daily
+      responses:
+        '200':
+          description: Inventory graph data retrieved successfully
+
+  # Inventory API (from live backend)
+  /inventory:
+    get:
+      summary: Get comprehensive inventory overview
+      tags:
+        - Inventory
+      responses:
+        '200':
+          description: Inventory overview retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryOverview'
+
+  /inventory/items:
+    get:
+      summary: Get inventory items
+      description: List all inventory items
+      tags:
+        - Inventory
+      responses:
+        '200':
+          description: Inventory items retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InventoryItem'
+
+  /inventory/{productId}:
+    get:
+      summary: Get product inventory details
+      tags:
+        - Inventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product inventory details retrieved
+
+  /inventory/{productId}/adjust:
+    post:
+      summary: Adjust product stock
+      tags:
+        - Inventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockAdjustmentDto'
+      responses:
+        '200':
+          description: Stock adjusted successfully
+
+  /inventory/{productId}/history:
+    get:
+      summary: Get inventory history
+      tags:
+        - Inventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Inventory history retrieved
+
+  # Orders API (from live backend)
+  /orders:
+    get:
+      summary: Get orders
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Orders retrieved successfully
+    post:
+      summary: Create order
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderDto'
+      responses:
+        '201':
+          description: Order created successfully
+
+  /orders/statistics:
+    get:
+      summary: Get order statistics
+      description: Retrieve order analytics and statistics
+      tags:
+        - Orders
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [today, week, month, quarter, year]
+            default: month
+      responses:
+        '200':
+          description: Order statistics retrieved
+
+  /orders/summary:
+    get:
+      summary: Get order summary
+      description: Get summary statistics for orders
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Order summary retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSummary'
+
+  /orders/{id}:
+    get:
+      summary: Get order by ID
+      tags:
+        - Orders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order retrieved successfully
+
+  # Alerts API (from live backend)
+  /alerts:
+    get:
+      summary: Get alerts
+      description: Retrieve current alerts
+      tags:
+        - Alerts
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [low-stock, out-of-stock, expired, forecast-warning, system]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Alerts retrieved successfully
+
+  /alerts/{alertId}/dismiss:
+    post:
+      summary: Dismiss an alert
+      description: Mark an alert as dismissed
+      tags:
+        - Alerts
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert dismissed successfully
+        '404':
+          description: Alert not found
+
+  # Recommendations API (Enhanced from live backend)
+  /recommendations:
+    get:
+      summary: Get AI-powered recommendations
+      tags:
+        - Recommendations
+      parameters:
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [reorder, optimize, discontinue, promotion]
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Returns paginated list of recommendations
+
+  /recommendations/{recommendationId}/accept:
+    post:
+      summary: Accept a recommendation
+      tags:
+        - Recommendations
+      parameters:
+        - name: recommendationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recommendation accepted successfully
+
+  /recommendations/{recommendationId}/dismiss:
+    post:
+      summary: Dismiss a recommendation
+      tags:
+        - Recommendations
+      parameters:
+        - name: recommendationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recommendation dismissed successfully
+
+  /recommendations/customers/{customerId}:
+    get:
+      summary: Get personalized product recommendations for a customer
+      tags:
+        - Recommendations
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: context
+          in: query
+          schema:
+            type: string
+            enum: [homepage, product_page, checkout, email]
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Customer recommendations retrieved
+
+  /recommendations/products/{productId}/similar:
+    get:
+      summary: Get similar products recommendations
+      tags:
+        - Recommendations
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Similar products retrieved
+
+  /recommendations/trending:
+    get:
+      summary: Get trending products
+      tags:
+        - Recommendations
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Trending products retrieved
+
+  /recommendations/seasonal:
+    get:
+      summary: Get seasonal product recommendations
+      tags:
+        - Recommendations
+      parameters:
+        - name: season
+          in: query
+          schema:
+            type: string
+            enum: [spring, summer, autumn, winter, current]
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Seasonal recommendations retrieved
+
+  /recommendations/complementary:
+    post:
+      summary: Get complementary product recommendations
+      tags:
+        - Recommendations
+      responses:
+        '201':
+          description: Complementary products retrieved
+
+  /recommendations/feedback:
+    post:
+      summary: Track user feedback on recommendations
+      tags:
+        - Recommendations
+      responses:
+        '201':
+          description: Feedback tracked successfully
+
+  # Customer Analytics System (28 endpoints from live API)
+  /customers/register:
+    post:
+      summary: Register new customer
+      description: Create a new customer profile in the system
+      tags:
+        - Customer Analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerProfileDto'
+      responses:
+        '201':
+          description: Customer registered successfully
+
+  /customers:
+    get:
+      summary: Get all customers
+      description: Retrieve all customers with pagination
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customers retrieved successfully
+
+  /customers/{id}/profile:
+    get:
+      summary: Get customer profile
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer profile retrieved
+    put:
+      summary: Update customer profile
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerProfileDto'
+      responses:
+        '200':
+          description: Profile updated successfully
+
+  /customers/{id}/preferences:
+    patch:
+      summary: Update customer preferences
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerPreferencesDto'
+      responses:
+        '200':
+          description: Preferences updated successfully
+
+  /customers/{id}/purchases:
+    get:
+      summary: Get customer purchases
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchase history retrieved
+    post:
+      summary: Add purchase history
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePurchaseHistoryDto'
+      responses:
+        '201':
+          description: Purchase added successfully
+
+  /customers/{id}/purchases/import:
+    post:
+      summary: Import purchase history
+      description: Bulk import customer purchase history
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportPurchaseHistoryDto'
+      responses:
+        '201':
+          description: Purchase history imported
+
+  /customers/{id}/interactions:
+    get:
+      summary: Get customer interactions
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer interactions retrieved
+    post:
+      summary: Track product interaction
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductInteractionDto'
+      responses:
+        '201':
+          description: Interaction tracked successfully
+
+  /customers/products/{productId}/interactions:
+    get:
+      summary: Get product interactions
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product interactions retrieved
+
+  /customers/segment/{segment}:
+    get:
+      summary: Get customers by segment
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: segment
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customers by segment retrieved
+
+  /customers/{id}/ai-analysis:
+    get:
+      summary: Get customer AI analysis
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI analysis retrieved
+
+  /customers/{id}/consumption-predictions:
+    get:
+      summary: Get consumption predictions
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Consumption predictions retrieved
+
+  /customers/{id}/customer-profile-analysis:
+    get:
+      summary: Get customer profile analysis
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Profile analysis retrieved
+
+  /customers/{id}/ai-recommendations:
+    get:
+      summary: Get AI recommendations
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI recommendations retrieved
+
+  /customers/{id}/replenishment-alerts:
+    get:
+      summary: Get replenishment alerts
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Replenishment alerts retrieved
+
+  /customers/{id}/purchase-prediction/{productId}:
+    get:
+      summary: Predict next purchase
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Purchase prediction retrieved
+
+  /customers/{id}/analyze:
+    post:
+      summary: Trigger AI analysis
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI analysis triggered
+
+  /customers/{id}/analysis-history:
+    get:
+      summary: Get analysis history
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Analysis history retrieved
+
+  /customers/{id}/cost-analytics:
+    get:
+      summary: Get customer cost analytics
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cost analytics retrieved
+
+  /customers/cost-analytics/overview:
+    get:
+      summary: Get cost analytics overview
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: timeRange
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cost overview retrieved
+
+  /customers/cost-analytics/top-customers:
+    get:
+      summary: Get top customers by cost
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Top customers retrieved
+
+  /customers/batch-analysis:
+    post:
+      summary: Submit batch analysis
+      tags:
+        - Customer Analytics
+      responses:
+        '201':
+          description: Batch analysis submitted
+
+  /customers/batch-analysis/{batchId}:
+    get:
+      summary: Get batch analysis status
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: batchId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Batch status retrieved
+
+  /customers/batch-analysis/queue/stats:
+    get:
+      summary: Get queue statistics
+      tags:
+        - Customer Analytics
+      responses:
+        '200':
+          description: Queue stats retrieved
+
+  /customers/{id}/segmentation:
+    post:
+      summary: Segment customer
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Customer segmented successfully
+
+  /customers/segmentation/batch:
+    post:
+      summary: Segment customers in batch
+      tags:
+        - Customer Analytics
+      responses:
+        '201':
+          description: Batch segmentation started
+
+  /customers/{id}/segment:
+    get:
+      summary: Get customer segment
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer segment retrieved
+
+  /customers/segments/overview:
+    get:
+      summary: Get segment overview
+      tags:
+        - Customer Analytics
+      responses:
+        '200':
+          description: Segment overview retrieved
+
+  /customers/segments/{segmentId}/performance:
+    get:
+      summary: Get segment performance
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Segment performance retrieved
+
+  /customers/segments/migrate:
+    post:
+      summary: Track segment migration
+      tags:
+        - Customer Analytics
+      responses:
+        '201':
+          description: Migration tracked
+
+  /customers/{id}/segment-recommendations:
+    get:
+      summary: Get segment-based recommendations
+      tags:
+        - Customer Analytics
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: includeStrategy
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Segment recommendations retrieved
+
+  # A/B Testing API (from live backend)
+  /ab-tests:
+    get:
+      summary: List all A/B tests
+      description: Get list of all A/B tests with their current status
+      tags:
+        - A/B Testing
+      responses:
+        '200':
+          description: List of A/B tests retrieved successfully
+    post:
+      summary: Create new A/B test
+      description: Create a new A/B test to compare different Bedrock models
+      tags:
+        - A/B Testing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateABTestDto'
+      responses:
+        '201':
+          description: A/B test created successfully
+        '400':
+          description: Invalid test configuration
+
+  /ab-tests/{testId}/results:
+    get:
+      summary: Get A/B test results
+      description: Retrieve detailed results and performance comparison
+      tags:
+        - A/B Testing
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: includeRawData
+          in: query
+          required: true
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: A/B test results retrieved successfully
+        '404':
+          description: A/B test not found
+
+  /ab-tests/{testId}/deactivate:
+    put:
+      summary: Deactivate A/B test
+      description: Stop an active A/B test
+      tags:
+        - A/B Testing
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A/B test deactivated successfully
+
+  /ab-tests/{testId}/status:
+    get:
+      summary: Get A/B test status
+      description: Get current status and basic metrics
+      tags:
+        - A/B Testing
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A/B test status retrieved successfully
+
+  /ab-tests/quick-test:
+    post:
+      summary: Create quick Haiku vs Sonnet test
+      description: Create a standard A/B test comparing Claude models
+      tags:
+        - A/B Testing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                testName:
+                  type: string
+                  example: "Haiku vs Sonnet - Customer Profiling"
+                analysisType:
+                  type: string
+                  enum: [consumption_prediction, customer_profiling, recommendation_generation]
+                durationDays:
+                  type: number
+                  default: 7
+                  minimum: 1
+                  maximum: 30
+                trafficSplit:
+                  type: number
+                  default: 50
+                  minimum: 10
+                  maximum: 90
+              required: [testName, analysisType]
+      responses:
+        '201':
+          description: Quick A/B test created successfully
+
+  /ab-tests/models/available:
+    get:
+      summary: List available models
+      description: Get list of available Bedrock models for A/B testing
+      tags:
+        - A/B Testing
+      responses:
+        '200':
+          description: Available models retrieved successfully
+
+  # Real-time Streaming Analytics (10 endpoints from live API)
+  /streaming/streams:
+    get:
+      summary: List streaming data streams
+      description: Get all active data streams
+      tags:
+        - Streaming Analytics
+      responses:
+        '200':
+          description: Streams list retrieved
+
+  /streaming/stream/create:
+    post:
+      summary: Create data stream
+      description: Create new real-time data stream
+      tags:
+        - Streaming Analytics
+      responses:
+        '201':
+          description: Stream created successfully
+
+  /streaming/stream/status:
+    get:
+      summary: Get stream status
+      description: Get status of data streams
+      tags:
+        - Streaming Analytics
+      responses:
+        '200':
+          description: Stream status retrieved
+
+  /streaming/stream/metrics:
+    get:
+      summary: Get stream metrics
+      description: Get performance metrics for streams
+      tags:
+        - Streaming Analytics
+      responses:
+        '200':
+          description: Stream metrics retrieved
+
+  /streaming/events/purchase:
+    post:
+      summary: Process purchase event
+      description: Process real-time purchase event
+      tags:
+        - Streaming Analytics
+      responses:
+        '201':
+          description: Purchase event processed
+
+  /streaming/events/consumption-prediction:
+    post:
+      summary: Process consumption prediction event
+      description: Process consumption prediction update
+      tags:
+        - Streaming Analytics
+      responses:
+        '201':
+          description: Prediction event processed
+
+  /streaming/events/segment-update:
+    post:
+      summary: Process segment update event
+      description: Process customer segment change
+      tags:
+        - Streaming Analytics
+      responses:
+        '201':
+          description: Segment update processed
+
+  /streaming/events/batch:
+    post:
+      summary: Process batch events
+      description: Process multiple events in batch
+      tags:
+        - Streaming Analytics
+      responses:
+        '201':
+          description: Batch events processed
+
+  /streaming/insights/{customerId}:
+    get:
+      summary: Get customer streaming insights
+      description: Get real-time insights for specific customer
+      tags:
+        - Streaming Analytics
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer insights retrieved
+
+  /streaming/insights/system/overview:
+    get:
+      summary: Get system insights overview
+      description: Get overall system insights from streaming data
+      tags:
+        - Streaming Analytics
+      responses:
+        '200':
+          description: System insights retrieved
+
+  # Forecasts API (from live backend)
+  /forecasts:
+    get:
+      summary: Get demand forecasts with filtering
+      tags:
+        - Forecasts
+      parameters:
+        - name: trend
+          in: query
+          schema:
+            type: string
+            enum: [increasing, decreasing, stable]
+        - name: days
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Returns paginated list of demand forecasts
+
+  /forecasts/metrics:
+    get:
+      summary: Get forecast metrics overview
+      tags:
+        - Forecasts
+      responses:
+        '200':
+          description: Returns forecast metrics
+
+  /forecasts/{productId}:
+    get:
+      summary: Get forecast for a specific product
+      tags:
+        - Forecasts
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Returns demand forecast for specific product
+
+  # System API (from live backend)
+  /system/health:
+    get:
+      summary: Get system health
+      tags:
+        - System
+      responses:
+        '200':
+          description: System health check successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+
+  /system/metrics:
+    get:
+      summary: Get system metrics
+      description: Get detailed system performance metrics
+      tags:
+        - System
+      responses:
+        '200':
+          description: System metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemMetrics'
+
+  /system/status:
+    get:
+      summary: Get system status
+      tags:
+        - System
+      responses:
+        '200':
+          description: System status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Authentication Schemas (from live backend)
+    LoginDto:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserProfile'
+        token:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: number
+
+    RefreshTokenDto:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+
+    # User Schemas (from live backend)
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, manager, user]
+        avatar:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateProfileDto:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+
+    # Product Schemas (from live backend)
+    CreateProductDto:
+      type: object
+      required:
+        - name
+        - sku
+        - category
+        - quantity
+        - minThreshold
+        - price
+        - supplier
+      properties:
+        name:
+          type: string
+        sku:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: integer
+          minimum: 0
+        minThreshold:
+          type: integer
+          minimum: 0
+        price:
+          type: number
+          minimum: 0
+        supplier:
+          type: string
+        description:
+          type: string
+        barcode:
+          type: string
+
+    UpdateProductDto:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        price:
+          type: number
+        supplier:
+          type: string
+        description:
+          type: string
+
+    # Customer Analytics Schemas (from live backend)
+    CreateCustomerProfileDto:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        demographics:
+          type: object
+
+    UpdateCustomerProfileDto:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        demographics:
+          type: object
+
+    CustomerPreferencesDto:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+        brands:
+          type: array
+          items:
+            type: string
+        notifications:
+          type: boolean
+
+    CreatePurchaseHistoryDto:
+      type: object
+      required:
+        - productId
+        - quantity
+        - price
+        - purchaseDate
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        purchaseDate:
+          type: string
+          format: date-time
+
+    ImportPurchaseHistoryDto:
+      type: object
+      properties:
+        purchases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePurchaseHistoryDto'
+
+    CreateProductInteractionDto:
+      type: object
+      required:
+        - productId
+        - interactionType
+      properties:
+        productId:
+          type: string
+        interactionType:
+          type: string
+          enum: [view, click, add_to_cart, purchase, search]
+        timestamp:
+          type: string
+          format: date-time
+
+    # A/B Testing Schemas (from live backend)
+    CreateABTestDto:
+      type: object
+      required:
+        - name
+        - description
+        - testType
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        testType:
+          type: string
+          enum: [model_comparison, feature_toggle]
+        modelA:
+          type: string
+        modelB:
+          type: string
+        trafficSplit:
+          type: number
+          minimum: 10
+          maximum: 90
+        durationDays:
+          type: integer
+          minimum: 1
+          maximum: 30
+
+    # Order Schemas (from live backend)
+    CreateOrderDto:
+      type: object
+      required:
+        - customerId
+        - items
+      properties:
+        customerId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemDto'
+
+    OrderItemDto:
+      type: object
+      required:
+        - productId
+        - quantity
+        - price
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        status:
+          type: string
+          enum: [pending, confirmed, shipped, delivered, cancelled]
+        totalAmount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        subtotal:
+          type: number
+
+    OrderSummary:
+      type: object
+      properties:
+        totalOrders:
+          type: integer
+        totalValue:
+          type: number
+        averageValue:
+          type: number
+        statusBreakdown:
+          type: object
+
+    UpdateOrderDto:
+      type: object
+      properties:
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemDto'
+
+    # Inventory Schemas (from live backend)
+    InventoryItem:
+      type: object
+      properties:
+        productId:
+          type: string
+        name:
+          type: string
+        sku:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        location:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+
+    InventoryOverview:
+      type: object
+      properties:
+        totalValue:
+          type: number
+        totalItems:
+          type: integer
+        lowStockItems:
+          type: integer
+        expiredItems:
+          type: integer
+        categories:
+          type: array
+          items:
+            type: object
+
+    StockAdjustmentDto:
+      type: object
+      required:
+        - quantity
+        - reason
+      properties:
+        quantity:
+          type: integer
+        reason:
+          type: string
+          enum: [sale, purchase, damage, theft, audit, transfer, return]
+        notes:
+          type: string
+
+    # System Schemas (from live backend)
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          properties:
+            database:
+              type: string
+            redis:
+              type: string
+            external_apis:
+              type: string
+
+    SystemMetrics:
+      type: object
+      properties:
+        cpu:
+          type: object
+          properties:
+            usage:
+              type: number
+            load:
+              type: array
+              items:
+                type: number
+        memory:
+          type: object
+          properties:
+            total:
+              type: number
+            used:
+              type: number
+            free:
+              type: number
+        database:
+          type: object
+          properties:
+            connections:
+              type: integer
+            queries_per_second:
+              type: number
+        api:
+          type: object
+          properties:
+            requests_per_minute:
+              type: number
+            average_response_time:
+              type: number
+            error_rate:
+              type: number
+
+    SystemStatus:
+      type: object
+      properties:
+        uptime:
+          type: integer
+        version:
+          type: string
+        environment:
+          type: string
+          enum: [development, staging, production]
+        memory_usage:
+          type: object
+        active_connections:
+          type: integer
+
+    # Response Schemas (from live backend)
+    SuccessResponseDto:
+      type: object
+      properties:
+        data:
+          type: object
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    PaginatedResponseDto:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        pagination:
+          $ref: '#/components/schemas/PaginationDto'
+        meta:
+          type: object
+
+    PaginationDto:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    ErrorDto:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+        code:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+
+    Unauthorized:
+      description: Unauthorized - Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+
+    NotFound:
+      description: Not Found - Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+
+    Conflict:
+      description: Conflict - Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorDto'
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: User Management
+    description: User profile and preferences management
+  - name: Products
+    description: Product management operations
+  - name: Dashboard
+    description: Dashboard and summary data
+  - name: Inventory
+    description: Inventory management and tracking
+  - name: Orders
+    description: Order processing and management
+  - name: Alerts
+    description: Alert management and notifications
+  - name: Recommendations
+    description: AI-powered recommendations
+  - name: Customer Analytics
+    description: AI-powered customer insights and analytics
+  - name: A/B Testing
+    description: A/B testing for AI model comparison
+  - name: Streaming Analytics
+    description: Real-time data processing and insights
+  - name: Forecasts
+    description: Demand forecasting and trend analysis
+  - name: System
+    description: System health and monitoring

@@ -1,0 +1,197 @@
+service: omnix-ai-backend
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-central-1
+  stage: ${opt:stage, 'dev'}
+  timeout: 30
+  memorySize: 512
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    JWT_SECRET: ${env:JWT_SECRET, 'omnix-jwt-secret-change-in-production'}
+    JWT_REFRESH_SECRET: ${env:JWT_REFRESH_SECRET, 'omnix-refresh-secret-change-in-production'}
+    API_KEY_1: ${env:API_KEY_1, 'omnix-api-key-production-2024'}
+    API_KEY_2: ${env:API_KEY_2, 'omnix-api-key-staging-2024'}
+    API_KEY_3: ${env:API_KEY_3, 'omnix-api-key-development-2024'}
+    AWS_REGION: ${self:provider.region}
+    DYNAMODB_TABLE_PREFIX: omnix-ai-${self:provider.stage}-
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/omnix-ai-${self:provider.stage}-*"
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: "*"
+
+functions:
+  api:
+    handler: lambda.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-API-Key
+            allowCredentials: true
+      - http:
+          path: /
+          method: ANY
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-API-Key
+            allowCredentials: true
+
+resources:
+  Resources:
+    # Users table for authentication
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: omnix-ai-${self:provider.stage}-users
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: email-index
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+
+    # Products table
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: omnix-ai-${self:provider.stage}-products
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: category
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: category-index
+            KeySchema:
+              - AttributeName: category
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    # Orders table
+    OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: omnix-ai-${self:provider.stage}-orders
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: status-created-index
+            KeySchema:
+              - AttributeName: status
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    # Inventory table
+    InventoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: omnix-ai-${self:provider.stage}-inventory
+        AttributeDefinitions:
+          - AttributeName: productId
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: S
+        KeySchema:
+          - AttributeName: productId
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    # Sessions table for refresh tokens
+    SessionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: omnix-ai-${self:provider.stage}-sessions
+        AttributeDefinitions:
+          - AttributeName: refreshToken
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: refreshToken
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: user-index
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: expiresAt
+          Enabled: true
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3001
+    lambdaPort: 3002

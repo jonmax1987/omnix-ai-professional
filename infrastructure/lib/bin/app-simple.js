@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.coreStack = void 0;
+require("source-map-support/register");
+const cdk = require("aws-cdk-lib");
+const core_stack_simple_1 = require("../lib/stacks/core-stack-simple");
+const environment_1 = require("../lib/config/environment");
+// Get environment from context or default to 'dev'
+const envName = process.env.CDK_ENV || process.env.NODE_ENV || 'dev';
+const app = new cdk.App();
+// Get environment from CDK context
+const contextEnv = app.node.tryGetContext('env') || envName;
+const config = (0, environment_1.getEnvironmentConfig)(contextEnv);
+// Define AWS environment
+const env = {
+    account: config.account || process.env.CDK_DEFAULT_ACCOUNT,
+    region: config.region,
+};
+// Stack naming convention
+const getStackName = (stackType, stage) => {
+    return `omnix-ai-${stackType}-${stage}`;
+};
+// Core Stack - Contains Lambda, API Gateway, DynamoDB
+const coreStack = new core_stack_simple_1.CoreStack(app, getStackName('core', config.stage), {
+    config,
+    env,
+    description: `OMNIX AI Core Infrastructure - ${config.stage}`,
+    tags: {
+        Environment: config.stage,
+        Project: 'omnix-ai',
+        Component: 'core',
+        Owner: 'engineering-team',
+        ManagedBy: 'aws-cdk',
+    },
+});
+exports.coreStack = coreStack;
+// Add global tags to all resources
+cdk.Tags.of(app).add('Project', 'omnix-ai');
+cdk.Tags.of(app).add('Environment', config.stage);
+cdk.Tags.of(app).add('ManagedBy', 'aws-cdk');
+// Synthesis and validation
+app.synth();
+// Log deployment information
+console.log(`
+🚀 OMNIX AI Infrastructure Deployment Configuration
+================================================
+
+Environment: ${config.stage}
+Region: ${config.region}
+Account: ${env.account || 'Using default account'}
+
+Core Stack: ${getStackName('core', config.stage)}
+├── Lambda Function: omnix-ai-backend-${config.stage}
+├── REST API: omnix-ai-api-${config.stage}
+├── DynamoDB Tables: 14 tables with GSIs
+└── IAM Roles & Policies
+
+Configuration:
+- Lambda Memory: ${config.lambdaMemorySize} MB
+- Lambda Timeout: ${config.lambdaTimeout} seconds
+- DynamoDB Billing: ${config.dynamodbBillingMode}
+- Monitoring: ${config.enableMonitoring ? 'Enabled' : 'Disabled'}
+
+AWS Bedrock Configuration:
+- Bedrock Region: ${config.bedrockRegion}
+- Primary Model: Claude 3 Haiku (cost-optimized)
+
+Deployment Commands:
+- Deploy: cdk deploy ${getStackName('core', config.stage)}
+- Test: curl [API_ENDPOINT]/health
+
+Next Steps:
+1. Ensure AWS credentials are configured
+2. Build Lambda function: cd ../backend && npm run build
+3. Deploy: cdk deploy ${getStackName('core', config.stage)}
+
+================================================
+`);
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiYXBwLXNpbXBsZS5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uL2Jpbi9hcHAtc2ltcGxlLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7QUFDQSx1Q0FBcUM7QUFDckMsbUNBQW1DO0FBQ25DLHVFQUE0RDtBQUM1RCwyREFBaUU7QUFFakUsbURBQW1EO0FBQ25ELE1BQU0sT0FBTyxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsT0FBTyxJQUFJLE9BQU8sQ0FBQyxHQUFHLENBQUMsUUFBUSxJQUFJLEtBQUssQ0FBQztBQUVyRSxNQUFNLEdBQUcsR0FBRyxJQUFJLEdBQUcsQ0FBQyxHQUFHLEVBQUUsQ0FBQztBQUUxQixtQ0FBbUM7QUFDbkMsTUFBTSxVQUFVLEdBQUcsR0FBRyxDQUFDLElBQUksQ0FBQyxhQUFhLENBQUMsS0FBSyxDQUFDLElBQUksT0FBTyxDQUFDO0FBQzVELE1BQU0sTUFBTSxHQUFHLElBQUEsa0NBQW9CLEVBQUMsVUFBVSxDQUFDLENBQUM7QUFFaEQseUJBQXlCO0FBQ3pCLE1BQU0sR0FBRyxHQUFHO0lBQ1YsT0FBTyxFQUFFLE1BQU0sQ0FBQyxPQUFPLElBQUksT0FBTyxDQUFDLEdBQUcsQ0FBQyxtQkFBbUI7SUFDMUQsTUFBTSxFQUFFLE1BQU0sQ0FBQyxNQUFNO0NBQ3RCLENBQUM7QUFFRiwwQkFBMEI7QUFDMUIsTUFBTSxZQUFZLEdBQUcsQ0FBQyxTQUFpQixFQUFFLEtBQWEsRUFBVSxFQUFFO0lBQ2hFLE9BQU8sWUFBWSxTQUFTLElBQUksS0FBSyxFQUFFLENBQUM7QUFDMUMsQ0FBQyxDQUFDO0FBRUYsc0RBQXNEO0FBQ3RELE1BQU0sU0FBUyxHQUFHLElBQUksNkJBQVMsQ0FBQyxHQUFHLEVBQUUsWUFBWSxDQUFDLE1BQU0sRUFBRSxNQUFNLENBQUMsS0FBSyxDQUFDLEVBQUU7SUFDdkUsTUFBTTtJQUNOLEdBQUc7SUFDSCxXQUFXLEVBQUUsa0NBQWtDLE1BQU0sQ0FBQyxLQUFLLEVBQUU7SUFDN0QsSUFBSSxFQUFFO1FBQ0osV0FBVyxFQUFFLE1BQU0sQ0FBQyxLQUFLO1FBQ3pCLE9BQU8sRUFBRSxVQUFVO1FBQ25CLFNBQVMsRUFBRSxNQUFNO1FBQ2pCLEtBQUssRUFBRSxrQkFBa0I7UUFDekIsU0FBUyxFQUFFLFNBQVM7S0FDckI7Q0FDRixDQUFDLENBQUM7QUErQ00sOEJBQVM7QUE3Q2xCLG1DQUFtQztBQUNuQyxHQUFHLENBQUMsSUFBSSxDQUFDLEVBQUUsQ0FBQyxHQUFHLENBQUMsQ0FBQyxHQUFHLENBQUMsU0FBUyxFQUFFLFVBQVUsQ0FBQyxDQUFDO0FBQzVDLEdBQUcsQ0FBQyxJQUFJLENBQUMsRUFBRSxDQUFDLEdBQUcsQ0FBQyxDQUFDLEdBQUcsQ0FBQyxhQUFhLEVBQUUsTUFBTSxDQUFDLEtBQUssQ0FBQyxDQUFDO0FBQ2xELEdBQUcsQ0FBQyxJQUFJLENBQUMsRUFBRSxDQUFDLEdBQUcsQ0FBQyxDQUFDLEdBQUcsQ0FBQyxXQUFXLEVBQUUsU0FBUyxDQUFDLENBQUM7QUFFN0MsMkJBQTJCO0FBQzNCLEdBQUcsQ0FBQyxLQUFLLEVBQUUsQ0FBQztBQUVaLDZCQUE2QjtBQUM3QixPQUFPLENBQUMsR0FBRyxDQUFDOzs7O2VBSUcsTUFBTSxDQUFDLEtBQUs7VUFDakIsTUFBTSxDQUFDLE1BQU07V0FDWixHQUFHLENBQUMsT0FBTyxJQUFJLHVCQUF1Qjs7Y0FFbkMsWUFBWSxDQUFDLE1BQU0sRUFBRSxNQUFNLENBQUMsS0FBSyxDQUFDO3dDQUNSLE1BQU0sQ0FBQyxLQUFLOzZCQUN2QixNQUFNLENBQUMsS0FBSzs7Ozs7bUJBS3RCLE1BQU0sQ0FBQyxnQkFBZ0I7b0JBQ3RCLE1BQU0sQ0FBQyxhQUFhO3NCQUNsQixNQUFNLENBQUMsbUJBQW1CO2dCQUNoQyxNQUFNLENBQUMsZ0JBQWdCLENBQUMsQ0FBQyxDQUFDLFNBQVMsQ0FBQyxDQUFDLENBQUMsVUFBVTs7O29CQUc1QyxNQUFNLENBQUMsYUFBYTs7Ozt1QkFJakIsWUFBWSxDQUFDLE1BQU0sRUFBRSxNQUFNLENBQUMsS0FBSyxDQUFDOzs7Ozs7d0JBTWpDLFlBQVksQ0FBQyxNQUFNLEVBQUUsTUFBTSxDQUFDLEtBQUssQ0FBQzs7O0NBR3pELENBQUMsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbIiMhL3Vzci9iaW4vZW52IG5vZGVcbmltcG9ydCAnc291cmNlLW1hcC1zdXBwb3J0L3JlZ2lzdGVyJztcbmltcG9ydCAqIGFzIGNkayBmcm9tICdhd3MtY2RrLWxpYic7XG5pbXBvcnQgeyBDb3JlU3RhY2sgfSBmcm9tICcuLi9saWIvc3RhY2tzL2NvcmUtc3RhY2stc2ltcGxlJztcbmltcG9ydCB7IGdldEVudmlyb25tZW50Q29uZmlnIH0gZnJvbSAnLi4vbGliL2NvbmZpZy9lbnZpcm9ubWVudCc7XG5cbi8vIEdldCBlbnZpcm9ubWVudCBmcm9tIGNvbnRleHQgb3IgZGVmYXVsdCB0byAnZGV2J1xuY29uc3QgZW52TmFtZSA9IHByb2Nlc3MuZW52LkNES19FTlYgfHwgcHJvY2Vzcy5lbnYuTk9ERV9FTlYgfHwgJ2Rldic7XG5cbmNvbnN0IGFwcCA9IG5ldyBjZGsuQXBwKCk7XG5cbi8vIEdldCBlbnZpcm9ubWVudCBmcm9tIENESyBjb250ZXh0XG5jb25zdCBjb250ZXh0RW52ID0gYXBwLm5vZGUudHJ5R2V0Q29udGV4dCgnZW52JykgfHwgZW52TmFtZTtcbmNvbnN0IGNvbmZpZyA9IGdldEVudmlyb25tZW50Q29uZmlnKGNvbnRleHRFbnYpO1xuXG4vLyBEZWZpbmUgQVdTIGVudmlyb25tZW50XG5jb25zdCBlbnYgPSB7XG4gIGFjY291bnQ6IGNvbmZpZy5hY2NvdW50IHx8IHByb2Nlc3MuZW52LkNES19ERUZBVUxUX0FDQ09VTlQsXG4gIHJlZ2lvbjogY29uZmlnLnJlZ2lvbixcbn07XG5cbi8vIFN0YWNrIG5hbWluZyBjb252ZW50aW9uXG5jb25zdCBnZXRTdGFja05hbWUgPSAoc3RhY2tUeXBlOiBzdHJpbmcsIHN0YWdlOiBzdHJpbmcpOiBzdHJpbmcgPT4ge1xuICByZXR1cm4gYG9tbml4LWFpLSR7c3RhY2tUeXBlfS0ke3N0YWdlfWA7XG59O1xuXG4vLyBDb3JlIFN0YWNrIC0gQ29udGFpbnMgTGFtYmRhLCBBUEkgR2F0ZXdheSwgRHluYW1vREJcbmNvbnN0IGNvcmVTdGFjayA9IG5ldyBDb3JlU3RhY2soYXBwLCBnZXRTdGFja05hbWUoJ2NvcmUnLCBjb25maWcuc3RhZ2UpLCB7XG4gIGNvbmZpZyxcbiAgZW52LFxuICBkZXNjcmlwdGlvbjogYE9NTklYIEFJIENvcmUgSW5mcmFzdHJ1Y3R1cmUgLSAke2NvbmZpZy5zdGFnZX1gLFxuICB0YWdzOiB7XG4gICAgRW52aXJvbm1lbnQ6IGNvbmZpZy5zdGFnZSxcbiAgICBQcm9qZWN0OiAnb21uaXgtYWknLFxuICAgIENvbXBvbmVudDogJ2NvcmUnLFxuICAgIE93bmVyOiAnZW5naW5lZXJpbmctdGVhbScsXG4gICAgTWFuYWdlZEJ5OiAnYXdzLWNkaycsXG4gIH0sXG59KTtcblxuLy8gQWRkIGdsb2JhbCB0YWdzIHRvIGFsbCByZXNvdXJjZXNcbmNkay5UYWdzLm9mKGFwcCkuYWRkKCdQcm9qZWN0JywgJ29tbml4LWFpJyk7XG5jZGsuVGFncy5vZihhcHApLmFkZCgnRW52aXJvbm1lbnQnLCBjb25maWcuc3RhZ2UpO1xuY2RrLlRhZ3Mub2YoYXBwKS5hZGQoJ01hbmFnZWRCeScsICdhd3MtY2RrJyk7XG5cbi8vIFN5bnRoZXNpcyBhbmQgdmFsaWRhdGlvblxuYXBwLnN5bnRoKCk7XG5cbi8vIExvZyBkZXBsb3ltZW50IGluZm9ybWF0aW9uXG5jb25zb2xlLmxvZyhgXG7wn5qAIE9NTklYIEFJIEluZnJhc3RydWN0dXJlIERlcGxveW1lbnQgQ29uZmlndXJhdGlvblxuPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09XG5cbkVudmlyb25tZW50OiAke2NvbmZpZy5zdGFnZX1cblJlZ2lvbjogJHtjb25maWcucmVnaW9ufVxuQWNjb3VudDogJHtlbnYuYWNjb3VudCB8fCAnVXNpbmcgZGVmYXVsdCBhY2NvdW50J31cblxuQ29yZSBTdGFjazogJHtnZXRTdGFja05hbWUoJ2NvcmUnLCBjb25maWcuc3RhZ2UpfVxu4pSc4pSA4pSAIExhbWJkYSBGdW5jdGlvbjogb21uaXgtYWktYmFja2VuZC0ke2NvbmZpZy5zdGFnZX1cbuKUnOKUgOKUgCBSRVNUIEFQSTogb21uaXgtYWktYXBpLSR7Y29uZmlnLnN0YWdlfVxu4pSc4pSA4pSAIER5bmFtb0RCIFRhYmxlczogMTQgdGFibGVzIHdpdGggR1NJc1xu4pSU4pSA4pSAIElBTSBSb2xlcyAmIFBvbGljaWVzXG5cbkNvbmZpZ3VyYXRpb246XG4tIExhbWJkYSBNZW1vcnk6ICR7Y29uZmlnLmxhbWJkYU1lbW9yeVNpemV9IE1CXG4tIExhbWJkYSBUaW1lb3V0OiAke2NvbmZpZy5sYW1iZGFUaW1lb3V0fSBzZWNvbmRzXG4tIER5bmFtb0RCIEJpbGxpbmc6ICR7Y29uZmlnLmR5bmFtb2RiQmlsbGluZ01vZGV9XG4tIE1vbml0b3Jpbmc6ICR7Y29uZmlnLmVuYWJsZU1vbml0b3JpbmcgPyAnRW5hYmxlZCcgOiAnRGlzYWJsZWQnfVxuXG5BV1MgQmVkcm9jayBDb25maWd1cmF0aW9uOlxuLSBCZWRyb2NrIFJlZ2lvbjogJHtjb25maWcuYmVkcm9ja1JlZ2lvbn1cbi0gUHJpbWFyeSBNb2RlbDogQ2xhdWRlIDMgSGFpa3UgKGNvc3Qtb3B0aW1pemVkKVxuXG5EZXBsb3ltZW50IENvbW1hbmRzOlxuLSBEZXBsb3k6IGNkayBkZXBsb3kgJHtnZXRTdGFja05hbWUoJ2NvcmUnLCBjb25maWcuc3RhZ2UpfVxuLSBUZXN0OiBjdXJsIFtBUElfRU5EUE9JTlRdL2hlYWx0aFxuXG5OZXh0IFN0ZXBzOlxuMS4gRW5zdXJlIEFXUyBjcmVkZW50aWFscyBhcmUgY29uZmlndXJlZFxuMi4gQnVpbGQgTGFtYmRhIGZ1bmN0aW9uOiBjZCAuLi9iYWNrZW5kICYmIG5wbSBydW4gYnVpbGRcbjMuIERlcGxveTogY2RrIGRlcGxveSAke2dldFN0YWNrTmFtZSgnY29yZScsIGNvbmZpZy5zdGFnZSl9XG5cbj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PVxuYCk7XG5cbmV4cG9ydCB7IGNvcmVTdGFjayB9OyJdfQ==

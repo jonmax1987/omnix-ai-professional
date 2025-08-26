@@ -1,0 +1,36 @@
+# Security headers for Netlify deployment
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Cross-Origin-Embedder-Policy: unsafe-none
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-site
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://cdn.mxpnl.com https://api.mixpanel.com https://js.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.omnix-ai.com https://www.google-analytics.com https://api.mixpanel.com https://sentry.io wss:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; report-uri /api/csp-report
+
+# Cache control for static assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Service Worker
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Manifest
+/manifest.json
+  Cache-Control: public, max-age=86400
+
+# HTML files
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# API endpoints (if serving from same domain)
+/api/*
+  X-Robots-Tag: noindex
+  Cache-Control: no-cache, no-store, must-revalidate

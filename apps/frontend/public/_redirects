@@ -1,0 +1,19 @@
+# Netlify redirects and rewrites
+
+# SPA fallback - serve index.html for all routes
+/*    /index.html   200
+
+# API redirects (if needed)
+/api/*  https://api.omnix-ai.com/:splat  200
+
+# Security redirects
+/wp-admin/*  https://example.com  301
+/wordpress/*  https://example.com  301
+/wp-content/*  https://example.com  301
+
+# Force HTTPS (if not handled by hosting)
+http://omnix-ai.com/*  https://omnix-ai.com/:splat  301!
+http://www.omnix-ai.com/*  https://omnix-ai.com/:splat  301!
+
+# Canonical redirects
+https://www.omnix-ai.com/*  https://omnix-ai.com/:splat  301!

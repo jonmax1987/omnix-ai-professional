@@ -1,0 +1,161 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI API Gateway with proper CORS configuration'
+
+Parameters:
+  LambdaFunctionArn:
+    Type: String
+    Default: 'arn:aws:lambda:eu-central-1:631844602411:function:omnix-ai-backend-dev'
+    Description: ARN of the Lambda function to integrate
+
+Resources:
+  OmnixApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: omnix-ai-api-cors-enabled
+      Description: OMNIX AI API Gateway with CORS properly configured
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # Root resource proxy to Lambda
+  ProxyResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref OmnixApiGateway
+      ParentId: !GetAtt OmnixApiGateway.RootResourceId
+      PathPart: '{proxy+}'
+
+  # ANY method for proxy
+  ProxyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OmnixApiGateway
+      ResourceId: !Ref ProxyResource
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunctionArn}/invocations'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Client-Version,X-Client-Type,X-Request-Id'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'https://d1vu6p9f5uc16.cloudfront.net'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Credentials: true
+
+  # OPTIONS method for CORS preflight
+  OptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OmnixApiGateway
+      ResourceId: !Ref ProxyResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Client-Version,X-Client-Type,X-Request-Id'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'https://d1vu6p9f5uc16.cloudfront.net'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+            ResponseTemplates:
+              application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: Empty
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Credentials: true
+
+  # Root ANY method
+  RootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OmnixApiGateway
+      ResourceId: !GetAtt OmnixApiGateway.RootResourceId
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunctionArn}/invocations'
+
+  # Root OPTIONS method
+  RootOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref OmnixApiGateway
+      ResourceId: !GetAtt OmnixApiGateway.RootResourceId
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Client-Version,X-Client-Type,X-Request-Id'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'https://d1vu6p9f5uc16.cloudfront.net'"
+              method.response.header.Access-Control-Allow-Credentials: "'true'"
+            ResponseTemplates:
+              application/json: ''
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json: Empty
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Credentials: true
+
+  # Lambda permission for API Gateway
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunctionArn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${OmnixApiGateway}/*/*'
+
+  # Deploy the API
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ProxyMethod
+      - OptionsMethod
+      - RootMethod
+      - RootOptionsMethod
+    Properties:
+      RestApiId: !Ref OmnixApiGateway
+      StageName: prod
+      StageDescription:
+        Description: Production deployment with CORS enabled
+        Variables:
+          cors: enabled
+
+Outputs:
+  ApiUrl:
+    Description: URL of the API Gateway
+    Value: !Sub 'https://${OmnixApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod'
+  ApiId:
+    Description: API Gateway ID
+    Value: !Ref OmnixApiGateway

@@ -1,0 +1,571 @@
+{
+  "common": {
+    "loading": "טוען...",
+    "error": "שגיאה",
+    "success": "הצלחה",
+    "cancel": "ביטול",
+    "save": "שמור",
+    "delete": "מחק",
+    "edit": "ערוך",
+    "search": "חפש",
+    "filter": "סנן",
+    "export": "יצא",
+    "add": "הוסף",
+    "create": "צור",
+    "refresh": "רענן",
+    "viewAll": "הצג הכל",
+    "noDataFound": "לא נמצאו נתונים",
+    "lastUpdated": "עודכן לאחרונה",
+    "dashboardReportTitle": "דוח לוח בקרה OMNIX AI",
+    "vsLastPeriod": "לעומת תקופה קודמת",
+    "minutesAgoShort": "דק' לפני",
+    "hoursAgoShort": "שע' לפני",
+    "daysAgoShort": "ימים לפני",
+    "lastUpdatedLabel": "עודכן לאחרונה:",
+    "noDataAvailable": "אין נתונים זמינים",
+    "justNow": "כרגע",
+    "noData": "אין נתונים",
+    "vsLastHour": "לעומת שעה קודמת",
+    "vsPrevious": "לעומת קודם",
+    "updatedMinutesAgo": "עודכן לפני 5 דקות",
+    "filters": "מסננים",
+    "clearAll": "ניקוי הכל",
+    "first": "ראשון",
+    "last": "אחרון",
+    "pagination": {
+      "showing": "מציג",
+      "of": "מתוך",
+      "items": "פריטים",
+      "page": "עמוד",
+      "perPage": "לעמוד"
+    }
+  },
+  "navigation": {
+    "dashboard": "לוח בקרה",
+    "products": "מוצרים",
+    "alerts": "התראות",
+    "recommendations": "המלצות",
+    "analytics": "אנליטיקה",
+    "settings": "הגדרות"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "description": "נהלו את העדפות החשבון והגדרות האפליקציה שלכם.",
+    "resetToDefault": "איפוס לברירת המחדל",
+    "saveChanges": "שמור שינויים",
+    "navigation": {
+      "profile": "פרופיל",
+      "notifications": "התראות",
+      "preferences": "העדפות",
+      "security": "אבטחה",
+      "integrations": "אינטגרציות",
+      "billing": "חיוב",
+      "team": "צוות"
+    },
+    "profile": {
+      "title": "הגדרות פרופיל",
+      "description": "נהלו את המידע האישי ופרטי החשבון שלכם.",
+      "changePhoto": "שנה תמונה",
+      "fullName": "שם מלא",
+      "email": "אימייל",
+      "phone": "טלפון",
+      "role": "תפקיד",
+      "company": "חברה",
+      "timezone": "אזור זמן",
+      "timezones": {
+        "utc-8": "שעון האוקיינוס השקט (UTC-8)",
+        "utc-7": "שעון ההרים (UTC-7)",
+        "utc-6": "שעון המרכז (UTC-6)",
+        "utc-5": "שעון המזרח (UTC-5)"
+      },
+      "dangerZone": "אזור סכנה",
+      "dangerZoneDescription": "פעולות אלו בלתי הפיכות. אנא המשיכו בזהירות.",
+      "deleteAccount": "מחק חשבון",
+      "exportData": "יצא נתונים"
+    },
+    "notifications": {
+      "title": "הגדרות התראות",
+      "description": "הגדירו איך אתם מקבלים התראות ועדכונים.",
+      "deliveryMethods": "שיטות משלוח",
+      "alertTypes": "סוגי התראות",
+      "emailNotifications": "התראות אימייל",
+      "emailNotificationsDesc": "קבלו התראות באימייל",
+      "pushNotifications": "התראות דחיפה",
+      "pushNotificationsDesc": "התראות דפדפן ומכשיר נייד",
+      "browserPushNotifications": "התראות דחיפה בדפדפן",
+      "smsNotifications": "התראות SMS",
+      "smsNotificationsDesc": "התראות הודעות טקסט לבעיות קריטיות",
+      "lowStockAlerts": "התראות מלאי נמוך",
+      "lowStockAlertsDesc": "כאשר מוצרים מגיעים לרמות מלאי מינימליות",
+      "priceChanges": "שינויי מחירים",
+      "priceChangesDesc": "עדכוני מחירי ספקים ושינויי שוק",
+      "reportGeneration": "יצירת דוחות",
+      "reportGenerationDesc": "כאשר דוחות מתוזמנים מוכנים",
+      "pushStatus": {
+        "active": "פעיל",
+        "blocked": "חסום",
+        "notConfigured": "לא מוגדר",
+        "permissionGranted": "הרשאה ניתנה",
+        "inactive": "לא פעיל"
+      },
+      "enableNotifications": "הפעל התראות",
+      "disableNotifications": "בטל התראות",
+      "sendTest": "שלח בדיקה",
+      "notificationsBlocked": "התראות חסומות. אנא הפעילו אותן בהגדרות הדפדפן.",
+      "pushNotSupported": "התראות דחיפה לא נתמכות בדפדפן זה.",
+      "testNotificationTitle": "התראת בדיקה",
+      "testNotificationBody": "זוהי התראת בדיקה מ-OMNIX AI"
+    },
+    "preferences": {
+      "title": "העדפות אפליקציה",
+      "description": "התאימו את חוויית האפליקציה שלכם.",
+      "theme": "ערכת נושא",
+      "currency": "מטבע",
+      "dateFormat": "פורמט תאריך",
+      "timeFormat": "פורמט שעה",
+      "language": "שפה",
+      "themes": {
+        "light": "ערכת נושא בהירה",
+        "dark": "ערכת נושא כהה",
+        "auto": "אוטומטי (מערכת)"
+      },
+      "currencies": {
+        "usd": "דולר אמריקאי (USD)",
+        "eur": "יורו (EUR)",
+        "gbp": "לירה בריטית (GBP)",
+        "cad": "דולר קנדי (CAD)"
+      },
+      "dateFormats": {
+        "us": "MM/dd/yyyy (ארה״ב)",
+        "uk": "dd/MM/yyyy (בריטניה)",
+        "iso": "yyyy-MM-dd (ISO)"
+      },
+      "timeFormats": {
+        "12h": "12 שעות (AM/PM)",
+        "24h": "24 שעות"
+      },
+      "languages": {
+        "en": "אנגלית",
+        "he": "עברית"
+      }
+    },
+    "security": {
+      "title": "הגדרות אבטחה",
+      "description": "נהלו את אבטחת החשבון ובקרות הגישה שלכם.",
+      "twoFactorAuth": "אימות דו-שלבי",
+      "twoFactorAuthDesc": "הוסיפו שכבת אבטחה נוספת לחשבון שלכם",
+      "sessionTimeout": "זמן קצוב להפעלה (דקות)",
+      "sessionTimeoutDesc": "התנתקות אוטומטית לאחר חוסר פעילות",
+      "passwordExpiry": "תפוגת סיסמה (ימים)",
+      "passwordExpiryDesc": "דרישה לשינוי סיסמה לאחר תקופה זו",
+      "changePassword": "שנה סיסמה",
+      "downloadBackupCodes": "הורד קודי גיבוי"
+    },
+    "integrations": {
+      "title": "אינטגרציות ו-API",
+      "description": "הגדירו אינטגרציות צד שלישי וגישת API.",
+      "apiAccess": "גישת API",
+      "apiAccessDesc": "הפעילו גישת REST API לאינטגרציות חיצוניות",
+      "webhooks": "Webhooks",
+      "webhooksDesc": "שלחו עדכונים בזמן אמת למערכות חיצוניות",
+      "exportAccess": "גישת יצוא",
+      "exportAccessDesc": "אפשרו יצוא נתונים בפורמטים שונים",
+      "generateApiKey": "צור מפתח API",
+      "viewDocumentation": "הצג תיעוד"
+    },
+    "comingSoon": "בקרוב",
+    "comingSoonDesc": "קטע זה בפיתוח."
+  },
+  "dashboard": {
+    "title": "לוח בקרה",
+    "totalValue": "שווי מלאי כולל",
+    "totalItems": "כמות פריטים",
+    "lowStock": "מלאי נמוך",
+    "outOfStock": "אזל מהמלאי",
+    "expiredItems": "פריטים שפגי תוקף",
+    "activeAlerts": "התראות פעילות",
+    "totalRevenue": "סך ההכנסות",
+    "totalOrders": "סך ההזמנות",
+    "inventoryTurnover": "מחזור מלאי",
+    "criticalAlerts": "התראות קריטיות",
+    "noAlerts": "אין התראות להציג",
+    "allGood": "כל המערכות פועלות תקין",
+    "welcomeMessage": "ברוכים השבים! הנה מה שקורה עם המלאי שלכם.",
+    "newBadge": "חדש",
+    "minutesAgo": "דק' לפני",
+    "pullToRefresh": "משכו לרענון לוח הבקרה",
+    "refreshingData": "מרענן נתוני לוח בקרה...",
+    "chartsSection": "גרפים",
+    "timeRange": {
+      "24h": "24 שעות אחרונות",
+      "7d": "7 ימים אחרונים",
+      "30d": "30 ימים אחרונים",
+      "90d": "90 ימים אחרונים"
+    },
+    "charts": {
+      "inventoryValueTrend": "מגמת שווי מלאי",
+      "inventoryValueTrendDesc": "שווי מלאי כולל לאורך זמן",
+      "inventoryValueOverTime": "שווי מלאי לאורך זמן",
+      "inventoryValueOverTimeDesc": "מגמת שווי מלאי כולל",
+      "categoryBreakdown": "פירוט לפי קטגוריות",
+      "categoryBreakdownDesc": "חלוקת מלאי לפי קטגוריה",
+      "stockLevelsByLocation": "רמות מלאי לפי מיקום",
+      "stockLevelsByLocationDesc": "חלוקת מלאי נוכחית",
+      "demandForecast": "תחזית ביקוש",
+      "demandForecastDesc": "תחזיות ביקוש מבוססות בינה מלאכותית",
+      "lineChartPlaceholder": "מקום לגרף קווים",
+      "pieChartPlaceholder": "מקום לגרף עוגה",
+      "barChartPlaceholder": "מקום לגרף עמודות",
+      "areaChartPlaceholder": "מקום לגרף אזור"
+    },
+    "categories": {
+      "electronics": "אלקטרוניקה",
+      "clothing": "ביגוד",
+      "food": "מזון",
+      "books": "ספרים"
+    },
+    "chartLegends": {
+      "currentValue": "ערך נוכחי",
+      "projected": "צפוי",
+      "actualDemand": "ביקוש בפועל",
+      "forecasted": "מתוחזה",
+      "confidenceRange": "טווח ביטחון"
+    },
+    "alertTypes": {
+      "criticalStockLevel": "רמת מלאי קריטית",
+      "supplierDelay": "עיכוב ספק",
+      "priceUpdate": "עדכון מחיר"
+    },
+    "alertCategories": {
+      "inventory": "מלאי",
+      "supplyChain": "שרשרת אספקה",
+      "pricing": "תמחור"
+    },
+    "badges": {
+      "live": "חי",
+      "ai": "בינה מלאכותית"
+    },
+    "alertMessages": {
+      "criticalStock": "iPhone 14 Pro נותרו רק 2 יחידות",
+      "supplierDelay": "משלוח Samsung Galaxy S23 מתעכב ב-3 ימים",
+      "priceUpdate": "מחירי לפטופים עודכנו לרבעון הרביעי 2024"
+    }
+  },
+  "products": {
+    "title": "מוצרים",
+    "name": "שם המוצר",
+    "sku": "מק״ט",
+    "category": "קטגוריה",
+    "quantity": "כמות",
+    "price": "מחיר",
+    "supplier": "ספק",
+    "lastUpdated": "עדכון אחרון",
+    "productInventory": "מלאי מוצרים",
+    "description": "רשימה מלאה של מוצרים עם רמות מלאי ופרטים",
+    "addProduct": "הוסף מוצר",
+    "bulkActions": "פעולות בכמות",
+    "stockLevel": {
+      "high": "במלאי",
+      "medium": "מלאי בינוני",
+      "low": "מלאי נמוך",
+      "out": "אזל מהמלאי"
+    },
+    "filters": {
+      "category": "סנן לפי קטגוריה",
+      "supplier": "סנן לפי ספק",
+      "location": "סנן לפי מיקום",
+      "status": "סנן לפי מצב"
+    },
+    "emptyState": "לא נמצאו מוצרים",
+    "emptyStateDescription": "התחילו על ידי הוספת המוצר הראשון שלכם או התאמת המסננים.",
+    "searchPlaceholder": "חפשו מוצרים, מק״טים או ספקים...",
+    "location": "מיקום",
+    "status": "מצב",
+    "cost": "עלות",
+    "actions": {
+      "viewDetails": "הצג פרטים",
+      "editProduct": "ערוך מוצר",
+      "moreActions": "פעולות נוספות",
+      "duplicate": "שכפל",
+      "export": "יצא",
+      "archive": "העבר לארכיון",
+      "delete": "מחק"
+    },
+    "bulkActions": {
+      "updateStatus": "עדכן מצב",
+      "updateLocation": "עדכן מיקום",
+      "exportSelected": "יצא נבחרים"
+    },
+    "categories": {
+      "electronics": "אלקטרוניקה",
+      "footwear": "נעליים"
+    },
+    "suppliers": {
+      "apple": "אפל בע״מ",
+      "samsung": "סמסונג אלקטרוניקס",
+      "nike": "נייקי בע״מ",
+      "sony": "סוני תאגיד"
+    }
+  },
+  "alerts": {
+    "title": "התראות",
+    "lowStock": "מלאי נמוך",
+    "outOfStock": "אזל מהמלאי",
+    "expired": "פג תוקף",
+    "forecastWarning": "אזהרת תחזית",
+    "dismiss": "בטל",
+    "acknowledge": "אשר",
+    "markAsRead": "סמן כנקרא",
+    "description": "ניהול ומעקב אחר התראות מערכת, הודעות ואזהרות.",
+    "unread": "לא נקראו",
+    "total": "סה״כ",
+    "critical": "קריטיות",
+    "warnings": "אזהרות",
+    "createRule": "צור כלל",
+    "settings": "הגדרות",
+    "severity": {
+      "critical": "קריטי",
+      "warning": "אזהרה",
+      "info": "מידע"
+    },
+    "alertTitles": {
+      "criticalStockLevel": "רמת מלאי קריטית",
+      "productOutOfStock": "מוצר אזל מהמלאי",
+      "supplierDelay": "הודעת עיכוב מספק",
+      "reorderPoint": "הושגה נקודת הזמנה מחדש",
+      "priceChange": "התראת שינוי מחיר",
+      "bulkOrderProcessed": "הזמנה כמותית עובדה",
+      "inventoryReport": "דוח מלאי נוצר",
+      "stockAdjustment": "התאמת מלאי הושלמה",
+      "newProduct": "מוצר חדש נוסף",
+      "temperatureAlert": "התראת טמפרטורת אחסון"
+    },
+    "alertMessages": {
+      "criticalStockLevel": "iPhone 14 Pro נותרו רק 2 יחידות. נדרש חידוש ממדי.",
+      "productOutOfStock": "Sony WH-1000XM4 אזל לחלוטין מהמלאי. הזמנות לקוחות ממתינות.",
+      "supplierDelay": "משלוח Samsung Galaxy S23 נדחה ב-3 ימים בשל בעיות לוגיסטיות.",
+      "reorderPoint": "מלאי MacBook Air M2 הגיע לנקודת הזמנה מחדש. שקלו לבצע הזמנה חדשה.",
+      "priceChange": "הספק העלה מחירים עבור Nike Air Max 90 ב-8%. סקרו אסטרטגיית תמחור.",
+      "bulkOrderProcessed": "עובדה בהצלחה הזמנה כמותית של 50 יחידות iPhone 14 Pro מהספק.",
+      "inventoryReport": "דוח מלאי חודשי נוצר ומוכן לעיון.",
+      "stockAdjustment": "רמות מלאי עבור Samsung Galaxy S23 הותאמו בהצלחה.",
+      "newProduct": "נוסף בהצלחה AirPods Pro 2nd Gen לקטלוג המוצרים.",
+      "temperatureAlert": "טמפרטורת מחלק ב' במחסן חרגה מהטווח האופטימלי לאלקטרוניקה."
+    },
+    "categories": {
+      "inventory": "מלאי",
+      "supplyChain": "שרשרת אספקה",
+      "reorder": "הזמנה מחדש",
+      "pricing": "תמחור",
+      "orders": "הזמנות",
+      "reports": "דוחות",
+      "products": "מוצרים",
+      "warehouse": "מחסן"
+    },
+    "filters": {
+      "allAlerts": "כל ההתראות",
+      "resolved": "פתורות",
+      "unread": "לא נקראו",
+      "read": "נקראו",
+      "archived": "בארכיון"
+    },
+    "actions": {
+      "markAsRead": "סמן כנקרא",
+      "markAsUnread": "סמן כלא נקרא",
+      "markRead": "סמן כנקרא",
+      "markUnread": "סמן כלא נקרא",
+      "archive": "העבר לארכיון",
+      "delete": "מחק"
+    },
+    "states": {
+      "loading": "טוען התראות...",
+      "noAlertsFound": "לא נמצאו התראות",
+      "adjustFilters": "נסו להתאים את המסננים או מילות החיפוש",
+      "allCaughtUp": "הכל בסדר! אין התראות חדשות כרגע."
+    },
+    "alertCenter": "מרכז התראות",
+    "searchPlaceholder": "חיפוש התראות..."
+  },
+  "recommendations": {
+    "title": "המלצות בינה מלאכותית",
+    "currentStock": "מלאי נוכחי",
+    "recommendedQuantity": "כמות מומלצת",
+    "urgency": "דחיפות",
+    "estimatedCost": "עלות משוערת",
+    "description": "תובנות חכמות והצעות לייעול ניהול המלאי שלכם.",
+    "aiPowered": "מונע בינה מלאכותית",
+    "aiSettings": "הגדרות בינה מלאכותית",
+    "refresh": "רענן",
+    "priorityRecommendations": "המלצות עדיפות",
+    "urgent": "דחוף",
+    "allRecommendations": "כל ההמלצות",
+    "tableTitle": "המלצות שנוצרו בבינה מלאכותית",
+    "tableDescription": "רשימה מלאה של הצעות ייעול",
+    "searchPlaceholder": "חיפוש המלצות...",
+    "emptyStateTitle": "אין המלצות זמינות",
+    "emptyStateDescription": "ניתוח הבינה המלאכותית הושלם. בדקו שוב מאוחר יותר להצעות חדשות.",
+    "apply": "החל",
+    "dismiss": "בטל",
+    "viewDetails": "הצג פרטים",
+    "impact": "השפעה",
+    "confidence": "ביטחון",
+    "metrics": {
+      "totalRecommendations": "סך ההמלצות",
+      "highPriority": "עדיפות גבוהה",
+      "potentialSavings": "חיסכון פוטנציאלי",
+      "avgConfidence": "ממוצע ביטחון"
+    },
+    "columns": {
+      "type": "סוג",
+      "recommendation": "המלצה",
+      "priority": "עדיפות",
+      "confidence": "ביטחון",
+      "estValue": "ערך משוער",
+      "urgency": "דחיפות"
+    },
+    "priority": {
+      "high": "גבוהה",
+      "medium": "בינונית",
+      "low": "נמוכה"
+    },
+    "types": {
+      "reorder": "הזמנה מחדש",
+      "pricing": "תמחור",
+      "inventory": "מלאי",
+      "demand": "ביקוש",
+      "supplier": "ספק"
+    },
+    "charts": {
+      "recommendationAccuracy": "דיוק המלצות",
+      "recommendationAccuracyDesc": "דיוק תחזיות הבינה המלאכותית לאורך זמן",
+      "savingsImpact": "השפעת החיסכון",
+      "savingsImpactDesc": "השפעה כלכלית של המלצות שיושמו",
+      "accuracyTrend": "מגמת דיוק",
+      "savingsByCategory": "חיסכון לפי קטגוריה",
+      "accuracy": "דיוק %",
+      "target": "יעד"
+    },
+    "mockData": {
+      "immediateReorderRequired": "נדרשת הזמנה מיידית",
+      "immediateReorderDesc": "iPhone 14 Pro במלאי נמוך קריטי ויש לו ביקוש גבוה. מומלץ להזמין מיידית למניעת אזילת מלאי.",
+      "preventLostSales": "מנע $25,000 במכירות אבודות",
+      "reorderUnits": "הזמן 50 יחידות",
+      "within24Hours": "תוך 24 שעות",
+      "priceOptimization": "הזדמנות ייעול מחיר",
+      "priceOptimizationDesc": "ניתן לייעל את תמחור Samsung Galaxy S23 בהתבסס על ניתוח מתחרים ודפוסי ביקוש.",
+      "increaseProfitMargin": "הגדל רווח ב-12%",
+      "increasePrice": "העלה מחיר ב-$50",
+      "within7Days": "תוך 7 ימים",
+      "inventoryRebalancing": "איזון מלאי מחדש",
+      "inventoryRebalancingDesc": "ל-Nike Air Max 90 יש עודף מלאי במיקום אחד אך מחסור באחר. מומלץ איזון מחדש.",
+      "optimizeStorageCosts": "ייעל עלויות אחסון",
+      "transferUnits": "העבר 15 יחידות",
+      "within14Days": "תוך 14 ימים",
+      "seasonalDemandPreparation": "הכנה לביקוש עונתי",
+      "seasonalDemandDesc": "בהתבסס על נתונים היסטוריים, הביקוש ל-MacBook Air M2 יגדל ב-40% בחודש הבא.",
+      "captureSeasonalDemand": "תפוס ביקוש עונתי",
+      "stockUpUnits": "צבור 25 יחידות",
+      "within10Days": "תוך 10 ימים",
+      "supplierDiversification": "גיוון ספקים",
+      "supplierDiversificationDesc": "שקלו להוסיף ספקים חלופיים ל-Sony WH-1000XM4 להפחתת סיכון שרשרת אספקה.",
+      "reduceSupplyRisk": "הפחת סיכון אספקה",
+      "contactSuppliers": "צור קשר עם 2 ספקים חדשים",
+      "within30Days": "תוך 30 ימים"
+    }
+  },
+  "analytics": {
+    "title": "אנליטיקה",
+    "overallDemandForecast": "תחזית ביקוש כללית",
+    "categoryBreakdown": "פירוט לפי קטגוריות",
+    "demandDistribution": "חלוקת ביקוש לפי קטגוריית מוצר",
+    "seasonalTrends": "מגמות עונתיות",
+    "seasonalPatterns": "דפוסי ביקוש עונתיים ומחזוריים",
+    "inventoryValueTrend": "מגמת שווי מלאי",
+    "totalInventoryValue": "שווי מלאי כולל לאורך זמן",
+    "stockLevelDistribution": "חלוקת רמות מלאי",
+    "currentStockLevels": "רמות מלאי נוכחיות בכל המוצרים",
+    "turnoverRateAnalysis": "ניתוח שיעור מחזור",
+    "aiPowered": "מונע בבינה מלאכותית",
+    "description": "אנליטיקה מתקדמת ותחזית ביקוש להחלטות מבוססות נתונים.",
+    "schedule": "תזמן",
+    "settings": "הגדרות",
+    "sections": {
+      "demandForecasting": "תחזית ביקוש",
+      "inventoryAnalytics": "אנליטיקת מלאי",
+      "performanceAnalysis": "ניתוח ביצועים",
+      "advancedAnalytics": "אנליטיקה מתקדמת"
+    },
+    "forecastPeriod": "תקופת תחזית:",
+    "periodOptions": {
+      "30d": "30 ימים",
+      "90d": "90 ימים",
+      "180d": "6 חודשים",
+      "1y": "שנה"
+    },
+    "metrics": {
+      "forecastAccuracy": "דיוק תחזית",
+      "demandVolatility": "תנודתיות ביקוש",
+      "stockoutRisk": "סיכון אזילת מלאי",
+      "inventoryTurnover": "מחזור מלאי"
+    },
+    "charts": {
+      "overallDemandForecast": "תחזית ביקוש כללית",
+      "overallDemandForecastDesc": "תחזיות ביקוש מבוססות בינה מלאכותית בכל קטגוריות המוצרים",
+      "categoryBreakdown": "פירוט לפי קטגוריות",
+      "categoryBreakdownDesc": "חלוקת ביקוש לפי קטגוריית מוצר",
+      "seasonalTrends": "מגמות עונתיות",
+      "seasonalTrendsDesc": "דפוסי ביקוש עונתיים ומחזוריים",
+      "inventoryValueTrend": "מגמת שווי מלאי",
+      "inventoryValueTrendDesc": "שווי מלאי כולל לאורך זמן",
+      "stockLevelDistribution": "חלוקת רמות מלאי",
+      "stockLevelDistributionDesc": "רמות מלאי נוכחיות בכל המוצרים",
+      "turnoverRateAnalysis": "ניתוח שיעור מחזור",
+      "turnoverRateAnalysisDesc": "מחזור מלאי לפי קטגוריה",
+      "forecastAccuracyOverTime": "דיוק תחזית לאורך זמן",
+      "forecastAccuracyOverTimeDesc": "דיוק היסטורי של תחזיות ביקוש",
+      "riskAnalysis": "ניתוח סיכונים",
+      "riskAnalysisDesc": "הערכת סיכון אזילת מלאי לפי קטגוריית מוצר",
+      "salesVsForecast": "השוואת מכירות לתחזית",
+      "salesVsForecastDesc": "ביצועי מכירות בפועל בהשוואה לתחזיות",
+      "marketTrends": "ניתוח מגמות שוק",
+      "marketTrendsDesc": "גורמים חיצוניים בשוק והשפעתם",
+      "supplierPerformance": "ביצועי ספקים",
+      "supplierPerformanceDesc": "מדדי אמינות משלוח ואיכות"
+    },
+    "legends": {
+      "historicalDemand": "ביקוש היסטורי",
+      "forecastedDemand": "ביקוש מתוחזה",
+      "upperConfidence": "גבול עליון",
+      "lowerConfidence": "גבול תחתון",
+      "foodAndBeverages": "מזון ומשקאות",
+      "homeAndGarden": "בית וגן",
+      "inventoryValue": "שווי מלאי",
+      "targetLevel": "רמת יעד",
+      "forecastAccuracy": "דיוק תחזית",
+      "targetAccuracy": "דיוק יעד",
+      "industryAverage": "ממוצע תעשיה",
+      "highRisk": "סיכון גבוה",
+      "mediumRisk": "סיכון בינוני",
+      "lowRisk": "סיכון נמוך",
+      "actualSales": "מכירות בפועל",
+      "forecastedSales": "מכירות מתוחזות",
+      "variance": "סטייה"
+    },
+    "badges": {
+      "ai": "בינה מלאכותית",
+      "performance": "ביצועים",
+      "externalData": "נתונים חיצוניים"
+    }
+  },
+  "offline": {
+    "message": "אתה כרגע לא מחובר לאינטרנט. חלק מהתכונות עלולות להיות מוגבלות.",
+    "cacheNotice": "מציג נתונים שמורים",
+    "noData": "אין נתונים זמינים במצב לא מקוון"
+  },
+  "update": {
+    "available": "גרסה חדשה זמינה.",
+    "apply": "עדכן",
+    "installing": "מתקין עדכון...",
+    "success": "העדכון יושם בהצלחה"
+  }
+}

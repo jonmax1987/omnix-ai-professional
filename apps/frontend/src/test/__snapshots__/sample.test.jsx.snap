@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Jest + React Testing Library Configuration > Snapshot Testing > should match snapshot 1`] = `
+<div
+  data-testid="sample-component"
+>
+  <h1>
+    Sample Component
+  </h1>
+  <p>
+    This is a test component for Jest configuration
+  </p>
+  <button
+    data-testid="action-button"
+  >
+    Click Me
+  </button>
+</div>
+`;

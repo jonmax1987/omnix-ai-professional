@@ -1,0 +1,38 @@
+User-agent: *
+Allow: /
+Disallow: /settings
+Disallow: /api/
+Disallow: /admin/
+Disallow: *.json$
+
+# Crawl delay
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://omnix-ai.com/sitemap.xml
+
+# Popular search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Block AI training bots (optional)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /

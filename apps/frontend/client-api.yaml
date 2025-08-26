@@ -1,0 +1,830 @@
+openapi: 3.0.3
+info:
+  title: OMNIX AI Client-side API Specification
+  description: |
+    This OpenAPI specification represents the current frontend API expectations
+    based on the existing client-side service layer implementation.
+    Generated from analyzing src/services/api.js and related stores.
+  version: 1.0.0-client
+  contact:
+    name: OMNIX AI Frontend Team
+    email: frontend@omnix-ai.com
+
+servers:
+  - url: http://localhost:3001/api
+    description: Local development (current client expectation)
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication Endpoints
+  /auth/login:
+    post:
+      summary: User login
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /auth/logout:
+    post:
+      summary: User logout
+      tags: [Authentication]
+      responses:
+        '200':
+          description: Logout successful
+
+  /auth/refresh:
+    post:
+      summary: Refresh token
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+
+  # User Profile Endpoints
+  /user/profile:
+    get:
+      summary: Get user profile
+      tags: [User]
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    
+    patch:
+      summary: Update user profile
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Profile updated
+
+  /user/preferences:
+    get:
+      summary: Get user preferences
+      tags: [User]
+      responses:
+        '200':
+          description: User preferences retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+    
+    patch:
+      summary: Update user preferences
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '200':
+          description: Preferences updated
+
+  # Products Endpoints
+  /products:
+    get:
+      summary: Get all products
+      tags: [Products]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: supplier
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClientProduct'
+                  pagination:
+                    $ref: '#/components/schemas/ClientPagination'
+
+    post:
+      summary: Create a new product
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientProduct'
+
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientProduct'
+
+    patch:
+      summary: Update product
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated successfully
+
+    delete:
+      summary: Delete product
+      tags: [Products]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product deleted successfully
+
+  /products/batch-delete:
+    post:
+      summary: Batch delete products
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Products deleted successfully
+
+  /products/categories:
+    get:
+      summary: Get product categories
+      tags: [Products]
+      responses:
+        '200':
+          description: Categories retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /products/suppliers:
+    get:
+      summary: Get suppliers
+      tags: [Products]
+      responses:
+        '200':
+          description: Suppliers retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # Inventory Endpoints
+  /inventory:
+    get:
+      summary: Get inventory data
+      tags: [Inventory]
+      responses:
+        '200':
+          description: Inventory data retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryItem'
+
+  /inventory/{productId}/adjust:
+    post:
+      summary: Adjust stock
+      tags: [Inventory]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: integer
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Stock adjusted successfully
+
+  # Alerts Endpoints
+  /alerts:
+    get:
+      summary: Get alerts
+      tags: [Alerts]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alerts retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClientAlert'
+
+    post:
+      summary: Create alert
+      tags: [Alerts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAlertRequest'
+      responses:
+        '201':
+          description: Alert created
+
+  /alerts/{id}/acknowledge:
+    post:
+      summary: Acknowledge alert
+      tags: [Alerts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert acknowledged
+
+  # Analytics Endpoints
+  /analytics/dashboard:
+    get:
+      summary: Get dashboard metrics
+      tags: [Analytics]
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientDashboardMetrics'
+
+  /analytics/forecast:
+    get:
+      summary: Get forecasting data
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Forecast data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastData'
+
+  /analytics/trends:
+    get:
+      summary: Get trend analysis
+      tags: [Analytics]
+      responses:
+        '200':
+          description: Trend analysis retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendData'
+
+  # Recommendations Endpoints
+  /recommendations:
+    get:
+      summary: Get recommendations
+      tags: [Recommendations]
+      responses:
+        '200':
+          description: Recommendations retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClientRecommendation'
+
+  /recommendations/{id}/accept:
+    post:
+      summary: Accept recommendation
+      tags: [Recommendations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recommendation accepted
+
+  # Settings Endpoints
+  /settings:
+    get:
+      summary: Get settings
+      tags: [Settings]
+      responses:
+        '200':
+          description: Settings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+
+    patch:
+      summary: Update settings
+      tags: [Settings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: Settings updated
+
+  # System Endpoints
+  /system/health:
+    get:
+      summary: Get system health
+      tags: [System]
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  uptime:
+                    type: number
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+        role:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+
+    UserPreferences:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark]
+        language:
+          type: string
+          enum: [en, he]
+        notifications:
+          type: object
+        dashboardLayout:
+          type: object
+
+    ClientProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sku:
+          type: string
+        category:
+          type: string
+        supplier:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        price:
+          type: number
+        cost:
+          type: number
+        status:
+          type: string
+          enum: [active, inactive, discontinued]
+        location:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateProductRequest:
+      type: object
+      required: [name, sku, category, quantity, minThreshold, price]
+      properties:
+        name:
+          type: string
+        sku:
+          type: string
+        category:
+          type: string
+        supplier:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        price:
+          type: number
+        cost:
+          type: number
+        location:
+          type: string
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        supplier:
+          type: string
+        quantity:
+          type: integer
+        minThreshold:
+          type: integer
+        price:
+          type: number
+        cost:
+          type: number
+        location:
+          type: string
+
+    InventoryItem:
+      type: object
+      properties:
+        productId:
+          type: string
+        productName:
+          type: string
+        currentStock:
+          type: integer
+        reservedStock:
+          type: integer
+        availableStock:
+          type: integer
+        lastMovement:
+          type: string
+          format: date-time
+
+    ClientAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [low-stock, out-of-stock, expired, system]
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        title:
+          type: string
+        message:
+          type: string
+        productId:
+          type: string
+        productName:
+          type: string
+        actionRequired:
+          type: boolean
+        acknowledged:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateAlertRequest:
+      type: object
+      properties:
+        type:
+          type: string
+        severity:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        productId:
+          type: string
+
+    ClientDashboardMetrics:
+      type: object
+      properties:
+        revenue:
+          type: object
+          properties:
+            current:
+              type: number
+            previous:
+              type: number
+            change:
+              type: number
+            trend:
+              type: string
+        orders:
+          type: object
+          properties:
+            current:
+              type: integer
+            previous:
+              type: integer
+            change:
+              type: number
+        inventory:
+          type: object
+          properties:
+            totalValue:
+              type: number
+            totalItems:
+              type: integer
+            lowStockItems:
+              type: integer
+            outOfStockItems:
+              type: integer
+        alerts:
+          type: object
+          properties:
+            critical:
+              type: integer
+            warning:
+              type: integer
+            info:
+              type: integer
+            total:
+              type: integer
+
+    ForecastData:
+      type: object
+      properties:
+        productId:
+          type: string
+        predictions:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+                format: date
+              predicted:
+                type: number
+              confidence:
+                type: number
+
+    TrendData:
+      type: object
+      properties:
+        timeRange:
+          type: string
+        trend:
+          type: string
+        data:
+          type: array
+          items:
+            type: object
+
+    ClientRecommendation:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [high, medium, low]
+        action:
+          type: string
+        data:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    Settings:
+      type: object
+      properties:
+        general:
+          type: object
+        notifications:
+          type: object
+        integrations:
+          type: object
+        security:
+          type: object
+
+    ClientPagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: User
+    description: User profile and preferences
+  - name: Products
+    description: Product management operations
+  - name: Inventory
+    description: Inventory tracking and adjustments
+  - name: Alerts
+    description: Alert management and notifications
+  - name: Analytics
+    description: Dashboard metrics and analytics
+  - name: Recommendations
+    description: AI-powered recommendations
+  - name: Settings
+    description: Application settings and configuration
+  - name: System
+    description: System health and status

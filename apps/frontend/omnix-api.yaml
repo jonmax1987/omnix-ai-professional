@@ -1,0 +1,2285 @@
+openapi: 3.0.3
+info:
+  title: OMNIX AI Inventory Management API
+  description: |
+    OMNIX AI is an advanced smart inventory management platform that helps store managers, 
+    purchasing teams, and analysts efficiently control inventory, prevent shortages/losses, 
+    and optimize procurement through AI-powered demand forecasting.
+  version: 1.0.0
+  contact:
+    name: OMNIX AI Team
+    email: api@omnix-ai.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.omnix-ai.com/v1
+    description: Production API
+  - url: https://staging-api.omnix-ai.com/v1
+    description: Staging API
+  - url: http://localhost:3000/v1
+    description: Local development
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  # Product Management Endpoints
+  /products:
+    get:
+      summary: Get all products
+      description: Retrieve a paginated list of products with optional filtering and sorting
+      tags:
+        - Products
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          description: Search by product name, SKU, or barcode
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter by product category
+          schema:
+            type: string
+        - name: supplier
+          in: query
+          description: Filter by supplier
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [name, sku, quantity, price, lastUpdated]
+            default: name
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: lowStock
+          in: query
+          description: Filter products with low stock (below minimum threshold)
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  meta:
+                    type: object
+                    properties:
+                      totalValue:
+                        type: number
+                        description: Total inventory value
+                      totalItems:
+                        type: integer
+                        description: Total number of items in stock
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      summary: Create a new product
+      description: Add a new product to the inventory
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+                  message:
+                    type: string
+                    example: "Product created successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      description: Retrieve a specific product by its ID
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      summary: Update product
+      description: Update an existing product's information
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Product'
+                  message:
+                    type: string
+                    example: "Product updated successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete product
+      description: Remove a product from the inventory
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Product deleted successfully"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Dashboard Endpoints
+  /dashboard/summary:
+    get:
+      summary: Get dashboard summary
+      description: Retrieve key metrics for the dashboard including total inventory value, item counts, and category breakdown
+      tags:
+        - Dashboard
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for data aggregation
+          schema:
+            type: string
+            enum: [today, week, month, quarter, year]
+            default: month
+      responses:
+        '200':
+          description: Dashboard summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /dashboard/inventory-graph:
+    get:
+      summary: Get inventory graph data
+      description: Retrieve time-series data for inventory value and item counts
+      tags:
+        - Dashboard
+      parameters:
+        - name: timeRange
+          in: query
+          description: Time range for the graph
+          schema:
+            type: string
+            enum: [week, month, quarter, year]
+            default: month
+        - name: category
+          in: query
+          description: Filter by specific category
+          schema:
+            type: string
+        - name: granularity
+          in: query
+          description: Data point granularity
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: daily
+      responses:
+        '200':
+          description: Inventory graph data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InventoryGraphData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Alerts Endpoints
+  /alerts:
+    get:
+      summary: Get alerts
+      description: Retrieve current alerts including low stock, expired items, and urgent notifications
+      tags:
+        - Alerts
+      parameters:
+        - name: type
+          in: query
+          description: Filter alerts by type
+          schema:
+            type: string
+            enum: [low-stock, out-of-stock, expired, forecast-warning, system]
+        - name: severity
+          in: query
+          description: Filter alerts by severity level
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Alert'
+                  count:
+                    type: integer
+                    description: Total number of active alerts
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /alerts/{alertId}/dismiss:
+    post:
+      summary: Dismiss an alert
+      description: Mark an alert as dismissed
+      tags:
+        - Alerts
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert dismissed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Alert dismissed successfully"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Order Recommendations Endpoints
+  /recommendations/orders:
+    get:
+      summary: Get order recommendations
+      description: Retrieve AI-powered smart ordering recommendations
+      tags:
+        - Recommendations
+      parameters:
+        - name: category
+          in: query
+          description: Filter recommendations by category
+          schema:
+            type: string
+        - name: urgency
+          in: query
+          description: Filter by urgency level
+          schema:
+            type: string
+            enum: [high, medium, low]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Order recommendations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrderRecommendation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Forecasting Endpoints
+  /forecasts/demand:
+    get:
+      summary: Get demand forecasts
+      description: Retrieve AI-powered demand forecasting data for products
+      tags:
+        - Forecasts
+      parameters:
+        - name: productId
+          in: query
+          description: Filter forecasts for specific product
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Filter forecasts by category
+          schema:
+            type: string
+        - name: timeHorizon
+          in: query
+          description: Forecast time horizon
+          schema:
+            type: string
+            enum: [week, month, quarter, year]
+            default: month
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Demand forecasts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DemandForecast'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /forecasts/trends:
+    get:
+      summary: Get trend analysis
+      description: Retrieve historical trends and pattern analysis
+      tags:
+        - Forecasts
+      parameters:
+        - name: productId
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [month, quarter, year]
+            default: year
+      responses:
+        '200':
+          description: Trend analysis retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TrendAnalysis'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Authentication Endpoints
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticate user with email/username and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "securePassword123"
+                rememberMe:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      token:
+                        type: string
+                        description: JWT access token
+                      refreshToken:
+                        type: string
+                        description: JWT refresh token
+                      expiresIn:
+                        type: integer
+                        description: Token expiration time in seconds
+                  message:
+                    type: string
+                    example: "Login successful"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/logout:
+    post:
+      summary: User logout
+      description: Logout user and invalidate tokens
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logout successful"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Valid refresh token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        description: New JWT access token
+                      expiresIn:
+                        type: integer
+                        description: Token expiration time in seconds
+                  message:
+                    type: string
+                    example: "Token refreshed successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/reset-password:
+    post:
+      summary: Request password reset
+      description: Send password reset email to user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password reset email sent"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/change-password:
+    post:
+      summary: Change user password
+      description: Change password for authenticated user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  format: password
+                newPassword:
+                  type: string
+                  format: password
+                  minLength: 8
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password changed successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/verify-email:
+    post:
+      summary: Verify email address
+      description: Verify user email with verification token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Email verification token
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email verified successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/2fa/setup:
+    post:
+      summary: Setup two-factor authentication
+      description: Initialize 2FA setup for user
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: 2FA setup initialized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      qrCode:
+                        type: string
+                        description: QR code for 2FA app
+                      secret:
+                        type: string
+                        description: Secret key for manual entry
+                  message:
+                    type: string
+                    example: "2FA setup initialized"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/2fa/verify:
+    post:
+      summary: Verify two-factor authentication
+      description: Verify 2FA code and enable 2FA
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: 6-digit 2FA code
+                  pattern: '^[0-9]{6}$'
+      responses:
+        '200':
+          description: 2FA verified and enabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "2FA enabled successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/2fa/disable:
+    post:
+      summary: Disable two-factor authentication
+      description: Disable 2FA for user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: 6-digit 2FA code
+                  pattern: '^[0-9]{6}$'
+      responses:
+        '200':
+          description: 2FA disabled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "2FA disabled successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # User Profile Endpoints
+  /user/profile:
+    get:
+      summary: Get user profile
+      description: Retrieve current user profile information
+      tags:
+        - User
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update user profile
+      description: Update user profile information
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+                    example: "Profile updated successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/avatar:
+    post:
+      summary: Upload user avatar
+      description: Upload and update user profile picture
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+                  description: Profile picture file (JPEG, PNG, max 5MB)
+      responses:
+        '200':
+          description: Avatar uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      avatarUrl:
+                        type: string
+                        format: uri
+                        description: URL of uploaded avatar
+                  message:
+                    type: string
+                    example: "Avatar uploaded successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/preferences:
+    get:
+      summary: Get user preferences
+      description: Retrieve user application preferences
+      tags:
+        - User
+      responses:
+        '200':
+          description: User preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserPreferences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update user preferences
+      description: Update user application preferences
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserPreferences'
+                  message:
+                    type: string
+                    example: "Preferences updated successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/permissions:
+    get:
+      summary: Get user permissions
+      description: Retrieve user role and permissions
+      tags:
+        - User
+      responses:
+        '200':
+          description: User permissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [admin, manager, user]
+                      permissions:
+                        type: array
+                        items:
+                          type: string
+                        example: ["products:read", "products:write", "alerts:manage"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Inventory Management Endpoints
+  /inventory:
+    get:
+      summary: Get inventory overview
+      description: Retrieve inventory status with filtering and aggregation
+      tags:
+        - Inventory
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: lowStock
+          in: query
+          schema:
+            type: boolean
+        - name: expired
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Inventory overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      totalValue:
+                        type: number
+                        format: decimal
+                      totalItems:
+                        type: integer
+                      lowStockCount:
+                        type: integer
+                      expiredCount:
+                        type: integer
+                      categories:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: number
+                            count:
+                              type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /inventory/{productId}:
+    get:
+      summary: Get product inventory details
+      description: Retrieve detailed inventory information for a specific product
+      tags:
+        - Inventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product inventory details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InventoryItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /inventory/{productId}/adjust:
+    post:
+      summary: Adjust product stock
+      description: Adjust stock quantity for a product (add/remove inventory)
+      tags:
+        - Inventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - quantity
+                - reason
+              properties:
+                quantity:
+                  type: integer
+                  description: Positive for addition, negative for removal
+                  example: -5
+                reason:
+                  type: string
+                  enum: [sale, purchase, damage, theft, audit, transfer, return]
+                  example: "sale"
+                notes:
+                  type: string
+                  maxLength: 500
+                  example: "Sold to customer"
+      responses:
+        '200':
+          description: Stock adjusted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InventoryItem'
+                  message:
+                    type: string
+                    example: "Stock adjusted successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /inventory/transfer:
+    post:
+      summary: Transfer stock between locations
+      description: Transfer inventory from one location to another
+      tags:
+        - Inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - productId
+                - fromLocation
+                - toLocation
+                - quantity
+              properties:
+                productId:
+                  type: string
+                  format: uuid
+                fromLocation:
+                  type: string
+                  example: "Warehouse A"
+                toLocation:
+                  type: string
+                  example: "Store Front"
+                quantity:
+                  type: integer
+                  minimum: 1
+                  example: 10
+                notes:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Stock transferred successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Stock transferred successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /inventory/{productId}/history:
+    get:
+      summary: Get inventory history
+      description: Retrieve stock movement history for a product
+      tags:
+        - Inventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Inventory history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InventoryTransaction'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /inventory/bulk-adjust:
+    post:
+      summary: Bulk adjust inventory
+      description: Adjust stock quantities for multiple products at once
+      tags:
+        - Inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - adjustments
+              properties:
+                adjustments:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - productId
+                      - quantity
+                      - reason
+                    properties:
+                      productId:
+                        type: string
+                        format: uuid
+                      quantity:
+                        type: integer
+                      reason:
+                        type: string
+                        enum: [sale, purchase, damage, theft, audit, transfer, return]
+                      notes:
+                        type: string
+                        maxLength: 500
+      responses:
+        '200':
+          description: Bulk adjustment completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      successful:
+                        type: integer
+                        description: Number of successful adjustments
+                      failed:
+                        type: integer
+                        description: Number of failed adjustments
+                      errors:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            productId:
+                              type: string
+                            error:
+                              type: string
+                  message:
+                    type: string
+                    example: "Bulk adjustment completed"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Order Management Endpoints
+  /orders:
+    get:
+      summary: Get orders
+      description: Retrieve list of orders with filtering and pagination
+      tags:
+        - Orders
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, shipped, delivered, cancelled]
+        - name: supplierId
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create order
+      description: Create a new purchase order
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+                    example: "Order created successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders/{orderId}:
+    get:
+      summary: Get order by ID
+      description: Retrieve a specific order by its ID
+      tags:
+        - Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update order
+      description: Update an existing order
+      tags:
+        - Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderRequest'
+      responses:
+        '200':
+          description: Order updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+                    example: "Order updated successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders/{orderId}/cancel:
+    post:
+      summary: Cancel order
+      description: Cancel an existing order
+      tags:
+        - Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  example: "Supplier unavailable"
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+                    example: "Order cancelled successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /orders/{orderId}/fulfill:
+    post:
+      summary: Fulfill order
+      description: Mark order as fulfilled and update inventory
+      tags:
+        - Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deliveryDate:
+                  type: string
+                  format: date
+                trackingNumber:
+                  type: string
+                notes:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Order fulfilled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+                    example: "Order fulfilled successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Settings Endpoints
+  /settings:
+    get:
+      summary: Get application settings
+      description: Retrieve current application configuration
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AppSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update application settings
+      description: Update application configuration
+      tags:
+        - Settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppSettings'
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AppSettings'
+                  message:
+                    type: string
+                    example: "Settings updated successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # System Health Endpoints
+  /system/health:
+    get:
+      summary: Get system health
+      description: Check system health and status
+      tags:
+        - System
+      responses:
+        '200':
+          description: System health check successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      cache:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      external_apis:
+                        type: string
+                        enum: [healthy, unhealthy]
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /system/status:
+    get:
+      summary: Get system status
+      description: Get detailed system status and metrics
+      tags:
+        - System
+      responses:
+        '200':
+          description: System status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      uptime:
+                        type: integer
+                        description: System uptime in seconds
+                      version:
+                        type: string
+                        example: "1.0.0"
+                      environment:
+                        type: string
+                        enum: [development, staging, production]
+                      memory_usage:
+                        type: object
+                        properties:
+                          used:
+                            type: number
+                          total:
+                            type: number
+                          percentage:
+                            type: number
+                      active_connections:
+                        type: integer
+                      last_backup:
+                        type: string
+                        format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - sku
+        - category
+        - quantity
+        - minThreshold
+        - price
+        - supplier
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          maxLength: 255
+          example: "Premium Coffee Beans"
+        sku:
+          type: string
+          maxLength: 100
+          example: "PCB-001"
+        barcode:
+          type: string
+          maxLength: 50
+          example: "1234567890123"
+        category:
+          type: string
+          maxLength: 100
+          example: "Beverages"
+        quantity:
+          type: integer
+          minimum: 0
+          example: 150
+        minThreshold:
+          type: integer
+          minimum: 0
+          example: 20
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          example: 24.99
+        cost:
+          type: number
+          format: decimal
+          minimum: 0
+          example: 18.50
+        supplier:
+          type: string
+          maxLength: 255
+          example: "Global Coffee Co."
+        description:
+          type: string
+          maxLength: 1000
+          example: "High-quality arabica coffee beans sourced from Colombia"
+        unit:
+          type: string
+          maxLength: 20
+          example: "kg"
+        expirationDate:
+          type: string
+          format: date
+          example: "2024-12-31"
+        location:
+          type: string
+          maxLength: 100
+          example: "Warehouse A, Shelf 3"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-20T14:45:00Z"
+        lastUpdated:
+          type: string
+          format: date-time
+          example: "2024-01-20T14:45:00Z"
+
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - sku
+        - category
+        - quantity
+        - minThreshold
+        - price
+        - supplier
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        sku:
+          type: string
+          maxLength: 100
+        barcode:
+          type: string
+          maxLength: 50
+        category:
+          type: string
+          maxLength: 100
+        quantity:
+          type: integer
+          minimum: 0
+        minThreshold:
+          type: integer
+          minimum: 0
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        cost:
+          type: number
+          format: decimal
+          minimum: 0
+        supplier:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        unit:
+          type: string
+          maxLength: 20
+        expirationDate:
+          type: string
+          format: date
+        location:
+          type: string
+          maxLength: 100
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        barcode:
+          type: string
+          maxLength: 50
+        category:
+          type: string
+          maxLength: 100
+        quantity:
+          type: integer
+          minimum: 0
+        minThreshold:
+          type: integer
+          minimum: 0
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        cost:
+          type: number
+          format: decimal
+          minimum: 0
+        supplier:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        unit:
+          type: string
+          maxLength: 20
+        expirationDate:
+          type: string
+          format: date
+        location:
+          type: string
+          maxLength: 100
+
+    Alert:
+      type: object
+      required:
+        - id
+        - type
+        - severity
+        - message
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [low-stock, out-of-stock, expired, forecast-warning, system]
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        severity:
+          type: string
+          enum: [high, medium, low]
+        message:
+          type: string
+        details:
+          type: string
+        actionRequired:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        dismissedAt:
+          type: string
+          format: date-time
+        dismissedBy:
+          type: string
+        title:
+          type: string
+          maxLength: 255
+          description: Alert title for display
+        acknowledged:
+          type: boolean
+          default: false
+          description: Whether alert has been acknowledged by user
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalInventoryValue:
+          type: number
+          format: decimal
+        totalItems:
+          type: integer
+        lowStockItems:
+          type: integer
+        outOfStockItems:
+          type: integer
+        expiredItems:
+          type: integer
+        activeAlerts:
+          type: integer
+        categoryBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              itemCount:
+                type: integer
+              value:
+                type: number
+                format: decimal
+        topCategories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              percentage:
+                type: number
+
+    InventoryGraphData:
+      type: object
+      properties:
+        timeRange:
+          type: string
+        granularity:
+          type: string
+        dataPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              inventoryValue:
+                type: number
+                format: decimal
+              itemCount:
+                type: integer
+              categories:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                    value:
+                      type: number
+                    count:
+                      type: integer
+
+    OrderRecommendation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        currentStock:
+          type: integer
+        recommendedQuantity:
+          type: integer
+        urgency:
+          type: string
+          enum: [high, medium, low]
+        reason:
+          type: string
+        explanation:
+          type: string
+        estimatedCost:
+          type: number
+          format: decimal
+        supplier:
+          type: string
+        leadTime:
+          type: integer
+          description: Lead time in days
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        createdAt:
+          type: string
+          format: date-time
+
+    DemandForecast:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        category:
+          type: string
+        timeHorizon:
+          type: string
+        predictions:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+                format: date
+              predictedDemand:
+                type: number
+              confidenceInterval:
+                type: object
+                properties:
+                  lower:
+                    type: number
+                  upper:
+                    type: number
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        model:
+          type: string
+        lastUpdated:
+          type: string
+          format: date-time
+
+    TrendAnalysis:
+      type: object
+      properties:
+        timeRange:
+          type: string
+        overallTrend:
+          type: string
+          enum: [increasing, decreasing, stable, seasonal]
+        seasonality:
+          type: object
+          properties:
+            detected:
+              type: boolean
+            pattern:
+              type: string
+            strength:
+              type: number
+        correlations:
+          type: array
+          items:
+            type: object
+            properties:
+              factor:
+                type: string
+              correlation:
+                type: number
+        insights:
+          type: array
+          items:
+            type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+        code:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Bad Request"
+            message: "Invalid input parameters"
+            code: 400
+            timestamp: "2024-01-20T15:30:00Z"
+
+    Unauthorized:
+      description: Unauthorized - Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Authentication required"
+            code: 401
+            timestamp: "2024-01-20T15:30:00Z"
+
+    NotFound:
+      description: Not Found - Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Not Found"
+            message: "Resource not found"
+            code: 404
+            timestamp: "2024-01-20T15:30:00Z"
+
+    Conflict:
+      description: Conflict - Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Conflict"
+            message: "Product with this SKU already exists"
+            code: 409
+            timestamp: "2024-01-20T15:30:00Z"
+
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+            code: 500
+            timestamp: "2024-01-20T15:30:00Z"
+
+tags:
+  - name: Products
+    description: Product management operations
+  - name: Dashboard
+    description: Dashboard and summary data
+  - name: Alerts
+    description: Alert management and notifications
+  - name: Recommendations
+    description: AI-powered recommendations
+  - name: Forecasts
+    description: Demand forecasting and trend analysis
