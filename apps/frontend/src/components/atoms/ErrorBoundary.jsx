@@ -1,79 +1,100 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Sentry } from '../../services/monitoring';
 import Button from './Button';
 import Typography from './Typography';
+
+// Safe Sentry import - handle cases where monitoring service doesn't exist
+let Sentry = null;
+try {
+  Sentry = require('../../services/monitoring').Sentry;
+} catch (error) {
+  console.warn('Sentry monitoring service not available:', error.message);
+  // Create a mock Sentry object to prevent errors
+  Sentry = {
+    withScope: (callback) => callback({ 
+      setTag: () => {}, 
+      setContext: () => {}, 
+      setUser: () => {} 
+    }),
+    captureException: (error) => {
+      console.error('Sentry not available, logging error:', error);
+      return 'mock-error-id';
+    },
+    addBreadcrumb: () => {},
+    withErrorBoundary: (component, options) => component
+  };
+}
 
 const ErrorContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing[6]};
+  padding: ${({ theme }) => theme?.spacing?.[6] || theme?.spacing?.xl || '1.5rem'};
   min-height: 400px;
   text-align: center;
-  background: ${({ theme }) => theme.colors.background.secondary};
+  background: ${({ theme }) => theme?.colors?.background?.secondary || '#f1f5f9'};
   border-radius: 8px;
-  border: 1px solid ${({ theme }) => theme.colors.border.default};
+  border: 1px solid ${({ theme }) => theme?.colors?.border?.default || '#e2e8f0'};
 `;
 
 const ErrorIcon = styled.div`
   font-size: 4rem;
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-  color: ${({ theme }) => theme.colors.error[500]};
+  margin-bottom: ${({ theme }) => theme?.spacing?.[4] || theme?.spacing?.lg || '1rem'};
+  color: ${({ theme }) => theme?.colors?.error?.[500] || theme?.colors?.red?.[500] || '#ef4444'};
 `;
 
 const ErrorActions = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing[3]};
-  margin-top: ${({ theme }) => theme.spacing[4]};
+  gap: ${({ theme }) => theme?.spacing?.[3] || theme?.spacing?.md || '0.75rem'};
+  margin-top: ${({ theme }) => theme?.spacing?.[4] || theme?.spacing?.lg || '1rem'};
   
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+  @media (max-width: ${({ theme }) => theme?.breakpoints?.sm || '640px'}) {
     flex-direction: column;
     align-items: stretch;
   }
 `;
 
 const ErrorDetails = styled.details`
-  margin-top: ${({ theme }) => theme.spacing[4]};
+  margin-top: ${({ theme }) => theme?.spacing?.[4] || theme?.spacing?.lg || '1rem'};
   text-align: left;
   max-width: 600px;
   
   summary {
     cursor: pointer;
-    font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-    margin-bottom: ${({ theme }) => theme.spacing[2]};
-    color: ${({ theme }) => theme.colors.text.secondary};
+    font-weight: ${({ theme }) => theme?.typography?.fontWeight?.medium || theme?.typography?.weights?.medium || 500};
+    margin-bottom: ${({ theme }) => theme?.spacing?.[2] || theme?.spacing?.sm || '0.5rem'};
+    color: ${({ theme }) => theme?.colors?.text?.secondary || '#64748b'};
   }
   
   pre {
-    background: ${({ theme }) => theme.colors.background.primary};
-    padding: ${({ theme }) => theme.spacing[3]};
+    background: ${({ theme }) => theme?.colors?.background?.primary || '#f8fafc'};
+    padding: ${({ theme }) => theme?.spacing?.[3] || theme?.spacing?.md || '0.75rem'};
     border-radius: 4px;
     font-size: 12px;
     overflow: auto;
     max-height: 200px;
-    border: 1px solid ${({ theme }) => theme.colors.border.subtle};
+    border: 1px solid ${({ theme }) => theme?.colors?.border?.subtle || '#e2e8f0'};
   }
 `;
 
 const FeedbackForm = styled.form`
-  margin-top: ${({ theme }) => theme.spacing[4]};
+  margin-top: ${({ theme }) => theme?.spacing?.[4] || theme?.spacing?.lg || '1rem'};
   max-width: 400px;
   
   textarea {
     width: 100%;
     min-height: 80px;
-    padding: ${({ theme }) => theme.spacing[2]};
-    border: 1px solid ${({ theme }) => theme.colors.border.default};
+    padding: ${({ theme }) => theme?.spacing?.[2] || theme?.spacing?.sm || '0.5rem'};
+    border: 1px solid ${({ theme }) => theme?.colors?.border?.default || '#e2e8f0'};
     border-radius: 4px;
     resize: vertical;
     font-family: inherit;
     
     &:focus {
       outline: none;
-      border-color: ${({ theme }) => theme.colors.primary[500]};
-      box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary[100]};
+      border-color: ${({ theme }) => theme?.colors?.primary?.[500] || theme?.colors?.primary?.main || '#0ea5e9'};
+      box-shadow: 0 0 0 2px ${({ theme }) => theme?.colors?.primary?.[100] || theme?.colors?.primary?.light || 'rgba(14, 165, 233, 0.2)'};
     }
   }
 `;

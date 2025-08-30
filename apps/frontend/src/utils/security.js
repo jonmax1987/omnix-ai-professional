@@ -312,8 +312,8 @@ export function logSecurityEvent(event, details = {}) {
   console.warn('Security event:', securityEvent);
   
   // Send to monitoring service
-  if (typeof analytics !== 'undefined') {
-    analytics.trackEvent('security_event', {
+  if (typeof window !== 'undefined' && window.analytics) {
+    window.analytics.trackEvent('security_event', {
       event_type: event,
       ...details,
       category: 'Security'

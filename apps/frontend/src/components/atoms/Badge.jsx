@@ -7,11 +7,11 @@ const StyledBadge = styled(motion.span).withConfig({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: ${props => props.theme.spacing[1]};
+  gap: ${props => props.theme?.spacing?.[1] || '0.25rem'};
   padding: ${props => getBadgePadding(props.size, props.theme)};
-  font-family: ${props => props.theme.typography.fontFamily.sans.join(', ')};
+  font-family: ${props => props.theme?.typography?.fontFamily?.sans?.join(', ') || 'Inter, system-ui, sans-serif'};
   font-size: ${props => getBadgeFontSize(props.size, props.theme)};
-  font-weight: ${props => props.theme.typography.fontWeight.medium};
+  font-weight: ${props => props.theme?.typography?.fontWeight?.medium || 500};
   line-height: 1;
   border-radius: ${props => getBadgeRadius(props.size, props.theme)};
   white-space: nowrap;

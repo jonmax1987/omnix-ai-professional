@@ -251,7 +251,9 @@ const ProductDetails = styled.div`
   margin-bottom: 8px;
 `;
 
-const PriorityBadge = styled.div`
+const PriorityBadge = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['priority'].includes(prop)
+})`
   display: flex;
   align-items: center;
   gap: 4px;
@@ -341,7 +343,9 @@ const SuggestionActions = styled.div`
   gap: 8px;
 `;
 
-const SuggestionButton = styled.button`
+const SuggestionButton = styled.button.withConfig({
+  shouldForwardProp: (prop) => !['variant'].includes(prop)
+})`
   flex: 1;
   display: flex;
   align-items: center;

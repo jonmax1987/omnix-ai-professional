@@ -26,9 +26,11 @@
 /manifest.json
   Cache-Control: public, max-age=86400
 
-# HTML files
+# HTML files - force refresh
 /*.html
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: no-cache, no-store, must-revalidate, proxy-revalidate
+  Pragma: no-cache
+  Expires: 0
 
 # API endpoints (if serving from same domain)
 /api/*

@@ -193,7 +193,9 @@ const AlertsList = styled.div`
   overflow-y: auto;
 `;
 
-const AlertItem = styled(motion.div)`
+const AlertItem = styled(motion.div).withConfig({
+  shouldForwardProp: (prop) => !['severity'].includes(prop)
+})`
   display: flex;
   align-items: center;
   gap: ${props => props.theme.spacing[2]};

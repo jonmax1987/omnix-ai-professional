@@ -23,7 +23,22 @@ import AutomatedOrderSuggestions from '../components/organisms/AutomatedOrderSug
 import SupplierIntegrationHub from '../components/organisms/SupplierIntegrationHub';
 import BulkOrderGenerationInterface from '../components/organisms/BulkOrderGenerationInterface';
 import RevenueStreamPanel from '../components/organisms/RevenueStreamPanel';
+import LiveCustomerActivityFeed from '../components/organisms/LiveCustomerActivityFeed';
+import LiveInventoryTracker from '../components/organisms/LiveInventoryTracker';
+import RealTimeAlertNotifications from '../components/organisms/RealTimeAlertNotifications';
+import LiveABTestResults from '../components/organisms/LiveABTestResults';
+import DashboardRefreshControls from '../components/organisms/DashboardRefreshControls';
 import RevenueStreamDebug from '../components/debug/RevenueStreamDebug';
+import CustomerActivityDebug from '../components/debug/CustomerActivityDebug';
+import InventoryChangeDebug from '../components/debug/InventoryChangeDebug';
+import AlertNotificationDebug from '../components/debug/AlertNotificationDebug';
+import ABTestResultsDebug from '../components/debug/ABTestResultsDebug';
+import DashboardRefreshDebug from '../components/debug/DashboardRefreshDebug';
+import RealTimeTeamActivity from '../components/organisms/RealTimeTeamActivity';
+import TeamActivityDebug from '../components/debug/TeamActivityDebug';
+import RealTimeCustomerBehavior from '../components/organisms/RealTimeCustomerBehavior';
+import CustomerBehaviorDebug from '../components/debug/CustomerBehaviorDebug';
+import LiveDashboardPerformanceMetrics from '../components/organisms/LiveDashboardPerformanceMetrics';
 import PullToRefresh from '../components/molecules/PullToRefresh';
 import MobileCarousel from '../components/molecules/MobileCarousel';
 import { exportDashboardReport } from '../utils/exportUtils';
@@ -31,6 +46,7 @@ import { isTouchDevice } from '../utils/mobileGestures';
 import { useI18n } from '../hooks/useI18n';
 import useDashboardStore from '../store/dashboardStore';
 import { useRealtimeDashboard } from '../hooks/useWebSocket';
+import { useTeamActivity } from '../hooks/useTeamActivity';
 import inventoryService from '../services/inventoryService';
 
 const DashboardContainer = styled(motion.div)`
@@ -175,9 +191,18 @@ const Dashboard = () => {
   
   // Debug state
   const [showRevenueDebug, setShowRevenueDebug] = useState(import.meta.env.DEV);
+  const [showInventoryDebug, setShowInventoryDebug] = useState(import.meta.env.DEV);
+  const [showAlertDebug, setShowAlertDebug] = useState(import.meta.env.DEV);
+  const [showABTestDebug, setShowABTestDebug] = useState(import.meta.env.DEV);
+  const [showRefreshDebug, setShowRefreshDebug] = useState(import.meta.env.DEV);
+  const [showTeamActivityDebug, setShowTeamActivityDebug] = useState(import.meta.env.DEV);
+  const [showCustomerBehaviorDebug, setShowCustomerBehaviorDebug] = useState(import.meta.env.DEV);
 
   // Enable real-time dashboard updates
   useRealtimeDashboard();
+  
+  // Enable team activity tracking
+  const { trackActivity } = useTeamActivity();
 
   // Fetch dashboard data on component mount
   useEffect(() => {
@@ -289,6 +314,15 @@ const Dashboard = () => {
 
   const handleRefresh = async () => {
     setLoading(true);
+    
+    // Track dashboard refresh activity
+    trackActivity('dashboard_view', {
+      action: 'Manually refreshed dashboard',
+      details: 'User initiated dashboard refresh',
+      category: 'dashboard',
+      priority: 'normal'
+    });
+    
     await Promise.all([
       refreshDashboard(),
       fetchInventoryData()
@@ -819,6 +853,66 @@ const Dashboard = () => {
         </DashboardGrid>
       </div>
 
+      {/* Live Customer Activity Feed */}
+      <div style={{ marginBottom: '2rem' }}>
+        <DashboardGrid
+          {...DASHBOARD_LAYOUTS.default}
+          spacing="lg"
+        >
+          <GridItem span={4}>
+            <LiveCustomerActivityFeed 
+              maxItems={20}
+              showStats={true}
+              showFilters={true}
+              onActivityClick={(activity) => console.log('Activity clicked:', activity)}
+            />
+          </GridItem>
+          <GridItem span={4}>
+            <LiveInventoryTracker 
+              maxItems={50}
+              showStats={true}
+              showFilters={true}
+              autoRefresh={true}
+              onItemClick={(item) => console.log('Inventory item clicked:', item)}
+            />
+          </GridItem>
+          <GridItem span={4}>
+            <LiveABTestResults 
+              maxTests={6}
+              autoRefresh={true}
+              showSummary={true}
+              onTestClick={(test) => console.log('A/B test clicked:', test)}
+            />
+          </GridItem>
+          <GridItem span={4}>
+            <RealTimeTeamActivity 
+              height={400}
+              showPresence={true}
+              showFilters={true}
+              maxActivities={30}
+            />
+          </GridItem>
+          <GridItem span={4}>
+            <RealTimeCustomerBehavior 
+              height={400}
+              showInsights={true}
+              showPatterns={true}
+              maxBehaviors={50}
+              autoRefresh={true}
+            />
+          </GridItem>
+          <GridItem span={4}>
+            <LiveDashboardPerformanceMetrics 
+              height={400}
+              showChart={false}
+              showSuggestions={true}
+              autoRefresh={true}
+              refreshInterval={10000}
+            />
+          </GridItem>
+        </DashboardGrid>
+      </div>
+
       {/* Recent Alerts */}
       <AlertsSection>
         <AlertsHeader>
@@ -1244,6 +1338,35 @@ const Dashboard = () => {
       
       {/* Revenue Stream Debug Panel (Development Only) */}
       {showRevenueDebug && <RevenueStreamDebug />}
+      
+      {/* Customer Activity Debug Panel (Development Only) */}
+      {showRevenueDebug && <CustomerActivityDebug />}
+      
+      {/* Inventory Change Debug Panel (Development Only) */}
+      {showInventoryDebug && <InventoryChangeDebug onClose={() => setShowInventoryDebug(false)} />}
+      
+      {/* Alert Notification Debug Panel (Development Only) */}
+      {showAlertDebug && <AlertNotificationDebug onClose={() => setShowAlertDebug(false)} />}
+      
+      {/* A/B Test Results Debug Panel (Development Only) */}
+      {showABTestDebug && <ABTestResultsDebug onClose={() => setShowABTestDebug(false)} />}
+      
+      {/* Dashboard Refresh Debug Panel (Development Only) */}
+      {showRefreshDebug && <DashboardRefreshDebug onClose={() => setShowRefreshDebug(false)} />}
+      
+      {/* Team Activity Debug Panel (Development Only) */}
+      {showTeamActivityDebug && <TeamActivityDebug onClose={() => setShowTeamActivityDebug(false)} />}
+      
+      {/* Customer Behavior Debug Panel (Development Only) */}
+      {showCustomerBehaviorDebug && <CustomerBehaviorDebug onClose={() => setShowCustomerBehaviorDebug(false)} />}
+      
+      {/* Real-time Alert Notifications (Always Active) */}
+      <RealTimeAlertNotifications 
+        maxNotifications={5}
+        autoHideDelay={8000}
+        soundEnabled={true}
+        showControls={import.meta.env.DEV}
+      />
     </DashboardContainer>
   );
 

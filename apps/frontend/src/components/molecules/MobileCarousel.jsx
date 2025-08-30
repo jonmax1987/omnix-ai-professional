@@ -78,7 +78,7 @@ const CarouselIndicator = styled.button.withConfig({
     background: ${props => 
       props.active 
         ? props.theme.colors.primary[600] 
-        : props.theme.colors.border.hover
+        : props.theme.colors?.border?.default || props.theme.colors?.border?.light || '#e2e8f0'
     };
   }
 
@@ -87,7 +87,9 @@ const CarouselIndicator = styled.button.withConfig({
   }
 `;
 
-const NavigationButton = styled(Button).attrs({
+const NavigationButton = styled(Button).withConfig({
+  shouldForwardProp: (prop) => !['direction'].includes(prop)
+}).attrs({
   variant: 'ghost',
   size: 'sm'
 })`

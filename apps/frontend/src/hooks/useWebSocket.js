@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useWebSocketStore } from '../store/websocketStore';
 import { webSocketManager } from '../services/websocket';
+import { fallbackPollingService } from '../services/fallbackPollingService';
 import useUserStore from '../store/userStore';
 import useProductStore from '../store/productsStore';
 import useDashboardStore from '../store/dashboardStore';
@@ -141,9 +142,15 @@ export const useWebSocket = () => {
     if (isAuthenticated) {
       // Check if WebSocket is disabled
       const wsUrl = import.meta.env.VITE_WEBSOCKET_URL;
-      if (!wsUrl) {
-        console.log('WebSocket disabled - skipping connection');
-        return;
+      if (!wsUrl || wsUrl === '') {
+        console.log('WebSocket disabled - starting fallback HTTP polling');
+        
+        // Start fallback polling instead
+        fallbackPollingService.start(['notifications', 'inventory', 'systemAlerts']);
+        
+        return () => {
+          fallbackPollingService.stop();
+        };
       }
       
       let unsubscribers = [];
@@ -248,7 +255,7 @@ export const useRealtimeDashboard = () => {
     const wsUrl = import.meta.env.VITE_WEBSOCKET_URL;
     
     const interval = setInterval(() => {
-      if (wsUrl && ws.isConnected()) {
+      if (wsUrl && wsUrl !== '' && ws.isConnected()) {
         // Request latest dashboard metrics via WebSocket
         ws.send('GET_DASHBOARD_METRICS', {});
       } else {

@@ -124,7 +124,9 @@ const SupplierName = styled.span`
   color: ${props => props.theme?.colors?.text?.secondary || '#6b7280'};
 `;
 
-const PriorityBadge = styled.span`
+const PriorityBadge = styled.span.withConfig({
+  shouldForwardProp: (prop) => !['priority'].includes(prop)
+})`
   background: ${props => {
     switch (props.priority) {
       case 'high': return props.theme?.colors?.error?.[100] || '#fef2f2';

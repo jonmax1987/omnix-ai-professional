@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
 import { getInitialIsMobile } from '../utils/viewport';
+
+// Enable MapSet plugin for Immer to handle Map and Set in state
+enableMapSet();
 
 // Create root store with middleware
 const useStore = create()(

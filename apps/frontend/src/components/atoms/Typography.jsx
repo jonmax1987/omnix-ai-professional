@@ -12,7 +12,7 @@ const StyledTypography = styled(motion.div).withConfig({
   color: ${props => getTextColor(props.color, props.theme)};
   
   ${props => props.weight && css`
-    font-weight: ${props.theme.typography.fontWeight[props.weight] || props.weight};
+    font-weight: ${props.theme?.typography?.fontWeight?.[props.weight] || props.weight};
   `}
   
   ${props => props.align && css`
@@ -44,15 +44,15 @@ const StyledTypography = styled(motion.div).withConfig({
 
 const getTypographyVariantStyles = (variant, theme) => {
   const baseStyles = css`
-    font-family: ${theme.typography.fontFamily.sans.join(', ')};
+    font-family: ${theme?.typography?.fontFamily?.sans?.join(', ') || 'Inter, system-ui, sans-serif'};
   `;
   
   switch (variant) {
     case 'h1':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize['4xl']};
-        font-weight: ${theme.typography.fontWeight.bold};
+        font-size: ${theme?.typography?.fontSize?.['4xl'] || '2.25rem'};
+        font-weight: ${theme?.typography?.fontWeight?.bold || 700};
         line-height: 1.2;
         letter-spacing: -0.02em;
       `;
@@ -60,8 +60,8 @@ const getTypographyVariantStyles = (variant, theme) => {
     case 'h2':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize['3xl']};
-        font-weight: ${theme.typography.fontWeight.bold};
+        font-size: ${theme?.typography?.fontSize?.['3xl'] || '1.875rem'};
+        font-weight: ${theme?.typography?.fontWeight?.bold || 700};
         line-height: 1.3;
         letter-spacing: -0.01em;
       `;
@@ -69,56 +69,56 @@ const getTypographyVariantStyles = (variant, theme) => {
     case 'h3':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize['2xl']};
-        font-weight: ${theme.typography.fontWeight.semibold};
+        font-size: ${theme?.typography?.fontSize?.['2xl'] || '1.5rem'};
+        font-weight: ${theme?.typography?.fontWeight?.semibold || 600};
         line-height: 1.4;
       `;
       
     case 'h4':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.xl};
-        font-weight: ${theme.typography.fontWeight.semibold};
+        font-size: ${theme?.typography?.fontSize?.xl || '1.25rem'};
+        font-weight: ${theme?.typography?.fontWeight?.semibold || 600};
         line-height: 1.4;
       `;
       
     case 'h5':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.lg};
-        font-weight: ${theme.typography.fontWeight.semibold};
+        font-size: ${theme?.typography?.fontSize?.lg || '1.125rem'};
+        font-weight: ${theme?.typography?.fontWeight?.semibold || 600};
         line-height: 1.5;
       `;
       
     case 'h6':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.base};
-        font-weight: ${theme.typography.fontWeight.semibold};
+        font-size: ${theme?.typography?.fontSize?.base || '1rem'};
+        font-weight: ${theme?.typography?.fontWeight?.semibold || 600};
         line-height: 1.5;
       `;
       
     case 'body1':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.base};
-        font-weight: ${theme.typography.fontWeight.normal};
+        font-size: ${theme?.typography?.fontSize?.base || '1rem'};
+        font-weight: ${theme?.typography?.fontWeight?.normal || 400};
         line-height: 1.6;
       `;
       
     case 'body2':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.sm};
-        font-weight: ${theme.typography.fontWeight.normal};
+        font-size: ${theme?.typography?.fontSize?.sm || '0.875rem'};
+        font-weight: ${theme?.typography?.fontWeight?.normal || 400};
         line-height: 1.5;
       `;
       
     case 'caption':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.xs};
-        font-weight: ${theme.typography.fontWeight.normal};
+        font-size: ${theme?.typography?.fontSize?.xs || '0.75rem'};
+        font-weight: ${theme?.typography?.fontWeight?.normal || 400};
         line-height: 1.4;
         letter-spacing: 0.02em;
       `;
@@ -126,8 +126,8 @@ const getTypographyVariantStyles = (variant, theme) => {
     case 'overline':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.xs};
-        font-weight: ${theme.typography.fontWeight.medium};
+        font-size: ${theme?.typography?.fontSize?.xs || '0.75rem'};
+        font-weight: ${theme?.typography?.fontWeight?.medium || 500};
         line-height: 1.2;
         letter-spacing: 0.1em;
         text-transform: uppercase;
@@ -136,59 +136,59 @@ const getTypographyVariantStyles = (variant, theme) => {
     case 'subtitle1':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.base};
-        font-weight: ${theme.typography.fontWeight.medium};
+        font-size: ${theme?.typography?.fontSize?.base || '1rem'};
+        font-weight: ${theme?.typography?.fontWeight?.medium || 500};
         line-height: 1.5;
       `;
       
     case 'subtitle2':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.sm};
-        font-weight: ${theme.typography.fontWeight.medium};
+        font-size: ${theme?.typography?.fontSize?.sm || '0.875rem'};
+        font-weight: ${theme?.typography?.fontWeight?.medium || 500};
         line-height: 1.4;
       `;
       
     case 'button':
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.sm};
-        font-weight: ${theme.typography.fontWeight.medium};
+        font-size: ${theme?.typography?.fontSize?.sm || '0.875rem'};
+        font-weight: ${theme?.typography?.fontWeight?.medium || 500};
         line-height: 1;
         letter-spacing: 0.02em;
       `;
       
     case 'mono':
       return css`
-        font-family: ${theme.typography.fontFamily.mono.join(', ')};
-        font-size: ${theme.typography.fontSize.sm};
-        font-weight: ${theme.typography.fontWeight.normal};
+        font-family: ${theme?.typography?.fontFamily?.mono?.join(', ') || 'JetBrains Mono, monospace'};
+        font-size: ${theme?.typography?.fontSize?.sm || '0.875rem'};
+        font-weight: ${theme?.typography?.fontWeight?.normal || 400};
         line-height: 1.6;
       `;
       
     default:
       return css`
         ${baseStyles}
-        font-size: ${theme.typography.fontSize.base};
-        font-weight: ${theme.typography.fontWeight.normal};
+        font-size: ${theme?.typography?.fontSize?.base || '1rem'};
+        font-weight: ${theme?.typography?.fontWeight?.normal || 400};
         line-height: 1.6;
       `;
   }
 };
 
 const getTextColor = (color, theme) => {
-  if (!color) return theme.colors.text.primary;
+  if (!color) return theme?.colors?.text?.primary || '#0f172a';
   
   const colorMap = {
-    primary: theme.colors.text.primary,
-    secondary: theme.colors.text.secondary,
-    tertiary: theme.colors.text.tertiary,
-    inverse: theme.colors.text.inverse,
-    success: theme.colors.status.success,
-    warning: theme.colors.status.warning,
-    error: theme.colors.status.error,
-    info: theme.colors.status.info,
-    brand: theme.colors.primary[600]
+    primary: theme?.colors?.text?.primary || '#0f172a',
+    secondary: theme?.colors?.text?.secondary || '#475569',
+    tertiary: theme?.colors?.text?.tertiary || '#64748b',
+    inverse: theme?.colors?.text?.inverse || '#ffffff',
+    success: theme?.colors?.status?.success || '#059669',
+    warning: theme?.colors?.status?.warning || '#d97706',
+    error: theme?.colors?.status?.error || '#dc2626',
+    info: theme?.colors?.status?.info || '#2563eb',
+    brand: theme?.colors?.primary?.[600] || '#2563eb'
   };
   
   return colorMap[color] || color;

@@ -62,7 +62,7 @@ const ViewButton = styled.button`
   border: none;
   background: ${props => props.active ? props.theme.colors.primary[500] : 'transparent'};
   color: ${props => props.active ? 'white' : props.theme.colors.text.primary};
-  font-size: ${props => props.theme.typography.caption.fontSize};
+  font-size: ${props => props.theme.typography?.caption?.fontSize || '0.75rem'};
   cursor: pointer;
   transition: all 0.2s ease;
   

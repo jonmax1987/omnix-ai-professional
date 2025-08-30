@@ -27,7 +27,7 @@ export class ABTestResultsDto {
 }
 
 @ApiTags('A/B Testing')
-@Controller('v1/ab-tests')
+@Controller('ab-tests')
 export class ABTestingController {
   constructor(
     private readonly enhancedBedrockService: EnhancedBedrockService,

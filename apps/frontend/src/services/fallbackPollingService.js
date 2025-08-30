@@ -59,17 +59,19 @@ class FallbackPollingService {
       return;
     }
 
-    console.log('Fallback Polling: Starting for data types:', dataTypes);
-    this.isActive = true;
+    console.log('Fallback Polling: Disabled - API endpoints not available yet');
+    console.log('Fallback Polling: Would start for data types:', dataTypes);
+    
+    // TODO: Enable when backend endpoints are implemented
+    // this.isActive = true;
+    // dataTypes.forEach(dataType => {
+    //   if (this.pollingConfig[dataType]) {
+    //     this.startPollingForType(dataType);
+    //   }
+    // });
 
-    dataTypes.forEach(dataType => {
-      if (this.pollingConfig[dataType]) {
-        this.startPollingForType(dataType);
-      }
-    });
-
-    // Emit start event
-    this.emitEvent('fallback_started', { dataTypes });
+    // Emit start event (for compatibility)
+    this.emitEvent('fallback_started', { dataTypes: [] });
   }
 
   /**
@@ -297,8 +299,7 @@ class FallbackPollingService {
     const userStore = useUserStore.getState();
     return {
       'Authorization': `Bearer ${userStore.token}`,
-      'Content-Type': 'application/json',
-      'X-Fallback-Mode': 'true'
+      'Content-Type': 'application/json'
     };
   }
 

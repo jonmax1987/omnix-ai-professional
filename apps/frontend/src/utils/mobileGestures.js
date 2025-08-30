@@ -1,5 +1,26 @@
 // Mobile gesture utilities for touch interactions
 
+// Non-hook gesture handlers (called from inside hooks)
+export const createSwipeHandler = (element, options) => {
+  return addSwipeGesture(element, options);
+};
+
+export const createTapHandler = (element, options) => {
+  return addTapGesture(element, options);
+};
+
+export const createLongPressHandler = (element, options) => {
+  return addLongPressGesture(element, options);
+};
+
+export const createPinchHandler = (element, options) => {
+  return addPinchGesture(element, options);
+};
+
+export const createPullToRefreshHandler = (element, options) => {
+  return addPullToRefreshGesture(element, options);
+};
+
 export const GESTURE_THRESHOLD = {
   SWIPE_MIN_DISTANCE: 50,
   SWIPE_MAX_TIME: 300,
@@ -365,27 +386,27 @@ export function useMobileGestures(ref, gestures = {}) {
     const element = ref.current;
 
     if (gestures.swipe) {
-      const cleanup = useSwipe(element, gestures.swipe);
+      const cleanup = createSwipeHandler(element, gestures.swipe);
       cleanupFunctions.push(cleanup);
     }
 
     if (gestures.tap) {
-      const cleanup = useTap(element, gestures.tap);
+      const cleanup = createTapHandler(element, gestures.tap);
       cleanupFunctions.push(cleanup);
     }
 
     if (gestures.longPress) {
-      const cleanup = useLongPress(element, gestures.longPress);
+      const cleanup = createLongPressHandler(element, gestures.longPress);
       cleanupFunctions.push(cleanup);
     }
 
     if (gestures.pinch) {
-      const cleanup = usePinch(element, gestures.pinch);
+      const cleanup = createPinchHandler(element, gestures.pinch);
       cleanupFunctions.push(cleanup);
     }
 
     if (gestures.pullToRefresh) {
-      const cleanup = usePullToRefresh(element, gestures.pullToRefresh);
+      const cleanup = createPullToRefreshHandler(element, gestures.pullToRefresh);
       cleanupFunctions.push(cleanup);
     }
   };

@@ -1,0 +1,2078 @@
+{
+ "Description": "OMNIX AI Core Infrastructure - dev",
+ "Resources": {
+  "DynamoDBTablesUsersTable413E28CF": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "email",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "email-index",
+      "KeySchema": [
+       {
+        "AttributeName": "email",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-dev-users-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/UsersTable/Resource"
+   }
+  },
+  "DynamoDBTablesProductsTableAC0A834A": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "category",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "category-index",
+      "KeySchema": [
+       {
+        "AttributeName": "category",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-dev-products-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ProductsTable/Resource"
+   }
+  },
+  "DynamoDBTablesOrdersTable205B3330": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "status",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "createdAt",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "status-created-index",
+      "KeySchema": [
+       {
+        "AttributeName": "status",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "createdAt",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-dev-orders-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/OrdersTable/Resource"
+   }
+  },
+  "DynamoDBTablesInventoryTable5321DBA0": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "productId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "timestamp",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "productId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "timestamp",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-dev-inventory-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/InventoryTable/Resource"
+   }
+  },
+  "DynamoDBTablesSessionsTable86722E8A": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "refreshToken",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "user-index",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "refreshToken",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "omnix-ai-cdk-dev-sessions-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ],
+    "TimeToLiveSpecification": {
+     "AttributeName": "expiresAt",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/SessionsTable/Resource"
+   }
+  },
+  "DynamoDBTablesCustomerProfilesTable2317A5BE": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "customerId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "customerId",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-customer-profiles-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/CustomerProfilesTable/Resource"
+   }
+  },
+  "DynamoDBTablesPurchaseHistoryTable882E0E48": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "id",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "customerId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "purchaseDate",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "productId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "customerId-purchaseDate-index",
+      "KeySchema": [
+       {
+        "AttributeName": "customerId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "purchaseDate",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     },
+     {
+      "IndexName": "productId-purchaseDate-index",
+      "KeySchema": [
+       {
+        "AttributeName": "productId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "purchaseDate",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "id",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-purchase-history-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/PurchaseHistoryTable/Resource"
+   }
+  },
+  "DynamoDBTablesProductInteractionsTable7AFC20C3": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "customerId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "interactionDate",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "customerId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "interactionDate",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-product-interactions-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ProductInteractionsTable/Resource"
+   }
+  },
+  "DynamoDBTablesRecommendationsTable22F3FCB4": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "customerId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "generatedAt",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "customerId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "generatedAt",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-recommendations-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ],
+    "TimeToLiveSpecification": {
+     "AttributeName": "ttl",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/RecommendationsTable/Resource"
+   }
+  },
+  "DynamoDBTablesABTestResultsTable8A118EFB": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "testId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "timestamp",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "testId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "timestamp",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-ab-test-results-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ABTestResultsTable/Resource"
+   }
+  },
+  "DynamoDBTablesCostAnalyticsTableBDF5E2E7": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "service",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "timestamp",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "service",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "timestamp",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-cost-analytics-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/CostAnalyticsTable/Resource"
+   }
+  },
+  "DynamoDBTablesSegmentationTableAD023DCF": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "customerId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "segmentId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "segment-index",
+      "KeySchema": [
+       {
+        "AttributeName": "segmentId",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "customerId",
+      "KeyType": "HASH"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-customer-segmentation-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/SegmentationTable/Resource"
+   }
+  },
+  "DynamoDBTablesStreamingAnalyticsTable980A173A": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "eventId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "timestamp",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "eventId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "timestamp",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-streaming-analytics-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ],
+    "TimeToLiveSpecification": {
+     "AttributeName": "ttl",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/StreamingAnalyticsTable/Resource"
+   }
+  },
+  "DynamoDBTablesAIAnalysisHistoryTable042C9CDA": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "customerId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "analysisDate",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "customerId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "analysisDate",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": false
+    },
+    "TableName": "omnix-ai-cdk-analysis-history-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ],
+    "TimeToLiveSpecification": {
+     "AttributeName": "ttl",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/DynamoDBTables/AIAnalysisHistoryTable/Resource"
+   }
+  },
+  "LambdaFunctionExecutionRoleAEF52BC1": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Execution role for OMNIX AI Lambda function",
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "RoleName": "omnix-ai-cdk-lambda-role-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LambdaFunction/ExecutionRole/Resource"
+   }
+  },
+  "LambdaFunctionExecutionRoleDefaultPolicyC3C3598C": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeStream",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:ListStreams",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:dynamodb:eu-central-1:*:table/omnix-ai-*-dev",
+        "arn:aws:dynamodb:eu-central-1:*:table/omnix-ai-*-dev/index/*",
+        "arn:aws:dynamodb:eu-central-1:*:table/omnix-ai-dev-*",
+        "arn:aws:dynamodb:eu-central-1:*:table/omnix-ai-dev-*/index/*"
+       ]
+      },
+      {
+       "Action": [
+        "bedrock:GetFoundationModel",
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
+        "bedrock:ListFoundationModels"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-haiku-*",
+        "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-*"
+       ]
+      },
+      {
+       "Action": [
+        "kinesis:DescribeStream",
+        "kinesis:DescribeStreamSummary",
+        "kinesis:GetRecords",
+        "kinesis:GetShardIterator",
+        "kinesis:ListShards",
+        "kinesis:ListStreams",
+        "kinesis:PutRecord",
+        "kinesis:PutRecords"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:kinesis:eu-central-1:*:stream/omnix-ai-*"
+      },
+      {
+       "Action": [
+        "sqs:ChangeMessageVisibility",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:ReceiveMessage",
+        "sqs:SendMessage"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:sqs:eu-central-1:*:omnix-ai-*"
+      },
+      {
+       "Action": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+        "cloudwatch:PutMetricData"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:secretsmanager:eu-central-1:*:secret:omnix-ai-dev-*"
+      },
+      {
+       "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:GetParametersByPath"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:ssm:eu-central-1:*:parameter/omnix-ai/dev/*"
+      },
+      {
+       "Action": "events:PutEvents",
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:events:eu-central-1:*:event-bus/default",
+        "arn:aws:events:eu-central-1:*:event-bus/omnix-ai-dev"
+       ]
+      },
+      {
+       "Action": "dynamodb:*",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesABTestResultsTable8A118EFB",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesAIAnalysisHistoryTable042C9CDA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesCostAnalyticsTableBDF5E2E7",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesCustomerProfilesTable2317A5BE",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesInventoryTable5321DBA0",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesOrdersTable205B3330",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesProductInteractionsTable7AFC20C3",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesProductsTableAC0A834A",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesPurchaseHistoryTable882E0E48",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesRecommendationsTable22F3FCB4",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesSegmentationTableAD023DCF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesSessionsTable86722E8A",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesStreamingAnalyticsTable980A173A",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "DynamoDBTablesUsersTable413E28CF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DynamoDBTablesOrdersTable205B3330",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DynamoDBTablesProductsTableAC0A834A",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DynamoDBTablesPurchaseHistoryTable882E0E48",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DynamoDBTablesSegmentationTableAD023DCF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DynamoDBTablesSessionsTable86722E8A",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "DynamoDBTablesUsersTable413E28CF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LambdaFunctionExecutionRoleDefaultPolicyC3C3598C",
+    "Roles": [
+     {
+      "Ref": "LambdaFunctionExecutionRoleAEF52BC1"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LambdaFunction/ExecutionRole/DefaultPolicy/Resource"
+   }
+  },
+  "LambdaFunction9BE3F601": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-631844602411-eu-central-1",
+     "S3Key": "5446cfeb596b405df6d99d4d45b6013501cde93d3e749d8eda7cb4cc95b33ab8.zip"
+    },
+    "Description": "OMNIX AI Backend Lambda - dev",
+    "Environment": {
+     "Variables": {
+      "NODE_ENV": "dev",
+      "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+      "AWS_BEDROCK_REGION": "us-east-1",
+      "USERS_TABLE": {
+       "Ref": "DynamoDBTablesUsersTable413E28CF"
+      },
+      "PRODUCTS_TABLE": {
+       "Ref": "DynamoDBTablesProductsTableAC0A834A"
+      },
+      "ORDERS_TABLE": {
+       "Ref": "DynamoDBTablesOrdersTable205B3330"
+      },
+      "INVENTORY_TABLE": {
+       "Ref": "DynamoDBTablesInventoryTable5321DBA0"
+      },
+      "SESSIONS_TABLE": {
+       "Ref": "DynamoDBTablesSessionsTable86722E8A"
+      },
+      "CUSTOMER_PROFILES_TABLE": {
+       "Ref": "DynamoDBTablesCustomerProfilesTable2317A5BE"
+      },
+      "PURCHASE_HISTORY_TABLE": {
+       "Ref": "DynamoDBTablesPurchaseHistoryTable882E0E48"
+      },
+      "PRODUCT_INTERACTIONS_TABLE": {
+       "Ref": "DynamoDBTablesProductInteractionsTable7AFC20C3"
+      },
+      "RECOMMENDATIONS_TABLE": {
+       "Ref": "DynamoDBTablesRecommendationsTable22F3FCB4"
+      },
+      "AB_TEST_RESULTS_TABLE": {
+       "Ref": "DynamoDBTablesABTestResultsTable8A118EFB"
+      },
+      "COST_ANALYTICS_TABLE": {
+       "Ref": "DynamoDBTablesCostAnalyticsTableBDF5E2E7"
+      },
+      "SEGMENTATION_TABLE": {
+       "Ref": "DynamoDBTablesSegmentationTableAD023DCF"
+      },
+      "STREAMING_ANALYTICS_TABLE": {
+       "Ref": "DynamoDBTablesStreamingAnalyticsTable980A173A"
+      },
+      "AI_ANALYSIS_HISTORY_TABLE": {
+       "Ref": "DynamoDBTablesAIAnalysisHistoryTable042C9CDA"
+      },
+      "AI_ANALYSIS_ENABLED": "true",
+      "STREAMING_ANALYTICS_ENABLED": "true",
+      "AB_TESTING_ENABLED": "true",
+      "COST_OPTIMIZATION_ENABLED": "true",
+      "BATCH_PROCESSING_ENABLED": "true",
+      "MONITORING_ENHANCED": "true"
+     }
+    },
+    "FunctionName": "omnix-ai-cdk-backend-dev-20250826T1539",
+    "Handler": "lambda.handler",
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "LambdaFunctionExecutionRoleAEF52BC1",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ],
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "LambdaFunctionExecutionRoleDefaultPolicyC3C3598C",
+    "LambdaFunctionExecutionRoleAEF52BC1"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LambdaFunction/Function/Resource",
+    "aws:asset:path": "asset.5446cfeb596b405df6d99d4d45b6013501cde93d3e749d8eda7cb4cc95b33ab8.zip",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "LambdaFunctionLogRetention29C89A9B": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "LambdaFunction9BE3F601"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LambdaFunction/Function/LogRetention/Resource"
+   }
+  },
+  "LambdaFunctionApiGatewayInvoke63D76FE0": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "LambdaFunction9BE3F601",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:eu-central-1:631844602411:",
+       {
+        "Ref": "ApiGatewayRestApi7538854B"
+       },
+       "/*/*/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LambdaFunction/Function/ApiGatewayInvoke"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:DeleteRetentionPolicy",
+        "logs:PutRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs22.x",
+    "Timeout": 900,
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-631844602411-eu-central-1",
+     "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ApiGatewayRestApiAccessLogs3727738A": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/apigateway/omnix-ai-cdk-dev-20250826T1539",
+    "RetentionInDays": 7,
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApiAccessLogs/Resource"
+   }
+  },
+  "ApiGatewayRestApi7538854B": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "BinaryMediaTypes": [
+     "multipart/form-data",
+     "application/octet-stream"
+    ],
+    "Description": "OMNIX AI REST API - dev",
+    "EndpointConfiguration": {
+     "Types": [
+      "REGIONAL"
+     ]
+    },
+    "Name": "omnix-ai-cdk-api-dev-20250826T1539",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Resource"
+   }
+  },
+  "ApiGatewayRestApiDeploymentF39605603316a69a0cce772f94ba3ca86509bfa1": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "OMNIX AI REST API - dev",
+    "RestApiId": {
+     "Ref": "ApiGatewayRestApi7538854B"
+    }
+   },
+   "DependsOn": [
+    "ApiGatewayRestApiproxyANYAFDFEFDD",
+    "ApiGatewayRestApiproxyOPTIONSB88501F2",
+    "ApiGatewayRestApiproxyCA30E02B",
+    "ApiGatewayRestApiANY2DB371C0",
+    "ApiGatewayRestApiOPTIONSDE91A6D5"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Deployment/Resource",
+    "aws:cdk:do-not-refactor": true
+   }
+  },
+  "ApiGatewayRestApiDeploymentStagedevE0DE3133": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "ApiGatewayRestApiDeploymentF39605603316a69a0cce772f94ba3ca86509bfa1"
+    },
+    "MethodSettings": [
+     {
+      "DataTraceEnabled": false,
+      "HttpMethod": "*",
+      "MetricsEnabled": true,
+      "ResourcePath": "/*"
+     }
+    ],
+    "RestApiId": {
+     "Ref": "ApiGatewayRestApi7538854B"
+    },
+    "StageName": "dev",
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ],
+    "TracingEnabled": false
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/DeploymentStage.dev/Resource"
+   }
+  },
+  "ApiGatewayRestApiOPTIONSDE91A6D5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-API-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'http://localhost:3000'",
+        "method.response.header.Vary": "'Origin'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,PATCH,OPTIONS'",
+        "method.response.header.Access-Control-Allow-Credentials": "'true'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"http://127.0.0.1:3000\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Allow-Credentials": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "ApiGatewayRestApi7538854B",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "ApiGatewayRestApi7538854B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/OPTIONS/Resource"
+   }
+  },
+  "ApiGatewayRestApiproxyCA30E02B": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "ApiGatewayRestApi7538854B",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "{proxy+}",
+    "RestApiId": {
+     "Ref": "ApiGatewayRestApi7538854B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/Resource"
+   }
+  },
+  "ApiGatewayRestApiproxyOPTIONSB88501F2": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-API-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'http://localhost:3000'",
+        "method.response.header.Vary": "'Origin'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,PATCH,OPTIONS'",
+        "method.response.header.Access-Control-Allow-Credentials": "'true'"
+       },
+       "ResponseTemplates": {
+        "application/json": "#set($origin = $input.params().header.get(\"Origin\"))\n#if($origin == \"\")\n  #set($origin = $input.params().header.get(\"origin\"))\n#end\n#if($origin == \"http://127.0.0.1:3000\")\n  #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin)\n#end"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Vary": true,
+       "method.response.header.Access-Control-Allow-Methods": true,
+       "method.response.header.Access-Control-Allow-Credentials": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "ApiGatewayRestApiproxyCA30E02B"
+    },
+    "RestApiId": {
+     "Ref": "ApiGatewayRestApi7538854B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/OPTIONS/Resource"
+   }
+  },
+  "ApiGatewayRestApiproxyANYApiPermissionomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYproxy2C840376": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "LambdaFunction9BE3F601",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:eu-central-1:631844602411:",
+       {
+        "Ref": "ApiGatewayRestApi7538854B"
+       },
+       "/",
+       {
+        "Ref": "ApiGatewayRestApiDeploymentStagedevE0DE3133"
+       },
+       "/*/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/ANY/ApiPermission.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY..{proxy+}"
+   }
+  },
+  "ApiGatewayRestApiproxyANYApiPermissionTestomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYproxyCB6B7942": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "LambdaFunction9BE3F601",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:eu-central-1:631844602411:",
+       {
+        "Ref": "ApiGatewayRestApi7538854B"
+       },
+       "/test-invoke-stage/*/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/ANY/ApiPermission.Test.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY..{proxy+}"
+   }
+  },
+  "ApiGatewayRestApiproxyANYAFDFEFDD": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "ANY",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "RequestTemplates": {
+      "application/json": "{ \"statusCode\": \"200\" }"
+     },
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:eu-central-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "LambdaFunction9BE3F601",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "ApiGatewayRestApiproxyCA30E02B"
+    },
+    "RestApiId": {
+     "Ref": "ApiGatewayRestApi7538854B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/ANY/Resource"
+   }
+  },
+  "ApiGatewayRestApiANYApiPermissionomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYA2C55637": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "LambdaFunction9BE3F601",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:eu-central-1:631844602411:",
+       {
+        "Ref": "ApiGatewayRestApi7538854B"
+       },
+       "/",
+       {
+        "Ref": "ApiGatewayRestApiDeploymentStagedevE0DE3133"
+       },
+       "/*/"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/ANY/ApiPermission.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY.."
+   }
+  },
+  "ApiGatewayRestApiANYApiPermissionTestomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYBED0F17A": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "LambdaFunction9BE3F601",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:eu-central-1:631844602411:",
+       {
+        "Ref": "ApiGatewayRestApi7538854B"
+       },
+       "/test-invoke-stage/*/"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/ANY/ApiPermission.Test.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY.."
+   }
+  },
+  "ApiGatewayRestApiANY2DB371C0": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "ANY",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "RequestTemplates": {
+      "application/json": "{ \"statusCode\": \"200\" }"
+     },
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:eu-central-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "LambdaFunction9BE3F601",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "ApiGatewayRestApi7538854B",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "ApiGatewayRestApi7538854B"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/ANY/Resource"
+   }
+  },
+  "ApiGatewayRestApiOmnixApiKeydev08BE8C80": {
+   "Type": "AWS::ApiGateway::ApiKey",
+   "Properties": {
+    "Description": "API Key for OMNIX AI - dev",
+    "Enabled": true,
+    "Name": "omnix-ai-key-dev",
+    "StageKeys": [
+     {
+      "RestApiId": {
+       "Ref": "ApiGatewayRestApi7538854B"
+      },
+      "StageName": {
+       "Ref": "ApiGatewayRestApiDeploymentStagedevE0DE3133"
+      }
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/OmnixApiKeydev/Resource"
+   }
+  },
+  "ApiGatewayRestApiOmnixUsagePlandev4D7C463F": {
+   "Type": "AWS::ApiGateway::UsagePlan",
+   "Properties": {
+    "ApiStages": [
+     {
+      "ApiId": {
+       "Ref": "ApiGatewayRestApi7538854B"
+      },
+      "Stage": {
+       "Ref": "ApiGatewayRestApiDeploymentStagedevE0DE3133"
+      },
+      "Throttle": {}
+     }
+    ],
+    "Description": "Usage plan for OMNIX AI - dev",
+    "Quota": {
+     "Limit": 100000,
+     "Period": "MONTH"
+    },
+    "Tags": [
+     {
+      "Key": "Environment",
+      "Value": "dev"
+     },
+     {
+      "Key": "ManagedBy",
+      "Value": "aws-cdk"
+     },
+     {
+      "Key": "Project",
+      "Value": "omnix-ai"
+     }
+    ],
+    "Throttle": {
+     "BurstLimit": 2000,
+     "RateLimit": 1000
+    },
+    "UsagePlanName": "omnix-ai-usage-plan-dev"
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/OmnixUsagePlandev/Resource"
+   }
+  },
+  "ApiGatewayRestApiOmnixUsagePlandevUsagePlanKeyResourceomnixaicdkcoredev20250826ApiGatewayRestApiOmnixApiKeydev335EE6EFE4D9A5A0": {
+   "Type": "AWS::ApiGateway::UsagePlanKey",
+   "Properties": {
+    "KeyId": {
+     "Ref": "ApiGatewayRestApiOmnixApiKeydev08BE8C80"
+    },
+    "KeyType": "API_KEY",
+    "UsagePlanId": {
+     "Ref": "ApiGatewayRestApiOmnixUsagePlandev4D7C463F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/OmnixUsagePlandev/UsagePlanKeyResource:omnixaicdkcoredev20250826ApiGatewayRestApiOmnixApiKeydev335EE6EF"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22PwW7CMBBEv6V3s4Vw6Bmo2gNURaE9o02yuAbHjrJ2UWT53ys7QaVST/tmRx7vFFAsCpg/4JVndXOZaVVBODisLwKvfAzNYLC1TQXhAytNYnMyGaJQ2EIo7bjLc2+1qockR4pCY1s1COHFm9opa5J3z3vqW8WsrImCl0dkJsewSkPwEta+vpBbI5PQVjKEnZUlOTL5/c7K1976LgXdOArslERHVxwglMRu1al84ITP1Gk7tGRc2t6pg0OZq4xQElvf15Q/fyP3ZZtkTnRzp+SRV53aUq4/0SejpL3GXPV/saUhxt+43DwdoIz8k705mXfvOu+iMLYhOPPjd1HA4gnmD2dWatZ741RLUI7zBzGQ5hbXAQAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "omnix-ai-cdk-core-dev-20250826/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "ApiGatewayRestApiEndpoint8A8A12DA": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "ApiGatewayRestApi7538854B"
+      },
+      ".execute-api.eu-central-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "ApiGatewayRestApiDeploymentStagedevE0DE3133"
+      },
+      "/"
+     ]
+    ]
+   }
+  },
+  "RestApiUrl": {
+   "Description": "REST API Gateway URL",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "ApiGatewayRestApi7538854B"
+      },
+      ".execute-api.eu-central-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "ApiGatewayRestApiDeploymentStagedevE0DE3133"
+      },
+      "/"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "dev-omnix-ai-rest-api-url"
+   }
+  },
+  "LambdaFunctionArn": {
+   "Description": "Lambda Function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "LambdaFunction9BE3F601",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "dev-omnix-ai-lambda-arn"
+   }
+  },
+  "LambdaFunctionName": {
+   "Description": "Lambda Function Name",
+   "Value": {
+    "Ref": "LambdaFunction9BE3F601"
+   },
+   "Export": {
+    "Name": "dev-omnix-ai-lambda-name"
+   }
+  },
+  "UsersTableName": {
+   "Description": "Users DynamoDB table name",
+   "Value": {
+    "Ref": "DynamoDBTablesUsersTable413E28CF"
+   },
+   "Export": {
+    "Name": "dev-omnix-ai-users-table-name"
+   }
+  },
+  "ProductsTableName": {
+   "Description": "Products DynamoDB table name",
+   "Value": {
+    "Ref": "DynamoDBTablesProductsTableAC0A834A"
+   },
+   "Export": {
+    "Name": "dev-omnix-ai-products-table-name"
+   }
+  },
+  "CustomerProfilesTableName": {
+   "Description": "Customer Profiles DynamoDB table name",
+   "Value": {
+    "Ref": "DynamoDBTablesCustomerProfilesTable2317A5BE"
+   },
+   "Export": {
+    "Name": "dev-omnix-ai-customer-profiles-table-name"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

@@ -56,7 +56,7 @@ const TimeRangeSelector = styled.select`
   border-radius: ${props => props.theme.spacing[1]};
   background: ${props => props.theme.colors.background.primary};
   color: ${props => props.theme.colors.text.primary};
-  font-size: ${props => props.theme.typography.body2.fontSize};
+  font-size: ${props => props.theme.typography?.body2?.fontSize || '0.875rem'};
   cursor: pointer;
   
   &:focus {

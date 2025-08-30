@@ -47,7 +47,7 @@ const AvatarFallback = styled.div.withConfig({
   height: 100%;
   background: ${props => getAvatarBackground(props.name, props.theme)};
   color: ${props => props.theme.colors.text.inverse};
-  font-family: ${props => props.theme.typography.fontFamily.sans.join(', ')};
+  font-family: ${props => props.theme?.typography?.fontFamily?.sans?.join(', ') || 'Inter, system-ui, sans-serif'};
   font-size: ${props => getAvatarFontSize(props.size, props.theme)};
   font-weight: ${props => props.theme.typography.fontWeight.medium};
   text-transform: uppercase;

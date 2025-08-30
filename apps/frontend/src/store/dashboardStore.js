@@ -47,6 +47,37 @@ const useDashboardStore = create()(
             hourlyRevenue: [],
             dailyTarget: 150000,
             dailyProgress: 0
+          },
+          inventoryChanges: {
+            changes: [],
+            stats: {
+              critical: 0,
+              low: 0,
+              normal: 0,
+              totalItems: 0
+            },
+            lastChange: null,
+            activeAlerts: []
+          },
+          customerActivity: {
+            activities: [],
+            stats: {
+              totalToday: 0,
+              browsing: 0,
+              shopping: 0,
+              activeUsers: 0
+            },
+            lastActivity: null
+          },
+          abTestResults: {
+            tests: [],
+            stats: {
+              total: 0,
+              running: 0,
+              completed: 0,
+              totalParticipants: 0
+            },
+            lastUpdate: null
           }
         },
 
@@ -212,6 +243,319 @@ const useDashboardStore = create()(
             state.realtimeData.revenueStream.dailyTarget = target;
             state.realtimeData.revenueStream.dailyProgress = 
               (state.realtimeData.revenueStream.current / target) * 100;
+          }),
+
+        // Real-time inventory change actions
+        addInventoryChange: (change) =>
+          set((state) => {
+            const inventory = state.realtimeData.inventoryChanges;
+            
+            // Add change to stream
+            inventory.changes.unshift({
+              ...change,
+              timestamp: change.timestamp || new Date().toISOString()
+            });
+            
+            // Keep only last 100 changes
+            if (inventory.changes.length > 100) {
+              inventory.changes = inventory.changes.slice(0, 100);
+            }
+            
+            // Update last change
+            inventory.lastChange = change;
+            
+            // Update alerts for critical/low stock items
+            if (change.urgent || change.reorderStatus === 'critical') {
+              const existingAlert = inventory.activeAlerts.find(a => a.productId === change.productId);
+              if (!existingAlert) {
+                inventory.activeAlerts.push({
+                  id: `alert-${Date.now()}-${change.productId}`,
+                  productId: change.productId,
+                  productName: change.productName,
+                  type: change.reorderStatus,
+                  message: `${change.productName} is ${change.reorderStatus === 'critical' ? 'critically low' : 'running low'} (${change.newStock} units remaining)`,
+                  timestamp: new Date().toISOString(),
+                  urgent: change.reorderStatus === 'critical'
+                });
+                
+                // Keep only last 20 alerts
+                if (inventory.activeAlerts.length > 20) {
+                  inventory.activeAlerts = inventory.activeAlerts.slice(0, 20);
+                }
+              }
+            }
+            
+            // Update lastUpdate timestamp
+            state.realtimeData.lastUpdate = new Date().toISOString();
+          }),
+
+        updateInventoryStats: (stats) =>
+          set((state) => {
+            state.realtimeData.inventoryChanges.stats = { ...stats };
+            
+            // Update main inventory metrics
+            state.metrics.inventory.lowStockItems = stats.low + stats.critical;
+            state.metrics.inventory.totalItems = stats.totalItems;
+          }),
+
+        clearInventoryAlert: (alertId) =>
+          set((state) => {
+            state.realtimeData.inventoryChanges.activeAlerts = 
+              state.realtimeData.inventoryChanges.activeAlerts.filter(alert => alert.id !== alertId);
+          }),
+
+        clearAllInventoryAlerts: () =>
+          set((state) => {
+            state.realtimeData.inventoryChanges.activeAlerts = [];
+          }),
+
+        // Real-time customer activity actions
+        addCustomerActivity: (activity) =>
+          set((state) => {
+            const customerActivity = state.realtimeData.customerActivity;
+            
+            // Add activity to stream
+            customerActivity.activities.unshift({
+              ...activity,
+              timestamp: activity.timestamp || new Date().toISOString()
+            });
+            
+            // Keep only last 50 activities
+            if (customerActivity.activities.length > 50) {
+              customerActivity.activities = customerActivity.activities.slice(0, 50);
+            }
+            
+            // Update last activity
+            customerActivity.lastActivity = activity;
+            
+            // Update lastUpdate timestamp
+            state.realtimeData.lastUpdate = new Date().toISOString();
+          }),
+
+        updateCustomerActivityStats: (stats) =>
+          set((state) => {
+            state.realtimeData.customerActivity.stats = { ...stats };
+          }),
+
+        // Real-time alert notification actions
+        addAlertNotification: (alert) =>
+          set((state) => {
+            if (!state.realtimeData.alertNotifications) {
+              state.realtimeData.alertNotifications = {
+                alerts: [],
+                stats: { total: 0, critical: 0, warning: 0, info: 0, success: 0 },
+                lastAlert: null
+              };
+            }
+            
+            const notifications = state.realtimeData.alertNotifications;
+            
+            // Add alert to stream
+            notifications.alerts.unshift({
+              ...alert,
+              timestamp: alert.timestamp || new Date().toISOString()
+            });
+            
+            // Keep only last 50 alerts
+            if (notifications.alerts.length > 50) {
+              notifications.alerts = notifications.alerts.slice(0, 50);
+            }
+            
+            // Update last alert
+            notifications.lastAlert = alert;
+            
+            // Update stats
+            notifications.stats.total += 1;
+            if (alert.alertType && notifications.stats[alert.alertType] !== undefined) {
+              notifications.stats[alert.alertType] += 1;
+            }
+            
+            // Update lastUpdate timestamp
+            state.realtimeData.lastUpdate = new Date().toISOString();
+          }),
+
+        updateAlertStats: (stats) =>
+          set((state) => {
+            if (!state.realtimeData.alertNotifications) {
+              state.realtimeData.alertNotifications = {
+                alerts: [],
+                stats: { total: 0, critical: 0, warning: 0, info: 0, success: 0 },
+                lastAlert: null
+              };
+            }
+            state.realtimeData.alertNotifications.stats = { ...stats };
+          }),
+
+        clearAlert: (alertId) =>
+          set((state) => {
+            if (state.realtimeData.alertNotifications) {
+              state.realtimeData.alertNotifications.alerts = 
+                state.realtimeData.alertNotifications.alerts.filter(alert => alert.id !== alertId);
+            }
+          }),
+
+        clearAllAlerts: () =>
+          set((state) => {
+            if (state.realtimeData.alertNotifications) {
+              state.realtimeData.alertNotifications.alerts = [];
+              state.realtimeData.alertNotifications.stats = { total: 0, critical: 0, warning: 0, info: 0, success: 0 };
+            }
+          }),
+
+        // Real-time A/B test result actions
+        addABTestUpdate: (update) =>
+          set((state) => {
+            const abTests = state.realtimeData.abTestResults;
+            
+            // Add or update test in the list
+            const existingIndex = abTests.tests.findIndex(test => test.testId === update.testId);
+            if (existingIndex >= 0) {
+              // Update existing test
+              abTests.tests[existingIndex] = {
+                ...abTests.tests[existingIndex],
+                ...update,
+                lastUpdate: update.timestamp || new Date().toISOString()
+              };
+            } else {
+              // Add new test
+              abTests.tests.unshift({
+                ...update,
+                lastUpdate: update.timestamp || new Date().toISOString()
+              });
+              
+              // Keep only last 50 tests
+              if (abTests.tests.length > 50) {
+                abTests.tests = abTests.tests.slice(0, 50);
+              }
+            }
+            
+            // Update last update timestamp
+            abTests.lastUpdate = new Date().toISOString();
+            state.realtimeData.lastUpdate = new Date().toISOString();
+          }),
+
+        updateABTestStats: (stats) =>
+          set((state) => {
+            state.realtimeData.abTestResults.stats = { ...stats };
+          }),
+
+        setABTests: (tests) =>
+          set((state) => {
+            state.realtimeData.abTestResults.tests = tests;
+            
+            // Update stats
+            state.realtimeData.abTestResults.stats = {
+              total: tests.length,
+              running: tests.filter(t => t.status === 'running').length,
+              completed: tests.filter(t => t.status === 'completed').length,
+              totalParticipants: tests.reduce((sum, t) => sum + (t.participants || 0), 0)
+            };
+          }),
+
+        clearABTestResults: () =>
+          set((state) => {
+            state.realtimeData.abTestResults.tests = [];
+            state.realtimeData.abTestResults.stats = {
+              total: 0,
+              running: 0,
+              completed: 0,
+              totalParticipants: 0
+            };
+          }),
+
+        // Dynamic widget refresh actions
+        addWidgetRefresh: (refreshData) =>
+          set((state) => {
+            if (!state.realtimeData.widgetRefreshes) {
+              state.realtimeData.widgetRefreshes = {
+                refreshHistory: [],
+                widgetStatuses: {},
+                globalStats: {
+                  totalRefreshes: 0,
+                  successfulRefreshes: 0,
+                  failedRefreshes: 0,
+                  averageRefreshTime: 0
+                }
+              };
+            }
+
+            const widgetRefreshes = state.realtimeData.widgetRefreshes;
+            
+            // Add refresh to history
+            widgetRefreshes.refreshHistory.unshift({
+              ...refreshData,
+              id: `refresh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              timestamp: refreshData.timestamp || new Date().toISOString()
+            });
+            
+            // Keep only last 100 refreshes
+            if (widgetRefreshes.refreshHistory.length > 100) {
+              widgetRefreshes.refreshHistory = widgetRefreshes.refreshHistory.slice(0, 100);
+            }
+            
+            // Update global stats
+            widgetRefreshes.globalStats.totalRefreshes += 1;
+            if (refreshData.success) {
+              widgetRefreshes.globalStats.successfulRefreshes += 1;
+            } else {
+              widgetRefreshes.globalStats.failedRefreshes += 1;
+            }
+            
+            // Update lastUpdate timestamp
+            state.realtimeData.lastUpdate = new Date().toISOString();
+          }),
+
+        updateWidgetStatus: (widgetId, status, metadata = {}) =>
+          set((state) => {
+            if (!state.realtimeData.widgetRefreshes) {
+              state.realtimeData.widgetRefreshes = {
+                refreshHistory: [],
+                widgetStatuses: {},
+                globalStats: {
+                  totalRefreshes: 0,
+                  successfulRefreshes: 0,
+                  failedRefreshes: 0,
+                  averageRefreshTime: 0
+                }
+              };
+            }
+
+            state.realtimeData.widgetRefreshes.widgetStatuses[widgetId] = {
+              status,
+              lastUpdate: Date.now(),
+              ...metadata
+            };
+          }),
+
+        setWidgetRefreshSettings: (settings) =>
+          set((state) => {
+            if (!state.realtimeData.widgetRefreshes) {
+              state.realtimeData.widgetRefreshes = {
+                refreshHistory: [],
+                widgetStatuses: {},
+                globalStats: {
+                  totalRefreshes: 0,
+                  successfulRefreshes: 0,
+                  failedRefreshes: 0,
+                  averageRefreshTime: 0
+                }
+              };
+            }
+
+            state.realtimeData.widgetRefreshes.settings = { ...settings };
+          }),
+
+        clearWidgetRefreshHistory: () =>
+          set((state) => {
+            if (state.realtimeData.widgetRefreshes) {
+              state.realtimeData.widgetRefreshes.refreshHistory = [];
+              state.realtimeData.widgetRefreshes.globalStats = {
+                totalRefreshes: 0,
+                successfulRefreshes: 0,
+                failedRefreshes: 0,
+                averageRefreshTime: 0
+              };
+            }
           }),
 
         // Chart data management

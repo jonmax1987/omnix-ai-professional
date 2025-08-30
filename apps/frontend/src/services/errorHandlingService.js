@@ -471,21 +471,25 @@ class ErrorHandlingService {
     const errors = this.errorQueue.splice(0);
     
     try {
-      // Send to monitoring service
-      if (typeof fetch !== 'undefined') {
-        await fetch('/api/v1/errors/report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            errors,
-            batch: {
-              id: `batch_${Date.now()}`,
-              size: errors.length,
-              timestamp: Date.now()
-            }
-          })
-        });
+      // For now, disable external error reporting since backend endpoint doesn't exist
+      // Just log errors in debug mode
+      if (this.debugMode) {
+        console.group('🚨 Error Batch Report');
+        console.log(`Reporting ${errors.length} errors:`, errors);
+        console.groupEnd();
       }
+      
+      // TODO: Implement backend error reporting endpoint at /v1/errors/report
+      // When ready, uncomment and use httpClient:
+      // import httpClient from './httpClient';
+      // await httpClient.post('/errors/report', {
+      //   errors,
+      //   batch: {
+      //     id: `batch_${Date.now()}`,
+      //     size: errors.length,
+      //     timestamp: Date.now()
+      //   }
+      // });
     } catch (reportingError) {
       // Silently fail error reporting to avoid infinite loops
       if (this.debugMode) {

@@ -53,7 +53,9 @@ const TabsContainer = styled.div`
   border-bottom: 2px solid ${props => props.theme.colors.border.subtle};
 `;
 
-const Tab = styled.button`
+const Tab = styled.button.withConfig({
+  shouldForwardProp: (prop) => !['active'].includes(prop)
+})`
   padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[6]};
   background: none;
   border: none;
@@ -122,7 +124,9 @@ const InsightsPanel = styled.div`
   border: 1px solid ${props => props.theme.colors.border.subtle};
 `;
 
-const InsightItem = styled(motion.div)`
+const InsightItem = styled(motion.div).withConfig({
+  shouldForwardProp: (prop) => !['severity'].includes(prop)
+})`
   display: flex;
   align-items: start;
   gap: ${props => props.theme.spacing[3]};

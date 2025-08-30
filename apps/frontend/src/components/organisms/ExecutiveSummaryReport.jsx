@@ -92,7 +92,7 @@ const DateInput = styled.input`
   border-radius: ${({ theme }) => theme.borderRadius.md};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-family: ${({ theme }) => theme?.typography?.fontFamily?.sans?.join(', ') || theme?.typography?.fontFamily || 'Inter, system-ui, sans-serif'};
 
   &:focus {
     outline: none;

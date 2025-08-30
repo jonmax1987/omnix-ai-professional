@@ -25,7 +25,7 @@ const DebugContainer = styled(motion.div)`
   box-shadow: ${({ theme }) => theme.shadows.large};
   min-width: 320px;
   max-width: 400px;
-  border: 2px solid ${({ theme }) => theme.colors.border.medium};
+  border: 2px solid ${({ theme }) => theme.colors?.border?.default || theme.colors?.border?.strong || '#e2e8f0'};
   z-index: 1000;
 `;
 

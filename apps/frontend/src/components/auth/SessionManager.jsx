@@ -1,6 +1,6 @@
 // SessionManager Component
 // Manages user session timeout and warnings
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
 import useUserStore from '../../store/userStore';
@@ -120,12 +120,16 @@ const SessionManager = ({
   const [showWarning, setShowWarning] = useState(false);
   const [showIndicatorState, setShowIndicatorState] = useState(false);
 
+  // Use ref to maintain stable reference to updateLastActivity
+  const updateLastActivityRef = useRef(updateLastActivity);
+  updateLastActivityRef.current = updateLastActivity;
+
   // Update last activity on user interactions
   const handleUserActivity = useCallback(() => {
     if (isAuthenticated) {
-      updateLastActivity();
+      updateLastActivityRef.current();
     }
-  }, [isAuthenticated]); // Remove updateLastActivity from deps
+  }, [isAuthenticated]);
 
   // Set up activity listeners
   useEffect(() => {

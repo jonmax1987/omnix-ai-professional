@@ -14,8 +14,8 @@ const SpinnerContainer = styled.div`
 const SpinnerCircle = styled.div`
   width: 100%;
   height: 100%;
-  border: 2px solid ${props => props.theme.colors.border.default};
-  border-top: 2px solid ${props => props.color || props.theme.colors.primary[600]};
+  border: 2px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-top: 2px solid ${props => props.color || props.theme?.colors?.primary?.[600] || '#2563eb'};
   border-radius: 50%;
   animation: ${spin} 1s linear infinite;
 `;

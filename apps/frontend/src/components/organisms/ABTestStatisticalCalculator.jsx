@@ -290,7 +290,7 @@ const FormulaTitle = styled.div`
   font-weight: ${props => props.theme.typography.fontWeight.semibold};
   color: ${props => props.theme.colors.text.primary};
   margin-bottom: ${props => props.theme.spacing[3]};
-  font-family: ${props => props.theme.typography.fontFamily.base};
+  font-family: ${props => props.theme?.typography?.fontFamily?.sans?.join(', ') || props.theme?.typography?.fontFamily?.base || 'Inter, system-ui, sans-serif'};
 `;
 
 const FormulaText = styled.div`

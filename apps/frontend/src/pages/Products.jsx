@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ErrorBoundary from '../components/organisms/ErrorBoundary';
 import Typography from '../components/atoms/Typography';
 import Button from '../components/atoms/Button';
 import Icon from '../components/atoms/Icon';
@@ -566,11 +567,12 @@ const Products = () => {
   };
 
   return (
-    <ProductsContainer
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-    >
+    <ErrorBoundary>
+      <ProductsContainer
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
       <ProductsHeader>
         <HeaderLeft>
           <Typography variant="h3" weight="bold" color="primary">
@@ -707,6 +709,7 @@ const Products = () => {
         isLoading={loading}
       />
     </ProductsContainer>
+    </ErrorBoundary>
   );
 };
 

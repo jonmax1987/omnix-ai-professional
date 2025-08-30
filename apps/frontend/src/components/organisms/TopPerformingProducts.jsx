@@ -234,7 +234,9 @@ const ProductMetrics = styled.div`
   flex-shrink: 0;
 `;
 
-const MetricValue = styled.div`
+const MetricValue = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['size', 'type'].includes(prop)
+})`
   font-weight: ${props => props.theme.typography.fontWeight.semibold};
   color: ${props => getMetricColor(props.type, props.theme)};
   font-size: ${props => props.size === 'lg' ? props.theme.typography.fontSize.lg : props.theme.typography.fontSize.base};

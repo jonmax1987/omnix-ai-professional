@@ -9,19 +9,19 @@ const Overlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: ${props => props.theme.colors.background.overlay};
+  background: ${props => props.theme?.colors?.background?.overlay || 'rgba(0, 0, 0, 0.5)'};
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: ${props => props.theme.spacing[4]};
+  padding: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const ModalContainer = styled(motion.div).withConfig({
   shouldForwardProp: (prop) => !['size', 'fullScreen'].includes(prop)
 })`
-  background: ${props => props.theme.colors.background.elevated};
-  border-radius: ${props => props.theme.spacing[3]};
+  background: ${props => props.theme?.colors?.background?.elevated || '#f8fafc'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   box-shadow: ${props => props.theme.shadows?.modal || '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'};
   position: relative;
   max-height: 90vh;
@@ -38,10 +38,10 @@ const ModalContainer = styled(motion.div).withConfig({
     margin: 0;
   `}
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
     width: 100%;
-    max-width: calc(100vw - ${props => props.theme.spacing[8]});
-    max-height: calc(100vh - ${props => props.theme.spacing[8]});
+    max-width: calc(100vw - ${props => props.theme?.spacing?.[8] || '2rem'});
+    max-height: calc(100vh - ${props => props.theme?.spacing?.[8] || '2rem'});
   }
 `;
 

@@ -5,9 +5,13 @@
 
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
 import { webSocketManager } from '../services/websocket';
 import { websocketErrorHandler } from '../services/websocketErrorHandler';
 import { fallbackPollingService } from '../services/fallbackPollingService';
+
+// Enable MapSet plugin for Immer to handle Map and Set in state
+enableMapSet();
 
 export const useWebSocketStore = create(
   immer((set, get) => ({
@@ -250,6 +254,98 @@ export const useWebSocketStore = create(
           updateHourlyRevenue(data);
         }
       });
+
+      // Team Activity events
+      webSocketManager.subscribe('team_activity', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to team activity store for processing
+        import('./teamActivityStore.js').then(({ default: useTeamActivityStore }) => {
+          useTeamActivityStore.getState().addActivity(data);
+        }).catch(console.error);
+      });
+
+      webSocketManager.subscribe('user_presence', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to team activity store for processing
+        import('./teamActivityStore.js').then(({ default: useTeamActivityStore }) => {
+          useTeamActivityStore.getState().updatePresence(data.userId, data.presence);
+        }).catch(console.error);
+      });
+
+      webSocketManager.subscribe('collaboration_start', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to team activity store for processing
+        import('./teamActivityStore.js').then(({ default: useTeamActivityStore }) => {
+          useTeamActivityStore.getState().startCollaboration(data);
+        }).catch(console.error);
+      });
+
+      webSocketManager.subscribe('collaboration_end', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to team activity store for processing
+        import('./teamActivityStore.js').then(({ default: useTeamActivityStore }) => {
+          useTeamActivityStore.getState().endCollaboration(data.collaborationId, data);
+        }).catch(console.error);
+      });
+
+      // Customer Behavior events
+      webSocketManager.subscribe('customer_behavior', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to customer behavior store for processing
+        import('./customerBehaviorStore.js').then(({ default: useCustomerBehaviorStore }) => {
+          useCustomerBehaviorStore.getState().trackBehavior(data);
+        }).catch(console.error);
+      });
+
+      webSocketManager.subscribe('customer_journey', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to customer behavior store for processing
+        import('./customerBehaviorStore.js').then(({ default: useCustomerBehaviorStore }) => {
+          data.behaviors?.forEach(behavior => {
+            useCustomerBehaviorStore.getState().trackBehavior(behavior);
+          });
+        }).catch(console.error);
+      });
+
+      webSocketManager.subscribe('behavior_patterns', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to customer behavior store for processing
+        import('./customerBehaviorStore.js').then(({ default: useCustomerBehaviorStore }) => {
+          useCustomerBehaviorStore.getState().generateInsights();
+        }).catch(console.error);
+      });
+
+      webSocketManager.subscribe('customer_insights', (data) => {
+        set((state) => {
+          state.totalMessagesReceived += 1;
+        });
+        
+        // Forward to customer behavior store for processing
+        import('./customerBehaviorStore.js').then(({ default: useCustomerBehaviorStore }) => {
+          useCustomerBehaviorStore.getState().generateInsights();
+        }).catch(console.error);
+      });
     },
 
     subscribeToDefaultChannels: () => {
@@ -260,7 +356,23 @@ export const useWebSocketStore = create(
         'price_changes',
         'revenue_stream',
         'revenue_updates',
-        'transactions'
+        'transactions',
+        'customer_actions',
+        'user_events',
+        'alert_notifications',
+        'critical_alerts',
+        'system_alerts',
+        'ab_test_updates',
+        'test_results',
+        'experiment_metrics',
+        'team_activity',
+        'user_presence',
+        'collaboration_start',
+        'collaboration_end',
+        'customer_behavior',
+        'customer_journey',
+        'behavior_patterns',
+        'customer_insights'
       ];
       
       webSocketManager.subscribeToChannels(defaultChannels);

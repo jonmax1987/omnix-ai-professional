@@ -12,88 +12,88 @@ const StyledInput = styled(motion.input).withConfig({
 })`
   width: 100%;
   padding: ${props => getInputPadding(props.size, props.theme)};
-  font-family: ${props => props.theme.typography.fontFamily.sans.join(', ')};
+  font-family: ${props => props.theme?.typography?.fontFamily?.sans?.join(', ') || 'Inter, system-ui, sans-serif'};
   font-size: ${props => getInputFontSize(props.size, props.theme)};
-  font-weight: ${props => props.theme.typography.fontWeight.normal};
+  font-weight: ${props => props.theme?.typography?.fontWeight?.normal || 400};
   line-height: 1.5;
-  color: ${props => props.theme.colors.text.primary};
-  background-color: ${props => props.theme.colors.background.elevated};
-  border: 1px solid ${props => props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[2]};
-  transition: all ${props => props.theme.animation.duration.fast} ${props => props.theme.animation.easing.easeInOut};
+  color: ${props => props.theme?.colors?.text?.primary || '#0f172a'};
+  background-color: ${props => props.theme?.colors?.background?.elevated || '#f8fafc'};
+  border: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  transition: all ${props => props.theme?.animation?.duration?.fast || '200ms'} ${props => props.theme?.animation?.easing?.easeInOut || 'ease-in-out'};
   
   &::placeholder {
-    color: ${props => props.theme.colors.text.tertiary};
+    color: ${props => props.theme?.colors?.text?.tertiary || '#64748b'};
   }
   
   &:focus {
     outline: none;
-    border-color: ${props => props.theme.colors.primary[500]};
-    box-shadow: 0 0 0 3px ${props => props.theme.colors.primary[100]};
+    border-color: ${props => props.theme?.colors?.primary?.[500] || '#3b82f6'};
+    box-shadow: 0 0 0 3px ${props => props.theme?.colors?.primary?.[100] || 'rgba(59, 130, 246, 0.1)'};
   }
   
   &:hover:not(:disabled):not(:focus) {
-    border-color: ${props => props.theme.colors.border.strong};
+    border-color: ${props => props.theme?.colors?.border?.strong || '#cbd5e1'};
   }
   
   &:disabled {
-    background-color: ${props => props.theme.colors.gray[100]};
-    color: ${props => props.theme.colors.text.tertiary};
+    background-color: ${props => props.theme?.colors?.gray?.[100] || '#f1f5f9'};
+    color: ${props => props.theme?.colors?.text?.tertiary || '#64748b'};
     cursor: not-allowed;
   }
   
   ${props => props.error && css`
-    border-color: ${props.theme.colors.red[500]};
+    border-color: ${props.theme?.colors?.red?.[500] || '#ef4444'};
     
     &:focus {
-      border-color: ${props.theme.colors.red[500]};
-      box-shadow: 0 0 0 3px ${props.theme.colors.red[100]};
+      border-color: ${props.theme?.colors?.red?.[500] || '#ef4444'};
+      box-shadow: 0 0 0 3px ${props.theme?.colors?.red?.[100] || 'rgba(239, 68, 68, 0.1)'};
     }
   `}
   
   ${props => props.success && css`
-    border-color: ${props.theme.colors.green[500]};
+    border-color: ${props.theme?.colors?.green?.[500] || '#10b981'};
     
     &:focus {
-      border-color: ${props.theme.colors.green[500]};
-      box-shadow: 0 0 0 3px ${props.theme.colors.green[100]};
+      border-color: ${props.theme?.colors?.green?.[500] || '#10b981'};
+      box-shadow: 0 0 0 3px ${props.theme?.colors?.green?.[100] || 'rgba(16, 185, 129, 0.1)'};
     }
   `}
 `;
 
 const ErrorText = styled(motion.div)`
-  margin-top: ${props => props.theme.spacing[1]};
-  font-size: ${props => props.theme.typography.fontSize.sm};
-  color: ${props => props.theme.colors.red[600]};
+  margin-top: ${props => props.theme?.spacing?.[1] || '0.25rem'};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
+  color: ${props => props.theme?.colors?.red?.[600] || '#dc2626'};
   line-height: 1.4;
 `;
 
 const HelperText = styled.div`
-  margin-top: ${props => props.theme.spacing[1]};
-  font-size: ${props => props.theme.typography.fontSize.sm};
-  color: ${props => props.theme.colors.text.secondary};
+  margin-top: ${props => props.theme?.spacing?.[1] || '0.25rem'};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
+  color: ${props => props.theme?.colors?.text?.secondary || '#475569'};
   line-height: 1.4;
 `;
 
 const getInputPadding = (size, theme) => {
   switch (size) {
     case 'sm':
-      return `${theme.spacing[2]} ${theme.spacing[3]}`;
+      return `${theme?.spacing?.[2] || '0.5rem'} ${theme?.spacing?.[3] || '0.75rem'}`;
     case 'lg':
-      return `${theme.spacing[4]} ${theme.spacing[4]}`;
+      return `${theme?.spacing?.[4] || '1rem'} ${theme?.spacing?.[4] || '1rem'}`;
     default: // md
-      return `${theme.spacing[3]} ${theme.spacing[4]}`;
+      return `${theme?.spacing?.[3] || '0.75rem'} ${theme?.spacing?.[4] || '1rem'}`;
   }
 };
 
 const getInputFontSize = (size, theme) => {
   switch (size) {
     case 'sm':
-      return theme.typography.fontSize.sm;
+      return theme?.typography?.fontSize?.sm || '0.875rem';
     case 'lg':
-      return theme.typography.fontSize.lg;
+      return theme?.typography?.fontSize?.lg || '1.125rem';
     default: // md
-      return theme.typography.fontSize.base;
+      return theme?.typography?.fontSize?.base || '1rem';
   }
 };
 

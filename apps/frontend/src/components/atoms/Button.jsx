@@ -8,16 +8,16 @@ const StyledButton = styled(motion.button).withConfig({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   padding: ${props => getButtonPadding(props.size, props.theme)};
-  font-family: ${props => props.theme.typography.fontFamily.sans.join(', ')};
+  font-family: ${props => props.theme?.typography?.fontFamily?.sans?.join(', ') || 'system-ui, -apple-system, sans-serif'};
   font-size: ${props => getButtonFontSize(props.size, props.theme)};
-  font-weight: ${props => props.theme.typography.fontWeight.medium};
+  font-weight: ${props => props.theme?.typography?.fontWeight?.medium || '500'};
   line-height: 1;
   border: none;
-  border-radius: ${props => props.theme.spacing[2]};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   cursor: pointer;
-  transition: all ${props => props.theme.animation.duration.fast} ${props => props.theme.animation.easing.easeInOut};
+  transition: all ${props => props.theme?.animation?.duration?.fast || '200ms'} ${props => props.theme?.animation?.easing?.easeInOut || 'ease-in-out'};
   text-decoration: none;
   user-select: none;
   white-space: nowrap;
@@ -31,30 +31,34 @@ const StyledButton = styled(motion.button).withConfig({
   }
   
   &:focus-visible {
-    outline: 2px solid ${props => props.theme.colors.primary[500]};
+    outline: 2px solid ${props => props.theme?.colors?.primary?.[500] || '#3b82f6'};
     outline-offset: 2px;
   }
 `;
 
 const getButtonPadding = (size, theme) => {
+  if (!theme?.spacing) return '0.75rem 1rem';
+  
   switch (size) {
     case 'sm':
-      return `${theme.spacing[2]} ${theme.spacing[3]}`;
+      return `${theme?.spacing?.[2] || '0.5rem'} ${theme?.spacing?.[3] || '0.75rem'}`;
     case 'lg':
-      return `${theme.spacing[4]} ${theme.spacing[6]}`;
+      return `${theme?.spacing?.[4] || '1rem'} ${theme?.spacing?.[6] || '1.5rem'}`;
     default: // md
-      return `${theme.spacing[3]} ${theme.spacing[4]}`;
+      return `${theme?.spacing?.[3] || '0.75rem'} ${theme?.spacing?.[4] || '1rem'}`;
   }
 };
 
 const getButtonFontSize = (size, theme) => {
+  if (!theme?.typography?.fontSize) return '1rem';
+  
   switch (size) {
     case 'sm':
-      return theme.typography.fontSize.sm;
+      return theme?.typography?.fontSize?.sm || '0.875rem';
     case 'lg':
-      return theme.typography.fontSize.lg;
+      return theme?.typography?.fontSize?.lg || '1.125rem';
     default: // md
-      return theme.typography.fontSize.base;
+      return theme?.typography?.fontSize?.base || '1rem';
   }
 };
 
@@ -62,74 +66,74 @@ const getButtonVariantStyles = (variant, theme) => {
   switch (variant) {
     case 'primary':
       return css`
-        background-color: ${theme.colors.primary[600]};
-        color: ${theme.colors.text.inverse};
+        background-color: ${theme?.colors?.primary?.[600] || '#2563eb'};
+        color: ${theme?.colors?.text?.inverse || '#ffffff'};
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.primary[700]};
+          background-color: ${theme?.colors?.primary?.[700] || '#1d4ed8'};
         }
         
         &:active:not(:disabled) {
-          background-color: ${theme.colors.primary[800]};
+          background-color: ${theme?.colors?.primary?.[800] || '#1e40af'};
         }
       `;
       
     case 'secondary':
       return css`
-        background-color: ${theme.colors.background.elevated};
-        color: ${theme.colors.text.primary};
-        border: 1px solid ${theme.colors.border.default};
+        background-color: ${theme?.colors?.background?.elevated || '#f8fafc'};
+        color: ${theme?.colors?.text?.primary || '#0f172a'};
+        border: 1px solid ${theme?.colors?.border?.default || '#e2e8f0'};
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.background.secondary};
-          border-color: ${theme.colors.border.strong};
+          background-color: ${theme?.colors?.background?.secondary || '#f1f5f9'};
+          border-color: ${theme?.colors?.border?.strong || '#cbd5e1'};
         }
         
         &:active:not(:disabled) {
-          background-color: ${theme.colors.gray[100]};
+          background-color: ${theme?.colors?.gray?.[100] || '#f1f5f9'};
         }
       `;
       
     case 'ghost':
       return css`
         background-color: transparent;
-        color: ${theme.colors.text.secondary};
+        color: ${theme?.colors?.text?.secondary || '#475569'};
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.background.secondary};
-          color: ${theme.colors.text.primary};
+          background-color: ${theme?.colors?.background?.secondary || '#f1f5f9'};
+          color: ${theme?.colors?.text?.primary || '#0f172a'};
         }
         
         &:active:not(:disabled) {
-          background-color: ${theme.colors.gray[100]};
+          background-color: ${theme?.colors?.gray?.[100] || '#f1f5f9'};
         }
       `;
       
     case 'danger':
       return css`
-        background-color: ${theme.colors.red[600]};
-        color: ${theme.colors.text.inverse};
+        background-color: ${theme?.colors?.red?.[600] || '#dc2626'};
+        color: ${theme?.colors?.text?.inverse || '#ffffff'};
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.red[700]};
+          background-color: ${theme?.colors?.red?.[700] || '#b91c1c'};
         }
         
         &:active:not(:disabled) {
-          background-color: ${theme.colors.red[800]};
+          background-color: ${theme?.colors?.red?.[800] || '#991b1b'};
         }
       `;
       
     case 'success':
       return css`
-        background-color: ${theme.colors.green[600]};
-        color: ${theme.colors.text.inverse};
+        background-color: ${theme?.colors?.green?.[600] || '#059669'};
+        color: ${theme?.colors?.text?.inverse || '#ffffff'};
         
         &:hover:not(:disabled) {
-          background-color: ${theme.colors.green[700]};
+          background-color: ${theme?.colors?.green?.[700] || '#047857'};
         }
         
         &:active:not(:disabled) {
-          background-color: ${theme.colors.green[800]};
+          background-color: ${theme?.colors?.green?.[800] || '#065f46'};
         }
       `;
       

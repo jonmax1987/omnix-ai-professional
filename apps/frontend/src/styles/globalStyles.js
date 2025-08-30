@@ -18,12 +18,12 @@ const GlobalStyles = createGlobalStyle`
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: ${props => props.theme.typography.fontFamily.sans.join(', ')};
-    font-size: ${props => props.theme.typography.fontSize.base};
-    font-weight: ${props => props.theme.typography.fontWeight.normal};
-    line-height: ${props => props.theme.typography.lineHeight.relaxed};
-    color: ${props => props.theme.colors.text.primary};
-    background-color: ${props => props.theme.colors.background.primary};
+    font-family: ${props => props.theme?.typography?.fontFamily?.sans?.join(', ') || 'Inter, system-ui, sans-serif'};
+    font-size: ${props => props.theme?.typography?.fontSize?.base || props.theme?.typography?.sizes?.base || '16px'};
+    font-weight: ${props => props.theme?.typography?.fontWeight?.normal || props.theme?.typography?.weights?.normal || '400'};
+    line-height: ${props => props.theme?.typography?.lineHeight?.relaxed || '1.6'};
+    color: ${props => props.theme?.colors?.text?.primary || '#0f172a'};
+    background-color: ${props => props.theme?.colors?.background?.primary || '#ffffff'};
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   }
 
@@ -40,23 +40,23 @@ const GlobalStyles = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-track {
-    background: ${props => props.theme.colors.background.secondary};
+    background: ${props => props.theme?.colors?.background?.secondary || '#f1f5f9'};
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: ${props => props.theme.colors.border.default};
+    background: ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: ${props => props.theme.colors.border.strong};
+    background: ${props => props.theme?.colors?.border?.strong || '#cbd5e1'};
   }
 
   /* Firefox scrollbar styling */
   * {
     scrollbar-width: thin;
-    scrollbar-color: ${props => props.theme.colors.border.default} ${props => props.theme.colors.background.secondary};
+    scrollbar-color: ${props => props.theme?.colors?.border?.default || '#e2e8f0'} ${props => props.theme?.colors?.background?.secondary || '#f1f5f9'};
   }
 
   /* Focus styles */
@@ -64,19 +64,19 @@ const GlobalStyles = createGlobalStyle`
   input:focus,
   textarea:focus,
   select:focus {
-    outline: 2px solid ${props => props.theme.colors.primary[500]};
+    outline: 2px solid ${props => props.theme?.colors?.primary?.[500] || '#3b82f6'};
     outline-offset: 2px;
   }
 
   /* Selection styles */
   ::selection {
-    background-color: ${props => props.theme.colors.primary[100]};
-    color: ${props => props.theme.colors.primary[800]};
+    background-color: ${props => props.theme?.colors?.primary?.[100] || 'rgba(59, 130, 246, 0.1)'};
+    color: ${props => props.theme?.colors?.primary?.[800] || '#1e40af'};
   }
 
   ::-moz-selection {
-    background-color: ${props => props.theme.colors.primary[100]};
-    color: ${props => props.theme.colors.primary[800]};
+    background-color: ${props => props.theme?.colors?.primary?.[100] || 'rgba(59, 130, 246, 0.1)'};
+    color: ${props => props.theme?.colors?.primary?.[800] || '#1e40af'};
   }
 
   /* Print styles */
@@ -421,9 +421,9 @@ const GlobalStyles = createGlobalStyle`
 
   .skeleton {
     background: linear-gradient(90deg, 
-      ${props => props.theme.colors.background.secondary} 0px, 
-      ${props => props.theme.colors.border.subtle} 50px, 
-      ${props => props.theme.colors.background.secondary} 100px
+      ${props => props.theme?.colors?.background?.secondary || '#f1f5f9'} 0px, 
+      ${props => props.theme?.colors?.border?.subtle || '#f8fafc'} 50px, 
+      ${props => props.theme?.colors?.background?.secondary || '#f1f5f9'} 100px
     );
     background-size: 200px 100%;
     animation: skeleton-loading 1.5s infinite linear;

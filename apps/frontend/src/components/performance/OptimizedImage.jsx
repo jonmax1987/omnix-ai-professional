@@ -11,7 +11,9 @@ const ImageContainer = styled.div`
   background: ${props => props.theme.colors.background.hover};
 `;
 
-const Image = styled(motion.img)`
+const Image = styled(motion.img).withConfig({
+  shouldForwardProp: (prop) => !['hoverEffect', 'objectFit'].includes(prop)
+})`
   width: 100%;
   height: 100%;
   object-fit: ${props => props.objectFit || 'cover'};

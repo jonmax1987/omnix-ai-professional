@@ -6,7 +6,7 @@
 set -e
 
 # Configuration - Use existing bucket name pattern
-BUCKET_NAME="omnix-ai-frontend-animations-1754933694"
+BUCKET_NAME="omnix-ai-frontend-animations-1755860292"
 REGION="eu-central-1"
 
 echo "🚀 OMNIX AI - Simple AWS Deployment"

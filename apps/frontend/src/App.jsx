@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { ThemeProvider } from 'styled-components';
 import { useEffect } from 'react';
 import { lightTheme, darkTheme } from './styles/theme';
 import GlobalStyles from './styles/globalStyles';
+import SafeThemeProvider from './components/providers/SafeThemeProvider';
 import useStore from './store';
 import useUserStore from './store/userStore';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -51,7 +51,8 @@ import { ModalProvider } from './contexts/ModalContext';
 import { createMobileListener } from './utils/viewport';
 
 // Styled components
-import styled, { css } from 'styled-components';
+import styled, { StyleSheetManager } from 'styled-components';
+import { shouldForwardProp } from './utils/styledUtils';
 
 const AppContainer = styled.div`
   display: flex;
@@ -93,22 +94,14 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const store = useStore();
-  const { preferences, setTheme, isAuthenticated, initializeAuth } = useUserStore();
+  const { preferences, initializeAuth } = useUserStore();
   const { ui = {}, toggleSidebar, setSidebarMobileOpen, setCurrentPage, setIsMobile } = store || {};
   
   // Initialize authentication state on app start
   useEffect(() => {
     initializeAuth();
-  }, []); // Empty dependency array - only run once on mount
+  }, [initializeAuth]);
   
-  // Initialize WebSocket connection
-  useWebSocket();
-  
-  // Ensure we always have a valid store
-  if (!store) {
-    return <div>Loading...</div>;
-  }
-
   // System theme detection
   useEffect(() => {
     if (preferences.theme === 'auto') {
@@ -140,6 +133,14 @@ function AppContent() {
     
     return cleanup;
   }, [setIsMobile]);
+
+  // Initialize WebSocket connection
+  useWebSocket();
+  
+  // Ensure we always have a valid store
+  if (!store) {
+    return <div>Loading...</div>;
+  }
 
   
   // Mock notifications for demo
@@ -195,7 +196,7 @@ function AppContent() {
   };
 
   const handleUserMenuAction = (action) => {
-    console.log('User menu action:', action);
+    console.warn('User menu action:', action);
     if (action === 'profile' || action === 'settings') {
       navigate('/settings');
     } else if (action === 'logout') {
@@ -214,19 +215,18 @@ function AppContent() {
   };
 
   const handleNotificationClick = (notification) => {
-    console.log('Notification clicked:', notification);
+    console.warn('Notification clicked:', notification);
   };
 
   const handleNotificationClear = () => {
-    console.log('Clear all notifications');
+    console.warn('Clear all notifications');
   };
 
   const handleSearch = (query) => {
-    console.log('Search query:', query);
+    console.warn('Search query:', query);
   };
 
-  // Check if we're on login page
-  const isLoginPage = location.pathname === '/login';
+  // Note: Login page check removed as it was unused
 
   return (
     <AuthProvider 
@@ -234,9 +234,10 @@ function AppContent() {
       showSessionIndicator={import.meta.env.DEV}
     >
       <ModalProvider>
-        <ThemeProvider theme={currentTheme}>
-          <GlobalStyles />
-          <ErrorBoundary showError={true}>
+        <SafeThemeProvider theme={currentTheme}>
+          <StyleSheetManager shouldForwardProp={shouldForwardProp}>
+            <GlobalStyles />
+          {/* <ErrorBoundary showError={true}> */}
           <OfflineIndicator />
         
         <Routes>
@@ -271,13 +272,13 @@ function AppContent() {
                   />
                   
                   {/* Debug panels for development */}
-                  {import.meta.env.DEV && <EnvDebug />}
+                  {/* {import.meta.env.DEV && <EnvDebug />}
                   {import.meta.env.DEV && <ApiDebug />}
                   {import.meta.env.DEV && <QueryDebug />}
                   {import.meta.env.DEV && <NotificationDemo />}
                   {import.meta.env.DEV && <ProductDemo />}
                   {import.meta.env.DEV && <AIInsightsDemo />}
-                  {import.meta.env.DEV && <WebSocketDebug />}
+                  {import.meta.env.DEV && <WebSocketDebug />} */}
                   
                   <ContentArea>
                     <PageTransition variant="default">
@@ -338,8 +339,9 @@ function AppContent() {
             </ProtectedRoute>
           } />
         </Routes>
-      </ErrorBoundary>
-      </ThemeProvider>
+      {/* </ErrorBoundary> */}
+          </StyleSheetManager>
+      </SafeThemeProvider>
     </ModalProvider>
     </AuthProvider>
   );

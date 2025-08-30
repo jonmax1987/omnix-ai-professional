@@ -489,7 +489,7 @@ const testAccessibility = {
   },
 
   // Check if element has sufficient color contrast
-  hasGoodContrast: async (element) => {
+  hasGoodContrast: async (_element) => {
     // This would require a color contrast checking library
     // For now, return true as a placeholder
     return true;

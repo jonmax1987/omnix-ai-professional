@@ -574,7 +574,17 @@ export class ABTestingService {
    * List all A/B tests with their current status
    */
   async listABTests(): Promise<ABTestConfig[]> {
-    return await this.dynamoDBService.scan(this.testsTable);
+    try {
+      return await this.dynamoDBService.scan(this.testsTable);
+    } catch (error) {
+      // Handle case where ab-tests table doesn't exist yet
+      if (error.name === 'ResourceNotFoundException') {
+        console.log(`⚠️ A/B tests table does not exist yet. Returning empty list.`);
+        return [];
+      }
+      console.error('❌ Failed to list A/B tests:', error);
+      throw error;
+    }
   }
 
   /**

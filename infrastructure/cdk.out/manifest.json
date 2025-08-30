@@ -1,19 +1,19 @@
 {
   "version": "48.0.0",
   "artifacts": {
-    "omnix-ai-cdk-core-dev-20250824.assets": {
+    "omnix-ai-cdk-core-dev-20250826.assets": {
       "type": "cdk:asset-manifest",
       "properties": {
-        "file": "omnix-ai-cdk-core-dev-20250824.assets.json",
+        "file": "omnix-ai-cdk-core-dev-20250826.assets.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
       }
     },
-    "omnix-ai-cdk-core-dev-20250824": {
+    "omnix-ai-cdk-core-dev-20250826": {
       "type": "aws:cloudformation:stack",
       "environment": "aws://631844602411/eu-central-1",
       "properties": {
-        "templateFile": "omnix-ai-cdk-core-dev-20250824.template.json",
+        "templateFile": "omnix-ai-cdk-core-dev-20250826.template.json",
         "terminationProtection": false,
         "tags": {
           "Component": "core",
@@ -25,11 +25,11 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::631844602411:role/cdk-hnb659fds-deploy-role-631844602411-eu-central-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::631844602411:role/cdk-hnb659fds-cfn-exec-role-631844602411-eu-central-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-631844602411-eu-central-1/c321352a5e07c0d69d1642f3e574b304315a5a98bbf79f1336cfec188b7e7c2a.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-631844602411-eu-central-1/bd6aa0193e3e22008553154470052774d6e542c25db936361751b4c9da492255.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
-          "omnix-ai-cdk-core-dev-20250824.assets"
+          "omnix-ai-cdk-core-dev-20250826.assets"
         ],
         "lookupRole": {
           "arn": "arn:${AWS::Partition}:iam::631844602411:role/cdk-hnb659fds-lookup-role-631844602411-eu-central-1",
@@ -38,10 +38,10 @@
         }
       },
       "dependencies": [
-        "omnix-ai-cdk-core-dev-20250824.assets"
+        "omnix-ai-cdk-core-dev-20250826.assets"
       ],
       "metadata": {
-        "/omnix-ai-cdk-core-dev-20250824": [
+        "/omnix-ai-cdk-core-dev-20250826": [
           {
             "type": "aws:cdk:stack-tags",
             "data": [
@@ -68,7 +68,7 @@
             ]
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/UsersTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/UsersTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -76,13 +76,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/UsersTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/UsersTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesUsersTable413E28CF"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/ProductsTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ProductsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -90,13 +90,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/ProductsTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ProductsTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesProductsTableAC0A834A"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/OrdersTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/OrdersTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -104,13 +104,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/OrdersTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/OrdersTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesOrdersTable205B3330"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/InventoryTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/InventoryTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -118,13 +118,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/InventoryTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/InventoryTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesInventoryTable5321DBA0"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/SessionsTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/SessionsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -132,13 +132,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/SessionsTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/SessionsTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesSessionsTable86722E8A"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/CustomerProfilesTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/CustomerProfilesTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -146,13 +146,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/CustomerProfilesTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/CustomerProfilesTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesCustomerProfilesTable2317A5BE"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/PurchaseHistoryTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/PurchaseHistoryTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -160,13 +160,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/PurchaseHistoryTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/PurchaseHistoryTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesPurchaseHistoryTable882E0E48"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/ProductInteractionsTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ProductInteractionsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -174,13 +174,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/ProductInteractionsTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ProductInteractionsTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesProductInteractionsTable7AFC20C3"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/RecommendationsTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/RecommendationsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -188,13 +188,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/RecommendationsTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/RecommendationsTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesRecommendationsTable22F3FCB4"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/ABTestResultsTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ABTestResultsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -202,13 +202,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/ABTestResultsTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/ABTestResultsTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesABTestResultsTable8A118EFB"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/CostAnalyticsTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/CostAnalyticsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -216,13 +216,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/CostAnalyticsTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/CostAnalyticsTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesCostAnalyticsTableBDF5E2E7"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/SegmentationTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/SegmentationTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -230,13 +230,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/SegmentationTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/SegmentationTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesSegmentationTableAD023DCF"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/StreamingAnalyticsTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/StreamingAnalyticsTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -244,13 +244,13 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/StreamingAnalyticsTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/StreamingAnalyticsTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesStreamingAnalyticsTable980A173A"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/AIAnalysisHistoryTable": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/AIAnalysisHistoryTable": [
           {
             "type": "aws:cdk:hasPhysicalName",
             "data": {
@@ -258,218 +258,218 @@
             }
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/DynamoDBTables/AIAnalysisHistoryTable/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/DynamoDBTables/AIAnalysisHistoryTable/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "DynamoDBTablesAIAnalysisHistoryTable042C9CDA"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LambdaFunction/ExecutionRole/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/LambdaFunction/ExecutionRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaFunctionExecutionRoleAEF52BC1"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LambdaFunction/ExecutionRole/DefaultPolicy/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/LambdaFunction/ExecutionRole/DefaultPolicy/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaFunctionExecutionRoleDefaultPolicyC3C3598C"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LambdaFunction/Function/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/LambdaFunction/Function/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaFunction9BE3F601"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LambdaFunction/Function/LogRetention/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/LambdaFunction/Function/LogRetention/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaFunctionLogRetention29C89A9B"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LambdaFunction/Function/ApiGatewayInvoke": [
+        "/omnix-ai-cdk-core-dev-20250826/LambdaFunction/Function/ApiGatewayInvoke": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaFunctionApiGatewayInvoke63D76FE0"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApiAccessLogs/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApiAccessLogs/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiAccessLogs3727738A"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApi7538854B"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Deployment/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ApiGatewayRestApiDeploymentF396056021bf2de00a1a7097edef3fe5cc7918a2"
+            "data": "ApiGatewayRestApiDeploymentF39605603316a69a0cce772f94ba3ca86509bfa1"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/DeploymentStage.dev/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/DeploymentStage.dev/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiDeploymentStagedevE0DE3133"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Endpoint": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Endpoint": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiEndpoint8A8A12DA"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/OPTIONS/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiOPTIONSDE91A6D5"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/{proxy+}/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiproxyCA30E02B"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/{proxy+}/OPTIONS/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/OPTIONS/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiproxyOPTIONSB88501F2"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/{proxy+}/ANY/ApiPermission.omnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4.ANY..{proxy+}": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/ANY/ApiPermission.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY..{proxy+}": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ApiGatewayRestApiproxyANYApiPermissionomnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4ANYproxyF45D488E"
+            "data": "ApiGatewayRestApiproxyANYApiPermissionomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYproxy2C840376"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/{proxy+}/ANY/ApiPermission.Test.omnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4.ANY..{proxy+}": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/ANY/ApiPermission.Test.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY..{proxy+}": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ApiGatewayRestApiproxyANYApiPermissionTestomnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4ANYproxy2EFFBA7A"
+            "data": "ApiGatewayRestApiproxyANYApiPermissionTestomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYproxyCB6B7942"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/{proxy+}/ANY/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/{proxy+}/ANY/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiproxyANYAFDFEFDD"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/ANY/ApiPermission.omnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4.ANY..": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/ANY/ApiPermission.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY..": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ApiGatewayRestApiANYApiPermissionomnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4ANYA65F9668"
+            "data": "ApiGatewayRestApiANYApiPermissionomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYA2C55637"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/ANY/ApiPermission.Test.omnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4.ANY..": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/ANY/ApiPermission.Test.omnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1.ANY..": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ApiGatewayRestApiANYApiPermissionTestomnixaicdkcoredev20250824ApiGatewayRestApiE4A303E4ANY33ABED9C"
+            "data": "ApiGatewayRestApiANYApiPermissionTestomnixaicdkcoredev20250826ApiGatewayRestApi0EA854B1ANYBED0F17A"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/Default/ANY/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/Default/ANY/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiANY2DB371C0"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/OmnixApiKeydev/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/OmnixApiKeydev/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiOmnixApiKeydev08BE8C80"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/OmnixUsagePlandev/Resource": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/OmnixUsagePlandev/Resource": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ApiGatewayRestApiOmnixUsagePlandev4D7C463F"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ApiGateway/RestApi/OmnixUsagePlandev/UsagePlanKeyResource:omnixaicdkcoredev20250824ApiGatewayRestApiOmnixApiKeydev3551AAF9": [
+        "/omnix-ai-cdk-core-dev-20250826/ApiGateway/RestApi/OmnixUsagePlandev/UsagePlanKeyResource:omnixaicdkcoredev20250826ApiGatewayRestApiOmnixApiKeydev335EE6EF": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ApiGatewayRestApiOmnixUsagePlandevUsagePlanKeyResourceomnixaicdkcoredev20250824ApiGatewayRestApiOmnixApiKeydev3551AAF936E5F0DA"
+            "data": "ApiGatewayRestApiOmnixUsagePlandevUsagePlanKeyResourceomnixaicdkcoredev20250826ApiGatewayRestApiOmnixApiKeydev335EE6EFE4D9A5A0"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/RestApiUrl": [
+        "/omnix-ai-cdk-core-dev-20250826/RestApiUrl": [
           {
             "type": "aws:cdk:logicalId",
             "data": "RestApiUrl"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LambdaFunctionArn": [
+        "/omnix-ai-cdk-core-dev-20250826/LambdaFunctionArn": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaFunctionArn"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/LambdaFunctionName": [
+        "/omnix-ai-cdk-core-dev-20250826/LambdaFunctionName": [
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaFunctionName"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/UsersTableName": [
+        "/omnix-ai-cdk-core-dev-20250826/UsersTableName": [
           {
             "type": "aws:cdk:logicalId",
             "data": "UsersTableName"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/ProductsTableName": [
+        "/omnix-ai-cdk-core-dev-20250826/ProductsTableName": [
           {
             "type": "aws:cdk:logicalId",
             "data": "ProductsTableName"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/CustomerProfilesTableName": [
+        "/omnix-ai-cdk-core-dev-20250826/CustomerProfilesTableName": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CustomerProfilesTableName"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/CDKMetadata/Default": [
+        "/omnix-ai-cdk-core-dev-20250826/CDKMetadata/Default": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CDKMetadata"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/BootstrapVersion": [
+        "/omnix-ai-cdk-core-dev-20250826/BootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "BootstrapVersion"
           }
         ],
-        "/omnix-ai-cdk-core-dev-20250824/CheckBootstrapVersion": [
+        "/omnix-ai-cdk-core-dev-20250826/CheckBootstrapVersion": [
           {
             "type": "aws:cdk:logicalId",
             "data": "CheckBootstrapVersion"
           }
         ]
       },
-      "displayName": "omnix-ai-cdk-core-dev-20250824"
+      "displayName": "omnix-ai-cdk-core-dev-20250826"
     },
     "Tree": {
       "type": "cdk:tree",

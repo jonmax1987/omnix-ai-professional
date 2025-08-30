@@ -552,7 +552,7 @@ const InventoryHealthOverview = ({
         <CategoryGrid>
           {currentData.categories.map((category, index) => (
             <CategoryCard
-              key={category.id}
+              key={category.id || `category-${index}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -597,7 +597,7 @@ const InventoryHealthOverview = ({
                 <IssuesList>
                   {category.issues.slice(0, 2).map((issue, issueIndex) => (
                     <IssueItem
-                      key={`${category.id}-${issue.type}-${issueIndex}`}
+                      key={`${category.id || `category-${index}`}-${issue.type || 'issue'}-${issueIndex}`}
                       severity={issue.severity}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -644,7 +644,7 @@ const InventoryHealthOverview = ({
           <AlertsList>
             {currentAlerts.slice(0, 5).map((alert, index) => (
               <AlertItem
-                key={alert.id}
+                key={alert.id || `alert-${index}`}
                 severity={alert.severity}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -680,7 +680,7 @@ const InventoryHealthOverview = ({
           
           {currentInsights.slice(0, 3).map((insight, index) => (
             <InsightItem
-              key={insight.id}
+              key={insight.id || `insight-${index}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, delay: index * 0.1 }}

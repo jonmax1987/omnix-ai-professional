@@ -24,7 +24,7 @@ class WebSocketManager {
     this.lastActivity = Date.now();
     
     // WebSocket URL from environment
-    this.wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'wss://5oo31khrrj.execute-api.eu-central-1.amazonaws.com/dev';
+    this.wsUrl = import.meta.env.VITE_WEBSOCKET_URL;
     
     // Bind methods
     this.connect = this.connect.bind(this);
@@ -38,6 +38,11 @@ class WebSocketManager {
    * Establish WebSocket connection
    */
   async connect() {
+    if (!this.wsUrl) {
+      console.log('WebSocket: No WebSocket URL configured, skipping connection');
+      return false;
+    }
+
     if (this.isConnecting || this.isConnected()) {
       console.log('WebSocket: Already connected or connecting');
       return false;
