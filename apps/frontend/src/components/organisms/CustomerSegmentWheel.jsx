@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, TrendingUp, AlertTriangle, Award, Star } from 'lucide-react';
 import * as d3 from 'd3';
 import { formatCurrency, formatNumber } from '../../utils/formatters';
+import { withMemoization, withExpensiveComputation } from '../hoc/withMemoization';
+import { useDeepMemo, useTrackedMemo, useThrottledMemo } from '../../utils/memoization.jsx';
 
 const Container = styled.div`
   background: ${({ theme }) => theme.colors.background.secondary};
@@ -294,13 +296,36 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const svgRef = useRef(null);
 
+  // Memoize expensive calculations
+  const { value: processedData, computeCount } = useTrackedMemo(() => {
+    return data.map(segment => ({
+      ...segment,
+      // Pre-calculate arc angles and positions for better performance
+      angle: (segment.percentage / 100) * 2 * Math.PI,
+      arcData: {
+        startAngle: 0, // Will be calculated in pie layout
+        endAngle: 0,   // Will be calculated in pie layout
+        padAngle: 0.02
+      }
+    }));
+  }, [data], 'segmentDataProcessing');
+
+  // Memoize total calculations
+  const totals = useMemo(() => ({
+    customers: data.reduce((sum, segment) => sum + segment.count, 0),
+    value: data.reduce((sum, segment) => sum + segment.value, 0)
+  }), [data]);
+
+  // Throttled draw function to prevent excessive re-renders
+  const throttledDrawWheel = useThrottledMemo(() => drawWheel, [view, processedData], 100);
+
   useEffect(() => {
     if (view === 'wheel' && svgRef.current) {
-      drawWheel();
+      throttledDrawWheel();
     }
-  }, [view, data]);
+  }, [view, processedData, throttledDrawWheel]);
 
-  const drawWheel = () => {
+  const drawWheel = useCallback(() => {
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
@@ -322,7 +347,7 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
       .outerRadius(radius);
 
     const arcs = g.selectAll('.arc')
-      .data(pie(data))
+      .data(pie(processedData))
       .enter()
       .append('g')
       .attr('class', 'arc');
@@ -381,10 +406,27 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
 
     // This would be more complex in production
     // Just showing the concept
-  };
+  }, [processedData]);
 
-  const totalCustomers = data.reduce((sum, segment) => sum + segment.count, 0);
-  const totalValue = data.reduce((sum, segment) => sum + segment.value, 0);
+  // Memoized event handlers
+  const handleSegmentClick = useCallback((segment) => {
+    setSelectedSegment(segment);
+    onSegmentClick?.(segment);
+  }, [onSegmentClick]);
+
+  const handleViewChange = useCallback((newView) => {
+    setView(newView);
+  }, []);
+
+  // Memoized tooltip handlers
+  const handleTooltipShow = useCallback((segment, position) => {
+    setHoveredSegment(segment);
+    setTooltipPosition(position);
+  }, []);
+
+  const handleTooltipHide = useCallback(() => {
+    setHoveredSegment(null);
+  }, []);
 
   return (
     <Container>
@@ -393,13 +435,13 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
         <ViewToggle>
           <ToggleButton
             active={view === 'wheel'}
-            onClick={() => setView('wheel')}
+            onClick={() => handleViewChange('wheel')}
           >
             Wheel View
           </ToggleButton>
           <ToggleButton
             active={view === 'list'}
-            onClick={() => setView('list')}
+            onClick={() => handleViewChange('list')}
           >
             List View
           </ToggleButton>
@@ -415,8 +457,8 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
           />
           
           <CenterMetrics>
-            <TotalCustomers>{formatNumber(totalCustomers)}</TotalCustomers>
-            <TotalValue>{formatCurrency(totalValue)}/month</TotalValue>
+            <TotalCustomers>{formatNumber(totals.customers)}</TotalCustomers>
+            <TotalValue>{formatCurrency(totals.value)}/month</TotalValue>
           </CenterMetrics>
 
           <AnimatePresence>
@@ -456,7 +498,7 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
         </ChartContainer>
       ) : (
         <LegendContainer>
-          {data.map((segment, index) => {
+          {processedData.map((segment, index) => {
             const Icon = segment.icon;
             return (
               <LegendItem
@@ -464,12 +506,7 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => {
-                  setSelectedSegment(segment);
-                  if (onSegmentClick) {
-                    onSegmentClick(segment);
-                  }
-                }}
+                onClick={() => handleSegmentClick(segment)}
               >
                 <LegendColor color={segment.color} />
                 <LegendInfo>
@@ -490,4 +527,30 @@ const CustomerSegmentWheel = ({ data = segmentData, onSegmentClick }) => {
   );
 };
 
-export default CustomerSegmentWheel;
+// Apply memoization HOCs for performance optimization
+export default withMemoization(
+  withExpensiveComputation(CustomerSegmentWheel, {
+    computations: {
+      // D3 calculations are expensive, cache them
+      pieLayout: (props) => {
+        const pie = d3.pie()
+          .value(d => d.percentage)
+          .sort(null);
+        return pie(props.data);
+      },
+      // Arc generator is also expensive to recreate
+      arcGenerator: () => {
+        return d3.arc()
+          .innerRadius(120)
+          .outerRadius(200);
+      }
+    },
+    cacheSize: 5,
+    displayName: 'CustomerSegmentWheel'
+  }),
+  {
+    strategy: 'deep',
+    displayName: 'CustomerSegmentWheel',
+    debug: process.env.NODE_ENV === 'development'
+  }
+);

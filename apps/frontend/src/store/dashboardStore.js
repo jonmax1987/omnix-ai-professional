@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { queryOptimizer, DatabasePatterns } from '../utils/queryOptimization.js';
 
 const useDashboardStore = create()(
   devtools(

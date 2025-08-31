@@ -16,20 +16,66 @@ const getBorder = (property, value) => {
 };
 
 export const lightTheme = {
+  // Add fontSizes at top level for components that expect it there
+  fontSizes: {
+    xs: typography?.fontSize?.xs || '0.75rem',
+    sm: typography?.fontSize?.sm || '0.875rem',
+    base: typography?.fontSize?.base || '1rem',
+    md: typography?.fontSize?.base || '1rem',
+    lg: typography?.fontSize?.lg || '1.125rem',
+    xl: typography?.fontSize?.xl || '1.25rem',
+    xxl: typography?.fontSize?.['2xl'] || '1.5rem',
+    '2xl': typography?.fontSize?.['2xl'] || '1.5rem',
+    '3xl': typography?.fontSize?.['3xl'] || '1.875rem',
+    '4xl': typography?.fontSize?.['4xl'] || '2.25rem'
+  },
   colors: {
     ...colors,
     // Add main property to primary for compatibility
     primary: {
       ...colors.primary,
       main: colors.primary[500],
-      dark: colors.primary[700]
+      dark: colors.primary[700],
+      light: colors.primary[300]
+    },
+    // Add secondary with main property
+    secondary: {
+      ...colors.secondary,
+      main: colors.secondary[500],
+      dark: colors.secondary[700],
+      light: colors.secondary[300]
     },
     // Add semantic color aliases that components expect
-    success: colors.green,
-    warning: colors.yellow,
-    danger: colors.red,
-    error: colors.red,
-    info: colors.primary,
+    success: {
+      ...colors.green,
+      main: colors.green[500],
+      dark: colors.green[700],
+      light: colors.green[300]
+    },
+    warning: {
+      ...colors.yellow,
+      main: colors.yellow[500],
+      dark: colors.yellow[700],
+      light: colors.yellow[300]
+    },
+    danger: {
+      ...colors.red,
+      main: colors.red[500],
+      dark: colors.red[700],
+      light: colors.red[300]
+    },
+    error: {
+      ...colors.red,
+      main: colors.red[500],
+      dark: colors.red[700],
+      light: colors.red[300]
+    },
+    info: {
+      ...colors.primary,
+      main: colors.primary[500],
+      dark: colors.primary[700],
+      light: colors.primary[300]
+    },
     white: '#ffffff',
     orange: {
       50: '#fff7ed',
@@ -88,7 +134,21 @@ export const lightTheme = {
       overlay: 'rgba(0, 0, 0, 0.5)',
       paper: '#ffffff',
       hover: colors.gray[50],
-      subtle: colors.gray[25] || '#fafafa'
+      subtle: colors.gray[25] || '#fafafa',
+      main: '#ffffff'
+    },
+    // Add surface alias for components that expect it
+    surface: {
+      primary: '#ffffff',
+      secondary: colors.gray[50],
+      tertiary: colors.gray[100]
+    },
+    // Add neutral colors that components expect
+    neutral: {
+      border: colors.gray[200],
+      light: colors.gray[100],
+      hover: colors.gray[50],
+      main: colors.gray[500]
     },
     text: {
       primary: colors.gray[900],
@@ -284,20 +344,66 @@ export const lightTheme = {
 
 export const darkTheme = {
   ...lightTheme,
+  // Add fontSizes at top level for components that expect it there
+  fontSizes: {
+    xs: typography?.fontSize?.xs || '0.75rem',
+    sm: typography?.fontSize?.sm || '0.875rem',
+    base: typography?.fontSize?.base || '1rem',
+    md: typography?.fontSize?.base || '1rem',
+    lg: typography?.fontSize?.lg || '1.125rem',
+    xl: typography?.fontSize?.xl || '1.25rem',
+    xxl: typography?.fontSize?.['2xl'] || '1.5rem',
+    '2xl': typography?.fontSize?.['2xl'] || '1.5rem',
+    '3xl': typography?.fontSize?.['3xl'] || '1.875rem',
+    '4xl': typography?.fontSize?.['4xl'] || '2.25rem'
+  },
   colors: {
     ...colors,
     // Add main property to primary for compatibility
     primary: {
       ...colors.primary,
       main: colors.primary[400],
-      dark: colors.primary[600]
+      dark: colors.primary[600],
+      light: colors.primary[300]
+    },
+    // Add secondary with main property
+    secondary: {
+      ...colors.secondary,
+      main: colors.secondary[400],
+      dark: colors.secondary[600],
+      light: colors.secondary[300]
     },
     // Add semantic color aliases that components expect
-    success: colors.green,
-    warning: colors.yellow,
-    danger: colors.red,
-    error: colors.red,
-    info: colors.primary,
+    success: {
+      ...colors.green,
+      main: colors.green[400],
+      dark: colors.green[600],
+      light: colors.green[300]
+    },
+    warning: {
+      ...colors.yellow,
+      main: colors.yellow[400],
+      dark: colors.yellow[600],
+      light: colors.yellow[300]
+    },
+    danger: {
+      ...colors.red,
+      main: colors.red[400],
+      dark: colors.red[600],
+      light: colors.red[300]
+    },
+    error: {
+      ...colors.red,
+      main: colors.red[400],
+      dark: colors.red[600],
+      light: colors.red[300]
+    },
+    info: {
+      ...colors.primary,
+      main: colors.primary[400],
+      dark: colors.primary[600],
+      light: colors.primary[300]
+    },
     white: '#ffffff',
     orange: {
       50: '#fff7ed',
@@ -356,7 +462,21 @@ export const darkTheme = {
       overlay: 'rgba(0, 0, 0, 0.8)',
       paper: colors.gray[800],
       hover: colors.gray[800],
-      subtle: colors.gray[850] || '#1a202c'
+      subtle: colors.gray[850] || '#1a202c',
+      main: colors.gray[800]
+    },
+    // Add surface alias for components that expect it
+    surface: {
+      primary: colors.gray[800],
+      secondary: colors.gray[700],
+      tertiary: colors.gray[600]
+    },
+    // Add neutral colors that components expect
+    neutral: {
+      border: colors.gray[700],
+      light: colors.gray[600],
+      hover: colors.gray[800],
+      main: colors.gray[500]
     },
     text: {
       primary: colors.gray[50],

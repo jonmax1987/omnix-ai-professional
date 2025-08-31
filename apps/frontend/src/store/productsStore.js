@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { queryOptimizer, DatabasePatterns, createOptimizedStore } from '../utils/queryOptimization.js';
+import { storeOptimizations } from '../services/optimizedDataService.js';
 
 const useProductsStore = create()(
   devtools(
@@ -45,6 +47,9 @@ const useProductsStore = create()(
         // Error handling
         error: null,
         
+        // Optimized query function
+        optimizedFetchProducts: null, // Will be set during initialization
+        
         // Async Actions
         fetchProducts: async (params = {}) => {
           set((state) => {
@@ -53,26 +58,53 @@ const useProductsStore = create()(
           });
 
           try {
+            // Use optimized query function if available, fallback to original logic
+            if (get().optimizedFetchProducts) {
+              const currentFilters = get().filters;
+              const queryParams = {
+                page: get().currentPage,
+                limit: get().itemsPerPage,
+                sortBy: get().sortBy,
+                sortOrder: get().sortOrder,
+                search: currentFilters.search || undefined,
+                category: currentFilters.category || undefined,
+                supplier: currentFilters.supplier || undefined,
+                location: currentFilters.location || undefined,
+                ...params
+              };
+              
+              const response = await get().optimizedFetchProducts(queryParams, {
+                forceFresh: params.forceFresh || false
+              });
+              
+              // Apply client-side optimizations
+              const optimizedResponse = get().applyClientSideOptimizations(response, currentFilters);
+              get().setProducts(optimizedResponse);
+              
+              if (response.pagination) {
+                set((state) => {
+                  state.totalItems = response.pagination.total || 0;
+                });
+              }
+              return;
+            }
+            
+            // Fallback to original implementation
             const { productsAPI } = await import('../services/api.js');
             
-            // Combine filters from store with any additional params
             const currentFilters = get().filters;
             const apiParams = {
               page: get().currentPage,
               limit: get().itemsPerPage,
               sortBy: get().sortBy,
               sortOrder: get().sortOrder,
-              // Map frontend filters to backend parameters (only include supported params)
               search: currentFilters.search || undefined,
               category: currentFilters.category || undefined,
               supplier: currentFilters.supplier || undefined,
               location: currentFilters.location || undefined,
-              // Note: status, stockLevel, and tags are not supported by backend API
-              // These will be filtered client-side after fetching
-              ...params // Allow override with explicit params
+              ...params
             };
             
-            // Remove undefined values to clean up the request
             Object.keys(apiParams).forEach(key => {
               if (apiParams[key] === undefined || apiParams[key] === '') {
                 delete apiParams[key];
@@ -81,52 +113,9 @@ const useProductsStore = create()(
             
             const response = await productsAPI.getProducts(apiParams);
             
-            // Apply client-side filtering for unsupported backend parameters
-            let filteredProducts = response.products || response.data || [];
-            
-            // Filter by status if specified
-            if (currentFilters.status && currentFilters.status !== 'all') {
-              filteredProducts = filteredProducts.filter(product => {
-                // Since backend doesn't have status field, assume all products are 'active'
-                // In production, this would be based on actual product status logic
-                return currentFilters.status === 'active';
-              });
-            }
-            
-            // Filter by stock level if specified
-            if (currentFilters.stockLevel && currentFilters.stockLevel !== 'all') {
-              filteredProducts = filteredProducts.filter(product => {
-                const stockRatio = product.quantity / (product.minThreshold || 1);
-                switch (currentFilters.stockLevel) {
-                  case 'low':
-                    return stockRatio <= 1.2; // Low stock: 120% or less of minimum
-                  case 'out':
-                    return product.quantity === 0;
-                  case 'healthy':
-                    return stockRatio > 1.2;
-                  default:
-                    return true;
-                }
-              });
-            }
-            
-            // Filter by tags if specified (client-side since backend doesn't support)
-            if (currentFilters.tags && currentFilters.tags.length > 0) {
-              filteredProducts = filteredProducts.filter(product => {
-                // Since backend products don't have tags, this would need to be added
-                // For now, we'll skip tag filtering until backend supports it
-                return true;
-              });
-            }
-            
-            // Create modified response with filtered products
-            const filteredResponse = {
-              ...response,
-              products: filteredProducts,
-              data: filteredProducts // Support both formats
-            };
-            
-            get().setProducts(filteredResponse);
+            // Apply client-side optimizations
+            const optimizedResponse = get().applyClientSideOptimizations(response, currentFilters);
+            get().setProducts(optimizedResponse);
             
             // Update pagination if provided
             if (response.pagination) {
@@ -456,112 +445,74 @@ const useProductsStore = create()(
             state.error = null;
           }),
           
-        // Computed getters
-        getFilteredProducts: () => {
-          const { products, filters } = get();
+        // Client-side optimization utilities
+        searchIndex: null,
+        
+        // Initialize search index for faster searching
+        initializeSearchIndex: () => {
+          const { products } = get();
+          const searchFields = ['name', 'sku', 'description', 'supplier', 'category'];
           
-          return products.filter(product => {
-            // Search filter
-            if (filters.search) {
-              const searchTerm = filters.search.toLowerCase();
-              const searchableFields = [
-                product.name,
-                product.sku,
-                product.description,
-                product.supplier,
-                product.category
-              ].filter(Boolean);
-              
-              if (!searchableFields.some(field => 
-                field.toLowerCase().includes(searchTerm)
-              )) {
-                return false;
-              }
-            }
-            
-            // Category filter
-            if (filters.category && product.category !== filters.category) {
-              return false;
-            }
-            
-            // Supplier filter
-            if (filters.supplier && product.supplier !== filters.supplier) {
-              return false;
-            }
-            
-            // Status filter
-            if (filters.status && product.status !== filters.status) {
-              return false;
-            }
-            
-            // Stock level filter
-            if (filters.stockLevel !== 'all') {
-              const stock = product.currentStock || 0;
-              const minStock = product.minStock || 0;
-              
-              switch (filters.stockLevel) {
-                case 'out':
-                  if (stock > 0) return false;
-                  break;
-                case 'low':
-                  if (stock === 0 || stock > minStock) return false;
-                  break;
-                case 'healthy':
-                  if (stock <= minStock) return false;
-                  break;
-              }
-            }
-            
-            // Location filter
-            if (filters.location && product.location !== filters.location) {
-              return false;
-            }
-            
-            // Tags filter
-            if (filters.tags.length > 0) {
-              const productTags = product.tags || [];
-              if (!filters.tags.some(tag => productTags.includes(tag))) {
-                return false;
-              }
-            }
-            
-            return true;
+          set((state) => {
+            state.searchIndex = DatabasePatterns.createSearchIndex(products, searchFields);
           });
+        },
+        
+        // Apply client-side optimizations to API response
+        applyClientSideOptimizations: (response, filters) => {
+          let products = response.products || response.data || [];
+          
+          // Apply client-side filtering for unsupported backend parameters
+          const clientFilters = {
+            status: filters.status,
+            stockLevel: filters.stockLevel,
+            tags: filters.tags
+          };
+          
+          products = DatabasePatterns.createFilterPipeline(products, clientFilters);
+          
+          return {
+            ...response,
+            products,
+            data: products
+          };
+        },
+        
+        // Computed getters with optimization
+        getFilteredProducts: () => {
+          const { products, filters, searchIndex } = get();
+          
+          // Use optimized search if search term is provided and index exists
+          if (filters.search && searchIndex) {
+            const searchResults = DatabasePatterns.searchWithIndex(products, searchIndex, filters.search);
+            
+            // Apply other filters to search results
+            const otherFilters = { ...filters };
+            delete otherFilters.search;
+            
+            return DatabasePatterns.createFilterPipeline(searchResults, otherFilters);
+          }
+          
+          // Fallback to regular filtering
+          return DatabasePatterns.createFilterPipeline(products, filters);
         },
         
         getSortedProducts: () => {
           const filteredProducts = get().getFilteredProducts();
           const { sortBy, sortOrder } = get();
           
-          return [...filteredProducts].sort((a, b) => {
-            let aValue = a[sortBy];
-            let bValue = b[sortBy];
-            
-            // Handle different data types
-            if (typeof aValue === 'string') {
-              aValue = aValue.toLowerCase();
-              bValue = bValue.toLowerCase();
-            }
-            
-            if (typeof aValue === 'number') {
-              return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-            }
-            
-            if (sortOrder === 'asc') {
-              return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-            } else {
-              return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-            }
-          });
+          return DatabasePatterns.createSortPipeline(filteredProducts, sortBy, sortOrder);
         },
         
         getPaginatedProducts: () => {
           const sortedProducts = get().getSortedProducts();
           const { currentPage, itemsPerPage } = get();
-          const startIndex = (currentPage - 1) * itemsPerPage;
-          const endIndex = startIndex + itemsPerPage;
           
-          return sortedProducts.slice(startIndex, endIndex);
+          return DatabasePatterns.createCursorPagination(
+            sortedProducts, 
+            null, // cursor-based navigation (can be enhanced later)
+            itemsPerPage
+          ).items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
         },
         
         getTotalPages: () => {
@@ -580,10 +531,23 @@ const useProductsStore = create()(
           return products.filter(product => selectedProducts.includes(product.id));
         },
         
-        // Statistics
+        // Optimized statistics using aggregation patterns
         getProductStats: () => {
           const { products } = get();
           
+          // Use DatabasePatterns for efficient aggregation
+          const aggregations = {
+            totalValue: { field: 'price', operation: 'sum' },
+            avgPrice: { field: 'price', operation: 'avg' },
+            maxStock: { field: 'currentStock', operation: 'max' },
+            minStock: { field: 'currentStock', operation: 'min' },
+            categoryStats: { field: 'price', operation: 'sum', groupBy: 'category' },
+            supplierStats: { field: 'currentStock', operation: 'sum', groupBy: 'supplier' }
+          };
+          
+          const aggregated = DatabasePatterns.createAggregationPipeline(products, aggregations);
+          
+          // Manual stats that don't fit aggregation pattern
           const stats = {
             total: products.length,
             active: products.filter(p => p.status === 'active').length,
@@ -596,10 +560,44 @@ const useProductsStore = create()(
             }).length,
             categories: [...new Set(products.map(p => p.category))].filter(Boolean).length,
             suppliers: [...new Set(products.map(p => p.supplier))].filter(Boolean).length,
-            totalValue: products.reduce((sum, p) => sum + ((p.currentStock || 0) * (p.price || 0)), 0)
+            ...aggregated
           };
           
           return stats;
+        },
+        
+        // Initialize optimization features using centralized service
+        initializeOptimizations: async () => {
+          try {
+            const enhancer = storeOptimizations.createProductsStoreEnhancer();
+            const optimizations = await enhancer.initializeOptimizations();
+            
+            set((state) => {
+              state.optimizedFetchProducts = optimizations.optimizedFetchProducts;
+              state.searchProducts = optimizations.searchProducts;
+              state.filterProducts = optimizations.filterProducts;
+              state.sortProducts = optimizations.sortProducts;
+            });
+            
+            // Initialize search index with current products
+            const { products } = get();
+            if (products.length > 0) {
+              enhancer.initializeSearchIndex(products);
+            }
+            
+            console.log('[ProductsStore] Optimizations initialized successfully');
+          } catch (error) {
+            console.error('[ProductsStore] Failed to initialize optimizations:', error);
+            // Fallback to basic functionality
+            get().initializeBasicOptimizations();
+          }
+        },
+
+        // Fallback optimization initialization
+        initializeBasicOptimizations: () => {
+          // Initialize search index only
+          get().initializeSearchIndex();
+          console.log('[ProductsStore] Basic optimizations initialized as fallback');
         }
       }))
     ),

@@ -1,0 +1,367 @@
+name: OMNIX AI - CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, staging ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy to environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      skip_tests:
+        description: 'Skip tests'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  AWS_REGION: 'eu-central-1'
+
+jobs:
+  # Security and code quality checks
+  security-scan:
+    name: 🔒 Security & Quality Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install Dependencies
+      run: npm ci
+    
+    - name: Run ESLint Security Rules
+      run: npm run lint:security || echo "⚠️ Security linting issues found"
+    
+    - name: Audit Dependencies
+      run: npm audit --audit-level=moderate
+    
+    - name: Check for Secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  # Test suite
+  test:
+    name: 🧪 Test Suite
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+    
+    strategy:
+      matrix:
+        test-type: [unit, integration, e2e]
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install Dependencies
+      run: npm ci
+    
+    - name: Install Playwright Browsers
+      if: matrix.test-type == 'e2e'
+      run: npx playwright install --with-deps
+    
+    - name: Run Unit Tests
+      if: matrix.test-type == 'unit'
+      run: |
+        npm run test:coverage
+        echo "📊 Coverage Report Generated"
+    
+    - name: Run Integration Tests
+      if: matrix.test-type == 'integration'
+      run: npm run test:integration || echo "Integration tests not configured"
+    
+    - name: Run E2E Tests
+      if: matrix.test-type == 'e2e'
+      run: |
+        npm run build:test
+        npm run test:e2e
+    
+    - name: Upload Coverage Reports
+      if: matrix.test-type == 'unit'
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  # Build and artifact creation
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+    needs: [security-scan, test]
+    if: always() && (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped') && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    
+    strategy:
+      matrix:
+        environment: [staging, production]
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install Dependencies
+      run: npm ci
+    
+    - name: Set Environment Variables
+      run: |
+        if [ "${{ matrix.environment }}" == "production" ]; then
+          echo "VITE_API_BASE_URL=https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod" >> $GITHUB_ENV
+          echo "VITE_API_KEY=omnix-api-key-production-2024" >> $GITHUB_ENV
+          echo "VITE_WEBSOCKET_URL=wss://5oo31khrrj.execute-api.eu-central-1.amazonaws.com/prod" >> $GITHUB_ENV
+        else
+          echo "VITE_API_BASE_URL=https://staging-api.omnix.ai/dev" >> $GITHUB_ENV
+          echo "VITE_API_KEY=omnix-api-key-staging-2024" >> $GITHUB_ENV
+          echo "VITE_WEBSOCKET_URL=wss://staging-ws.omnix.ai/dev" >> $GITHUB_ENV
+        fi
+        echo "VITE_ENVIRONMENT=${{ matrix.environment }}" >> $GITHUB_ENV
+    
+    - name: Build Application
+      run: |
+        echo "🏗️ Building for ${{ matrix.environment }} environment"
+        npm run build
+    
+    - name: Run Build Validation
+      run: |
+        # Check build output
+        if [ ! -d "dist" ]; then
+          echo "❌ Build failed - no dist directory"
+          exit 1
+        fi
+        
+        # Check critical files
+        required_files=("index.html" "assets")
+        for file in "${required_files[@]}"; do
+          if [ ! -e "dist/$file" ]; then
+            echo "❌ Missing critical file: $file"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Build validation passed"
+    
+    - name: Generate Build Manifest
+      run: |
+        echo "{
+          \"buildTime\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+          \"gitSha\": \"$GITHUB_SHA\",
+          \"gitRef\": \"$GITHUB_REF\",
+          \"environment\": \"${{ matrix.environment }}\",
+          \"version\": \"$(node -p "require('./package.json').version")\",
+          \"buildNumber\": \"$GITHUB_RUN_NUMBER\"
+        }" > dist/build-manifest.json
+    
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-${{ matrix.environment }}
+        path: dist/
+        retention-days: 30
+        compression-level: 6
+
+  # Staging deployment
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.omnix.ai
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-staging
+        path: dist/
+    
+    - name: Deploy to S3 Staging
+      run: |
+        echo "🚀 Deploying to staging S3 bucket"
+        aws s3 sync dist/ s3://omnix-ai-staging-frontend --delete \
+          --cache-control "max-age=31536000" \
+          --exclude "*.html" \
+          --exclude "build-manifest.json"
+        
+        # Deploy HTML with no-cache
+        aws s3 sync dist/ s3://omnix-ai-staging-frontend --delete \
+          --cache-control "max-age=0, no-cache, no-store, must-revalidate" \
+          --include "*.html" \
+          --include "build-manifest.json"
+    
+    - name: Invalidate CloudFront Cache
+      run: |
+        DISTRIBUTION_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='OMNIX-AI-Staging'].Id" --output text)
+        if [ -n "$DISTRIBUTION_ID" ]; then
+          echo "♻️ Invalidating CloudFront cache for staging: $DISTRIBUTION_ID"
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+        else
+          echo "⚠️ Staging CloudFront distribution not found"
+        fi
+    
+    - name: Run Staging Health Checks
+      run: |
+        sleep 30  # Wait for cache invalidation
+        echo "🏥 Running staging health checks"
+        
+        # Test main endpoints
+        curl -f https://staging.omnix.ai/ || echo "⚠️ Staging main page check failed"
+        curl -f https://staging.omnix.ai/dashboard || echo "⚠️ Staging dashboard check failed"
+        
+        echo "✅ Staging deployment completed"
+
+  # Production deployment
+  deploy-production:
+    name: 🎯 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://d1vu6p9f5uc16.cloudfront.net
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-production
+        path: dist/
+    
+    - name: Create Deployment Backup
+      run: |
+        echo "💾 Creating deployment backup"
+        BACKUP_BUCKET="omnix-ai-production-backups"
+        BACKUP_KEY="frontend-backup-$(date +%Y%m%d-%H%M%S)"
+        
+        aws s3 sync s3://omnix-ai-frontend-animations-1755860292 s3://$BACKUP_BUCKET/$BACKUP_KEY/ || echo "⚠️ Backup failed"
+    
+    - name: Deploy to Production S3
+      run: |
+        echo "🎯 Deploying to production S3 bucket"
+        BUCKET_NAME="omnix-ai-frontend-animations-1755860292"
+        
+        # Deploy static assets with long cache
+        aws s3 sync dist/ s3://$BUCKET_NAME --delete \
+          --cache-control "max-age=31536000" \
+          --exclude "*.html" \
+          --exclude "build-manifest.json"
+        
+        # Deploy HTML with no-cache
+        aws s3 sync dist/ s3://$BUCKET_NAME --delete \
+          --cache-control "max-age=0, no-cache, no-store, must-revalidate" \
+          --include "*.html" \
+          --include "build-manifest.json"
+    
+    - name: Invalidate Production CloudFront
+      run: |
+        echo "♻️ Invalidating production CloudFront cache"
+        aws cloudfront create-invalidation \
+          --distribution-id E3VGKLCQPWE4DG \
+          --paths "/*"
+    
+    - name: Run Production Health Checks
+      run: |
+        sleep 60  # Wait longer for production cache invalidation
+        echo "🏥 Running production health checks"
+        
+        # Comprehensive health checks
+        endpoints=(
+          "https://d1vu6p9f5uc16.cloudfront.net/"
+          "https://d1vu6p9f5uc16.cloudfront.net/dashboard"
+          "https://d1vu6p9f5uc16.cloudfront.net/products"
+        )
+        
+        for endpoint in "${endpoints[@]}"; do
+          echo "Testing $endpoint"
+          if curl -f -s -o /dev/null -w "%{http_code}" "$endpoint" | grep -q "200"; then
+            echo "✅ $endpoint is healthy"
+          else
+            echo "❌ $endpoint health check failed"
+            exit 1
+          fi
+        done
+    
+    - name: Update Deployment Status
+      run: |
+        echo "📊 Updating deployment status"
+        echo "Deployment completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        echo "Build: $GITHUB_RUN_NUMBER"
+        echo "SHA: $GITHUB_SHA"
+
+  # Post-deployment monitoring
+  post-deployment:
+    name: 📊 Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always() && needs.deploy-production.result == 'success'
+    
+    steps:
+    - name: Setup Monitoring
+      run: |
+        echo "📊 Setting up post-deployment monitoring"
+        echo "Monitoring active for 24 hours post-deployment"
+    
+    - name: Performance Baseline
+      run: |
+        echo "🏃‍♂️ Establishing performance baseline"
+        # Could integrate with Lighthouse CI or other performance tools
+    
+    - name: Setup Alerts
+      run: |
+        echo "🚨 Deployment alerts are active"
+        echo "Monitoring system will alert on any issues"

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { lightTheme, darkTheme } from './styles/theme';
 import GlobalStyles from './styles/globalStyles';
 import SafeThemeProvider from './components/providers/SafeThemeProvider';
@@ -7,6 +7,7 @@ import useStore from './store';
 import useUserStore from './store/userStore';
 import { useWebSocket } from './hooks/useWebSocket';
 import QueryProvider from './components/providers/QueryProvider';
+import { initializeApplication } from './utils/appInitializer.js';
 
 // Layout components
 import Header from './components/organisms/Header';
@@ -15,30 +16,38 @@ import ErrorBoundary from './components/organisms/ErrorBoundary';
 import OfflineIndicator from './components/atoms/OfflineIndicator';
 import PageTransition from './components/molecules/PageTransition';
 
-// Debug components (development only)
-import ApiDebug from './components/debug/ApiDebug';
-import WebSocketDebug from './components/debug/WebSocketDebug';
-import EnvDebug from './components/debug/EnvDebug';
-import QueryDebug from './components/debug/QueryDebug';
-import NotificationDemo from './components/debug/NotificationDemo';
-import ProductDemo from './components/debug/ProductDemo';
-import AIInsightsDemo from './components/debug/AIInsightsDemo';
+// Debug components (development only) - Lazy loaded
+const ApiDebug = import.meta.env.DEV ? lazy(() => import('./components/debug/ApiDebug')) : null;
+const WebSocketDebug = import.meta.env.DEV ? lazy(() => import('./components/debug/WebSocketDebug')) : null;
+const EnvDebug = import.meta.env.DEV ? lazy(() => import('./components/debug/EnvDebug')) : null;
+const QueryDebug = import.meta.env.DEV ? lazy(() => import('./components/debug/QueryDebug')) : null;
+const NotificationDemo = import.meta.env.DEV ? lazy(() => import('./components/debug/NotificationDemo')) : null;
+const ProductDemo = import.meta.env.DEV ? lazy(() => import('./components/debug/ProductDemo')) : null;
+const AIInsightsDemo = import.meta.env.DEV ? lazy(() => import('./components/debug/AIInsightsDemo')) : null;
+const CDNPerformanceDebug = import.meta.env.DEV ? lazy(() => import('./components/debug/CDNPerformanceDebug')) : null;
 
-// Pages
-import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import ProductDetail from './pages/ProductDetail';
-import Orders from './pages/Orders';
-import OrderDetail from './pages/OrderDetail';
-import Alerts from './pages/Alerts';
-import Recommendations from './pages/Recommendations';
-import Analytics from './pages/Analytics';
-import ABTesting from './pages/ABTesting';
-import Settings from './pages/Settings';
+// Pages - Lazy loaded for code splitting
+import { lazy, Suspense } from 'react';
+import Spinner from './components/atoms/Spinner';
+
+// Immediate loads for critical paths
 import Login from './pages/Login';
-import Register from './pages/Register';
-import ResetPassword from './pages/ResetPassword';
-import Unauthorized from './pages/Unauthorized';
+import Dashboard from './pages/Dashboard';
+
+// Lazy load non-critical pages
+const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'));
+const Products = lazy(() => import('./pages/Products'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Orders = lazy(() => import('./pages/Orders'));
+const OrderDetail = lazy(() => import('./pages/OrderDetail'));
+const Alerts = lazy(() => import('./pages/Alerts'));
+const Recommendations = lazy(() => import('./pages/Recommendations'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const ABTesting = lazy(() => import('./pages/ABTesting'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Register = lazy(() => import('./pages/Register'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 
 // Auth components
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -49,6 +58,7 @@ import { ModalProvider } from './contexts/ModalContext';
 
 // Mobile-first utilities
 import { createMobileListener } from './utils/viewport';
+import { preloadManager } from './utils/preloadManager';
 
 // Styled components
 import styled, { StyleSheetManager } from 'styled-components';
@@ -89,13 +99,74 @@ const ContentArea = styled.div`
   overflow-x: hidden;
 `;
 
+// Loading wrapper for lazy components
+const LazyWrapper = ({ children }) => (
+  <Suspense fallback={
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+      <Spinner size="lg" />
+    </div>
+  }>
+    {children}
+  </Suspense>
+);
+
+// Role-based Dashboard Router Component
+function DashboardRouter() {
+  const { user } = useUserStore();
+  
+  // If customer role, show customer dashboard without sidebar/header
+  if (user?.role === 'customer') {
+    return (
+      <LazyWrapper>
+        <CustomerDashboard />
+      </LazyWrapper>
+    );
+  }
+  
+  // Otherwise show admin/manager dashboard
+  return <Dashboard />;
+}
+
 // AppContent component that uses React Router hooks
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const store = useStore();
-  const { preferences, initializeAuth } = useUserStore();
+  const { preferences, initializeAuth, user } = useUserStore();
   const { ui = {}, toggleSidebar, setSidebarMobileOpen, setCurrentPage, setIsMobile } = store || {};
+  const [appInitialized, setAppInitialized] = useState(false);
+  const [initError, setInitError] = useState(null);
+  
+  // Initialize application performance optimizations
+  useEffect(() => {
+    let mounted = true;
+    
+    const initializeApp = async () => {
+      try {
+        console.log('[App] Initializing performance optimizations...');
+        const report = await initializeApplication();
+        
+        if (mounted) {
+          setAppInitialized(true);
+          if (import.meta.env.DEV) {
+            console.log('[App] Performance optimizations initialized:', report);
+          }
+        }
+      } catch (error) {
+        console.error('[App] Failed to initialize performance optimizations:', error);
+        if (mounted) {
+          setInitError(error);
+          setAppInitialized(true); // Continue with degraded performance
+        }
+      }
+    };
+    
+    initializeApp();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
   
   // Initialize authentication state on app start
   useEffect(() => {
@@ -136,6 +207,14 @@ function AppContent() {
 
   // Initialize WebSocket connection
   useWebSocket();
+  
+  // Initialize preload manager
+  useEffect(() => {
+    if (user) {
+      const currentRoute = location.pathname.slice(1) || 'dashboard';
+      preloadManager.initialize(user.role, currentRoute);
+    }
+  }, [user, location.pathname]);
   
   // Ensure we always have a valid store
   if (!store) {
@@ -243,99 +322,114 @@ function AppContent() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/forgot-password" element={<ResetPassword />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/register" element={<LazyWrapper><Register /></LazyWrapper>} />
+          <Route path="/reset-password" element={<LazyWrapper><ResetPassword /></LazyWrapper>} />
+          <Route path="/forgot-password" element={<LazyWrapper><ResetPassword /></LazyWrapper>} />
+          <Route path="/unauthorized" element={<LazyWrapper><Unauthorized /></LazyWrapper>} />
           
           {/* Protected routes */}
           <Route path="/*" element={
             <ProtectedRoute>
-              <AppContainer>
-                <Sidebar
-                  collapsed={ui?.sidebarCollapsed || false}
-                  mobileOpen={ui?.sidebarMobileOpen || false}
-                  onClose={() => setSidebarMobileOpen?.(false)}
-                  onCollapse={toggleSidebar}
-                  currentPage={ui?.currentPage || 'dashboard'}
-                  onNavigate={handleNavigate}
-                />
-                
-                <MainContent sidebarCollapsed={ui?.sidebarCollapsed || false}>
-                  <Header
-                    notifications={notifications}
-                    onMenuToggle={handleMenuToggle}
-                    onUserMenuAction={handleUserMenuAction}
-                    onNotificationClick={handleNotificationClick}
-                    onNotificationClear={handleNotificationClear}
-                    onSearch={handleSearch}
+              {user?.role === 'customer' ? (
+                // Customer gets dedicated dashboard without admin UI
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<LazyWrapper><CustomerDashboard /></LazyWrapper>} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              ) : (
+                // Admin/Manager gets full admin interface
+                <AppContainer>
+                  <Sidebar
+                    collapsed={ui?.sidebarCollapsed || false}
+                    mobileOpen={ui?.sidebarMobileOpen || false}
+                    onClose={() => setSidebarMobileOpen?.(false)}
+                    onCollapse={toggleSidebar}
+                    currentPage={ui?.currentPage || 'dashboard'}
+                    onNavigate={handleNavigate}
                   />
                   
-                  {/* Debug panels for development */}
-                  {/* {import.meta.env.DEV && <EnvDebug />}
-                  {import.meta.env.DEV && <ApiDebug />}
-                  {import.meta.env.DEV && <QueryDebug />}
-                  {import.meta.env.DEV && <NotificationDemo />}
-                  {import.meta.env.DEV && <ProductDemo />}
-                  {import.meta.env.DEV && <AIInsightsDemo />}
-                  {import.meta.env.DEV && <WebSocketDebug />} */}
-                  
-                  <ContentArea>
-                    <PageTransition variant="default">
-                      <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/products" element={
-                          <ProtectedRoute requiredResource="products">
-                            <Products />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/products/:id" element={
-                          <ProtectedRoute requiredResource="products">
-                            <ProductDetail />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/orders" element={
-                          <ProtectedRoute requiredResource="orders">
-                            <Orders />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/orders/:id" element={
-                          <ProtectedRoute requiredResource="orders">
-                            <OrderDetail />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/alerts" element={
-                          <ProtectedRoute requiredResource="alerts">
-                            <Alerts />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/recommendations" element={
-                          <ProtectedRoute requiredResource="analytics">
-                            <Recommendations />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/analytics" element={
-                          <ProtectedRoute requiredResource="analytics">
-                            <Analytics />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/ab-testing" element={
-                          <ProtectedRoute requiredResource="analytics">
-                            <ABTesting />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="/settings" element={
-                          <ProtectedRoute requiredResource="settings">
-                            <Settings />
-                          </ProtectedRoute>
-                        } />
-                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                      </Routes>
-                    </PageTransition>
-                  </ContentArea>
-                </MainContent>
-              </AppContainer>
+                  <MainContent sidebarCollapsed={ui?.sidebarCollapsed || false}>
+                    <Header
+                      notifications={notifications}
+                      onMenuToggle={handleMenuToggle}
+                      onUserMenuAction={handleUserMenuAction}
+                      onNotificationClick={handleNotificationClick}
+                      onNotificationClear={handleNotificationClear}
+                      onSearch={handleSearch}
+                    />
+                    
+                    {/* Debug panels for development */}
+                    {/* {import.meta.env.DEV && <EnvDebug />}
+                    {import.meta.env.DEV && <ApiDebug />}
+                    {import.meta.env.DEV && <QueryDebug />}
+                    {import.meta.env.DEV && <NotificationDemo />}
+                    {import.meta.env.DEV && <ProductDemo />}
+                    {import.meta.env.DEV && <AIInsightsDemo />}
+                    {import.meta.env.DEV && <WebSocketDebug />}
+                    {import.meta.env.DEV && CDNPerformanceDebug && appInitialized && (
+                      <Suspense fallback={null}>
+                        <CDNPerformanceDebug visible={true} />
+                      </Suspense>
+                    )} */}
+                    
+                    <ContentArea>
+                      <PageTransition variant="default">
+                        <Routes>
+                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                          <Route path="/dashboard" element={<Dashboard />} />
+                          <Route path="/products" element={
+                            <ProtectedRoute requiredResource="products">
+                              <LazyWrapper><Products /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/products/:id" element={
+                            <ProtectedRoute requiredResource="products">
+                              <LazyWrapper><ProductDetail /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/orders" element={
+                            <ProtectedRoute requiredResource="orders">
+                              <LazyWrapper><Orders /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/orders/:id" element={
+                            <ProtectedRoute requiredResource="orders">
+                              <LazyWrapper><OrderDetail /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/alerts" element={
+                            <ProtectedRoute requiredResource="alerts">
+                              <LazyWrapper><Alerts /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/recommendations" element={
+                            <ProtectedRoute requiredResource="analytics">
+                              <LazyWrapper><Recommendations /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/analytics" element={
+                            <ProtectedRoute requiredResource="analytics">
+                              <LazyWrapper><Analytics /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/ab-testing" element={
+                            <ProtectedRoute requiredResource="analytics">
+                              <LazyWrapper><ABTesting /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="/settings" element={
+                            <ProtectedRoute requiredResource="settings">
+                              <LazyWrapper><Settings /></LazyWrapper>
+                            </ProtectedRoute>
+                          } />
+                          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                        </Routes>
+                      </PageTransition>
+                    </ContentArea>
+                  </MainContent>
+                </AppContainer>
+              )}
             </ProtectedRoute>
           } />
         </Routes>

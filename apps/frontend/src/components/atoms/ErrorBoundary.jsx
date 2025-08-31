@@ -2,15 +2,10 @@ import React from 'react';
 import styled from 'styled-components';
 import Button from './Button';
 import Typography from './Typography';
+import { Sentry } from '../../services/monitoring';
 
-// Safe Sentry import - handle cases where monitoring service doesn't exist
-let Sentry = null;
-try {
-  Sentry = require('../../services/monitoring').Sentry;
-} catch (error) {
-  console.warn('Sentry monitoring service not available:', error.message);
-  // Create a mock Sentry object to prevent errors
-  Sentry = {
+// Create a mock Sentry object if the real one is not available
+const SentryService = Sentry || {
     withScope: (callback) => callback({ 
       setTag: () => {}, 
       setContext: () => {}, 
@@ -23,7 +18,6 @@ try {
     addBreadcrumb: () => {},
     withErrorBoundary: (component, options) => component
   };
-}
 
 const ErrorContainer = styled.div`
   display: flex;
@@ -120,7 +114,7 @@ class ErrorBoundary extends React.Component {
     console.error('Error caught by boundary:', error, errorInfo);
     
     // Report to Sentry
-    Sentry.withScope((scope) => {
+    SentryService.withScope((scope) => {
       scope.setTag('errorBoundary', true);
       scope.setContext('errorInfo', errorInfo);
       scope.setContext('props', this.props);
@@ -129,7 +123,7 @@ class ErrorBoundary extends React.Component {
         scope.setUser({ id: this.props.userId });
       }
       
-      const eventId = Sentry.captureException(error);
+      const eventId = SentryService.captureException(error);
       this.setState({ eventId });
     });
 
@@ -157,7 +151,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.feedback.trim() && this.state.eventId) {
       // captureUserFeedback is deprecated in newer Sentry versions
       // Use addBreadcrumb instead for user feedback
-      Sentry.addBreadcrumb({
+      SentryService.addBreadcrumb({
         category: 'user-feedback',
         message: this.state.feedback,
         level: 'info',

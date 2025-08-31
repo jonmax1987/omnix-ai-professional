@@ -47,7 +47,13 @@ import { useI18n } from '../hooks/useI18n';
 import useDashboardStore from '../store/dashboardStore';
 import { useRealtimeDashboard } from '../hooks/useWebSocket';
 import { useTeamActivity } from '../hooks/useTeamActivity';
+import { useDynamicRefresh, useDynamicRefreshService } from '../hooks/useDynamicRefresh';
 import inventoryService from '../services/inventoryService';
+import customerBehaviorAnalytics from '../services/customerBehaviorAnalytics';
+import useWebSocketStore from '../store/websocketStore';
+import useCustomerBehaviorStore from '../store/customerBehaviorStore';
+import { webSocketManager } from '../services/websocket';
+import DynamicDashboardRefresh from '../components/organisms/DynamicDashboardRefresh';
 
 const DashboardContainer = styled(motion.div)`
   padding: ${props => props.theme.spacing[6]};
@@ -182,12 +188,34 @@ const Dashboard = () => {
     refreshDashboard 
   } = useDashboardStore();
   
+  // WebSocket real-time connection
+  const {
+    isConnected: wsConnected,
+    isAuthenticated: wsAuthenticated,
+    realtimeData: wsData
+  } = useWebSocketStore();
+  
+  // Customer behavior analytics
+  const {
+    insights: customerInsights,
+    segmentMigrations,
+    consumptionPatterns,
+    behaviorAlerts: churnAlerts,
+    patterns: storeBehaviorPatterns
+  } = useCustomerBehaviorStore();
+  
   const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleTimeString());
   
   // Inventory-specific state
   const [inventoryData, setInventoryData] = useState(null);
   const [inventoryForecasting, setInventoryForecasting] = useState([]);
   const [inventoryLoading, setInventoryLoading] = useState(true);
+  
+  // Advanced analytics state
+  const [aiInsights, setAiInsights] = useState([]);
+  const [realtimeAlerts, setRealtimeAlerts] = useState([]);
+  const [behaviorPatterns, setBehaviorPatterns] = useState(null);
+  const [predictionAccuracy, setPredictionAccuracy] = useState(0.94);
   
   // Debug state
   const [showRevenueDebug, setShowRevenueDebug] = useState(import.meta.env.DEV);
@@ -204,11 +232,72 @@ const Dashboard = () => {
   // Enable team activity tracking
   const { trackActivity } = useTeamActivity();
 
+  // Dynamic refresh service integration
+  const refreshService = useDynamicRefreshService();
+
+  // Register main dashboard refresh
+  const mainDashboardRefresh = useDynamicRefresh({
+    widgetId: 'main-dashboard',
+    widgetName: 'Main Dashboard Metrics',
+    priority: 'high_priority',
+    refreshCallback: async () => {
+      await Promise.all([
+        fetchMetrics(),
+        fetchInventoryData(),
+        fetchAdvancedAnalytics()
+      ]);
+    },
+    autoStart: true
+  });
+
+  // Register inventory panel refresh  
+  const inventoryRefresh = useDynamicRefresh({
+    widgetId: 'inventory-panel',
+    widgetName: 'Inventory Health Panel',
+    priority: 'high_priority',
+    refreshCallback: async () => {
+      await fetchInventoryData();
+    },
+    dependencies: ['main-dashboard'],
+    autoStart: true
+  });
+
+  // Register analytics refresh
+  const analyticsRefresh = useDynamicRefresh({
+    widgetId: 'analytics-panel',
+    widgetName: 'AI Analytics Panel',
+    priority: 'medium_priority',
+    refreshCallback: async () => {
+      await fetchAdvancedAnalytics();
+    },
+    customInterval: 45000, // 45 seconds for analytics
+    autoStart: true
+  });
+
   // Fetch dashboard data on component mount
   useEffect(() => {
     fetchMetrics();
     fetchInventoryData();
+    fetchAdvancedAnalytics();
   }, [fetchMetrics]);
+  
+  // Connect WebSocket and request real-time data
+  useEffect(() => {
+    if (wsConnected && wsAuthenticated) {
+      webSocketManager.requestDashboardMetrics();
+      webSocketManager.subscribeToAlerts();
+    }
+  }, [wsConnected, wsAuthenticated]);
+  
+  // Process real-time WebSocket data
+  useEffect(() => {
+    if (wsData?.notifications?.length > 0) {
+      setRealtimeAlerts(prevAlerts => [
+        ...wsData.notifications.slice(0, 10),
+        ...prevAlerts.slice(0, 20)
+      ]);
+    }
+  }, [wsData]);
 
   // Fetch inventory data and forecasting
   const fetchInventoryData = async () => {
@@ -218,12 +307,14 @@ const Dashboard = () => {
         inventoryService.getInventoryOverview({ 
           timeRange: '30d',
           includeMetrics: true,
-          includeAlerts: true 
+          includeAlerts: true,
+          includeAIInsights: true
         }),
         inventoryService.getInventoryForecasting({
           timeHorizon: '60d',
           includeReorderPoints: true,
-          includeSeasonality: true
+          includeSeasonality: true,
+          includeAIPredictions: true
         })
       ]);
       
@@ -235,40 +326,62 @@ const Dashboard = () => {
       setInventoryLoading(false);
     }
   };
+  
+  // Fetch advanced AI analytics
+  const fetchAdvancedAnalytics = async () => {
+    try {
+      const [insights, patterns] = await Promise.all([
+        customerBehaviorAnalytics.getRealtimeInsights({ limit: 20 }),
+        customerBehaviorAnalytics.getBehaviorPatterns({ timeRange: '7d' })
+      ]);
+      
+      setAiInsights(insights?.insights || []);
+      setBehaviorPatterns(patterns?.patterns || null);
+    } catch (error) {
+      console.error('Failed to fetch advanced analytics:', error);
+    }
+  };
 
-  // Transform real dashboard data for display
+  // Transform real dashboard data with AI insights for display
   const displayMetrics = useMemo(() => {
     if (!metrics.inventory) return [];
+    
+    const revenueValue = metrics.revenue?.current || metrics.inventory?.totalValue || 0;
+    const aiRevenueInsight = aiInsights.find(insight => insight.type === 'revenue_optimization');
     
     return [
       {
         title: t('dashboard.totalRevenue'),
-        value: metrics.revenue?.current || metrics.inventory?.totalValue || 0,
+        value: revenueValue,
         valueFormat: 'currency',
         change: metrics.revenue?.change || 0,
         trend: metrics.revenue?.trend || 'neutral',
         icon: 'trending',
         iconColor: 'success',
         target: 250000,
-        progress: ((metrics.revenue?.current || 0) / 250000) * 100
+        progress: (revenueValue / 250000) * 100,
+        aiInsight: aiRevenueInsight?.insight || null,
+        confidence: aiRevenueInsight?.confidence || null
       },
       {
         title: t('dashboard.totalItems'),
         value: metrics.inventory?.totalItems || 0,
-        change: 0, // Backend doesn't provide change yet
-        trend: 'neutral',
+        change: wsData?.inventoryUpdates ? Object.keys(wsData.inventoryUpdates).length : 0,
+        trend: 'up',
         icon: 'products',
         iconColor: 'primary',
-        badge: t('dashboard.badges.live')
+        badge: t('dashboard.badges.live'),
+        realtime: true
       },
       {
         title: t('dashboard.lowStock'),
         value: metrics.inventory?.lowStockItems || 0,
-        change: 0, // Backend doesn't provide change yet
+        change: realtimeAlerts.filter(a => a.type === 'low_stock').length,
         trend: metrics.inventory?.lowStockItems > 10 ? 'up' : 'down',
         icon: 'warning',
         iconColor: 'warning',
-        variant: 'compact'
+        variant: 'compact',
+        urgent: metrics.inventory?.lowStockItems > 15
       },
       {
         title: t('dashboard.totalOrders'),
@@ -277,40 +390,68 @@ const Dashboard = () => {
         trend: metrics.orders?.trend || 'neutral',
         icon: 'checkCircle',
         iconColor: 'success',
-        variant: 'compact'
+        variant: 'compact',
+        aiPrediction: behaviorPatterns?.orderPrediction || null
       }
     ];
   }, [metrics, t]);
 
-  const recentAlerts = [
-    {
-      id: '1',
-      severity: 'error',
-      title: t('dashboard.alertTypes.criticalStockLevel'),
-      message: t('dashboard.alertMessages.criticalStock'),
-      category: t('dashboard.alertCategories.inventory'),
-      timestamp: new Date(Date.now() - 10 * 60 * 1000),
-      read: false
-    },
-    {
-      id: '2',
-      severity: 'warning',
-      title: t('dashboard.alertTypes.supplierDelay'),
-      message: t('dashboard.alertMessages.supplierDelay'),
-      category: t('dashboard.alertCategories.supplyChain'),
-      timestamp: new Date(Date.now() - 45 * 60 * 1000),
-      read: false
-    },
-    {
-      id: '3',
-      severity: 'info',
-      title: t('dashboard.alertTypes.priceUpdate'),
-      message: t('dashboard.alertMessages.priceUpdate'),
-      category: t('dashboard.alertCategories.pricing'),
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      read: true
-    }
-  ];
+  // Combine real-time alerts with AI insights
+  const recentAlerts = useMemo(() => {
+    const alerts = [];
+    
+    // Add real-time WebSocket alerts
+    realtimeAlerts.forEach(alert => {
+      alerts.push({
+        id: alert.id || `rt-${Date.now()}`,
+        severity: alert.priority === 'critical' ? 'error' : alert.priority === 'high' ? 'warning' : 'info',
+        title: alert.title || alert.type,
+        message: alert.message || alert.insight,
+        category: alert.category || 'Real-time',
+        timestamp: new Date(alert.timestamp),
+        read: false,
+        source: 'websocket',
+        aiGenerated: true
+      });
+    });
+    
+    // Add customer behavior insights as alerts
+    customerInsights.slice(0, 5).forEach(insight => {
+      alerts.push({
+        id: insight.id,
+        severity: insight.priority === 'high' ? 'warning' : 'info',
+        title: `Customer Insight: ${insight.type}`,
+        message: insight.message,
+        category: 'Customer Behavior',
+        timestamp: new Date(insight.timestamp),
+        read: false,
+        source: 'ai',
+        aiGenerated: true,
+        customerId: insight.customerId
+      });
+    });
+    
+    // Add churn risk alerts
+    churnAlerts.slice(0, 3).forEach(alert => {
+      alerts.push({
+        id: alert.id,
+        severity: alert.riskLevel === 'critical' ? 'error' : 'warning',
+        title: `Churn Risk Alert`,
+        message: `Customer ${alert.customerId} at ${alert.riskLevel} risk (${(alert.riskScore * 100).toFixed(1)}%)`,
+        category: 'Customer Retention',
+        timestamp: new Date(alert.timestamp),
+        read: false,
+        source: 'ai',
+        aiGenerated: true,
+        customerId: alert.customerId
+      });
+    });
+    
+    // Sort by timestamp (newest first) and take top 10
+    return alerts
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 10);
+  }, [realtimeAlerts, customerInsights, churnAlerts]);
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -821,34 +962,94 @@ const Dashboard = () => {
         </HeaderRight>
       </DashboardHeader>
 
-      {/* Key Metrics */}
-      <DashboardGrid
-        {...DASHBOARD_LAYOUTS.default}
-        spacing="lg"
-      >
-        {displayMetrics.map((metric, index) => (
-          <GridItem
-            key={metric.title}
-            span={index < 2 ? 2 : 1}
-          >
-            <MetricCard
-              {...metric}
-              clickable
-              onClick={() => console.log('Metric clicked:', metric.title)}
-              lastUpdated={`2 ${t('dashboard.minutesAgo')}`}
-            />
-          </GridItem>
-        ))}
-      </DashboardGrid>
-
-      {/* Real-Time Revenue Stream */}
+      {/* Enhanced Metrics with AI Insights */}
       <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+          <Typography variant="h5" weight="semibold">
+            {t('dashboard.sections.keyMetrics')}
+          </Typography>
+          <Badge variant="success" size="sm" style={{ marginLeft: '0.5rem' }}>
+            AI-Enhanced
+          </Badge>
+          {wsConnected && (
+            <Badge variant="info" size="sm" style={{ marginLeft: '0.5rem' }}>
+              Live
+            </Badge>
+          )}
+          <Badge variant="secondary" size="sm" style={{ marginLeft: '0.5rem' }}>
+            {(predictionAccuracy * 100).toFixed(1)}% Accuracy
+          </Badge>
+        </div>
+        <DashboardGrid
+          {...DASHBOARD_LAYOUTS.default}
+          spacing="lg"
+        >
+          {displayMetrics.map((metric, index) => (
+            <GridItem
+              key={metric.title}
+              span={index < 2 ? 2 : 1}
+            >
+              <MetricCard
+                {...metric}
+                clickable
+                onClick={() => console.log('AI-enhanced metric clicked:', metric.title)}
+                lastUpdated={wsConnected ? `Live` : `2 ${t('dashboard.minutesAgo')}`}
+                showAIInsights={!!metric.aiInsight}
+                enhanced={true}
+              />
+            </GridItem>
+          ))}
+        </DashboardGrid>
+      </div>
+
+      {/* Dynamic Dashboard Refresh Control Panel */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+          <Typography variant="h5" weight="semibold">
+            Dynamic Refresh Control
+          </Typography>
+          <Badge variant="success" size="sm" style={{ marginLeft: '0.5rem' }}>
+            Live System
+          </Badge>
+          <Badge variant="secondary" size="sm" style={{ marginLeft: '0.5rem' }}>
+            {refreshService.isActive ? 'Active' : 'Inactive'}
+          </Badge>
+        </div>
         <DashboardGrid
           {...DASHBOARD_LAYOUTS.default}
           spacing="lg"
         >
           <GridItem span={4}>
-            <RevenueStreamPanel />
+            <DynamicDashboardRefresh />
+          </GridItem>
+        </DashboardGrid>
+      </div>
+
+      {/* AI-Enhanced Real-Time Analytics */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+          <Typography variant="h5" weight="semibold">
+            Real-Time Business Intelligence
+          </Typography>
+          <Badge variant="info" size="sm" style={{ marginLeft: '0.5rem' }}>
+            AWS Bedrock
+          </Badge>
+          {mainDashboardRefresh.isRefreshing && (
+            <Badge variant="warning" size="sm" style={{ marginLeft: '0.5rem' }}>
+              Refreshing...
+            </Badge>
+          )}
+        </div>
+        <DashboardGrid
+          {...DASHBOARD_LAYOUTS.default}
+          spacing="lg"
+        >
+          <GridItem span={4}>
+            <RevenueStreamPanel 
+              showAIPredictions={true}
+              showConfidenceScores={true}
+              aiInsights={aiInsights.filter(i => i.type === 'revenue_optimization')}
+            />
           </GridItem>
         </DashboardGrid>
       </div>
@@ -913,20 +1114,27 @@ const Dashboard = () => {
         </DashboardGrid>
       </div>
 
-      {/* Recent Alerts */}
+      {/* AI-Powered Real-time Alerts */}
       <AlertsSection>
         <AlertsHeader>
-          <Typography variant="h5" weight="semibold">
-            {t('alerts.title')}
-          </Typography>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Typography variant="h5" weight="semibold">
+              {t('alerts.title')}
+            </Typography>
+            <Badge variant="info" size="sm">AI-Powered</Badge>
+            {wsConnected && <Badge variant="success" size="sm">Live</Badge>}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Badge variant="error" size="sm">
               {recentAlerts.filter(a => !a.read).length} {t('dashboard.newBadge')}
             </Badge>
+            <Badge variant="secondary" size="sm">
+              {recentAlerts.filter(a => a.aiGenerated).length} AI Generated
+            </Badge>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => console.log('View all alerts')}
+              onClick={() => console.log('View all AI alerts')}
             >
               {t('common.viewAll')}
               <Icon name="chevronRight" size={14} />
@@ -936,7 +1144,7 @@ const Dashboard = () => {
 
         {recentAlerts.length > 0 ? (
           <AlertsList>
-            {recentAlerts.slice(0, 3).map((alert, index) => (
+            {recentAlerts.slice(0, 5).map((alert, index) => (
               <motion.div
                 key={alert.id}
                 initial={{ opacity: 0, x: -20 }}
@@ -947,20 +1155,24 @@ const Dashboard = () => {
                   {...alert}
                   dismissible={!alert.read}
                   onClick={() => handleAlertClick(alert)}
-                  onDismiss={() => console.log('Dismiss alert:', alert.id)}
+                  onDismiss={() => console.log('Dismiss AI alert:', alert.id)}
+                  showAIBadge={alert.aiGenerated}
+                  showSource={true}
+                  enhanced={true}
+                  realtime={alert.source === 'websocket'}
                 />
               </motion.div>
             ))}
           </AlertsList>
         ) : (
           <EmptyAlerts>
-            <Icon name="checkCircle" size={48} color="#22C55E" />
+            <Icon name="brain" size={48} color="#3B82F6" />
             <div>
               <Typography variant="h6" weight="medium">
-                {t('dashboard.allGood')}
+                AI Monitoring Active
               </Typography>
               <Typography variant="body2" color="secondary">
-                {t('dashboard.noAlerts')}
+                No alerts detected. AI is continuously monitoring for anomalies.
               </Typography>
             </div>
           </EmptyAlerts>
@@ -1337,36 +1549,36 @@ const Dashboard = () => {
       </DashboardGrid>
       
       {/* Revenue Stream Debug Panel (Development Only) */}
-      {showRevenueDebug && <RevenueStreamDebug />}
+      {/* {showRevenueDebug && <RevenueStreamDebug />} */}
       
       {/* Customer Activity Debug Panel (Development Only) */}
-      {showRevenueDebug && <CustomerActivityDebug />}
+      {/* {showRevenueDebug && <CustomerActivityDebug />} */}
       
       {/* Inventory Change Debug Panel (Development Only) */}
-      {showInventoryDebug && <InventoryChangeDebug onClose={() => setShowInventoryDebug(false)} />}
+      {/* {showInventoryDebug && <InventoryChangeDebug onClose={() => setShowInventoryDebug(false)} />} */}
       
       {/* Alert Notification Debug Panel (Development Only) */}
-      {showAlertDebug && <AlertNotificationDebug onClose={() => setShowAlertDebug(false)} />}
+      {/* {showAlertDebug && <AlertNotificationDebug onClose={() => setShowAlertDebug(false)} />} */}
       
       {/* A/B Test Results Debug Panel (Development Only) */}
-      {showABTestDebug && <ABTestResultsDebug onClose={() => setShowABTestDebug(false)} />}
+      {/* {showABTestDebug && <ABTestResultsDebug onClose={() => setShowABTestDebug(false)} />} */}
       
       {/* Dashboard Refresh Debug Panel (Development Only) */}
-      {showRefreshDebug && <DashboardRefreshDebug onClose={() => setShowRefreshDebug(false)} />}
+      {/* {showRefreshDebug && <DashboardRefreshDebug onClose={() => setShowRefreshDebug(false)} />} */}
       
       {/* Team Activity Debug Panel (Development Only) */}
-      {showTeamActivityDebug && <TeamActivityDebug onClose={() => setShowTeamActivityDebug(false)} />}
+      {/* {showTeamActivityDebug && <TeamActivityDebug onClose={() => setShowTeamActivityDebug(false)} />} */}
       
       {/* Customer Behavior Debug Panel (Development Only) */}
-      {showCustomerBehaviorDebug && <CustomerBehaviorDebug onClose={() => setShowCustomerBehaviorDebug(false)} />}
+      {/* {showCustomerBehaviorDebug && <CustomerBehaviorDebug onClose={() => setShowCustomerBehaviorDebug(false)} />} */}
       
       {/* Real-time Alert Notifications (Always Active) */}
-      <RealTimeAlertNotifications 
+      {/* <RealTimeAlertNotifications 
         maxNotifications={5}
         autoHideDelay={8000}
         soundEnabled={true}
         showControls={import.meta.env.DEV}
-      />
+      /> */}
     </DashboardContainer>
   );
 

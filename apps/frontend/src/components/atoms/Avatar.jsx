@@ -1,6 +1,8 @@
-import styled, { css } from 'styled-components';
+import styled, { css, useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import LazyImage from './LazyImage';
+import { withAvatarImageOptimization } from '../hoc/withImageOptimization';
 
 const AvatarContainer = styled(motion.div).withConfig({
   shouldForwardProp: (prop) => !['size', 'square', 'clickable', 'bordered'].includes(prop)
@@ -30,11 +32,14 @@ const AvatarContainer = styled(motion.div).withConfig({
   `}
 `;
 
-const AvatarImage = styled.img`
+// Remove old AvatarImage - now using LazyImage with optimization
+const OptimizedAvatarImage = styled(LazyImage)`
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
+  
+  img {
+    border-radius: inherit;
+  }
 `;
 
 const AvatarFallback = styled.div.withConfig({
@@ -179,9 +184,11 @@ const Avatar = ({
   notification,
   className,
   onClick,
+  priority = false,
   ...props
 }) => {
   const [imageError, setImageError] = useState(false);
+  const theme = useTheme();
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleImageError = () => {
@@ -208,11 +215,18 @@ const Avatar = ({
       {...props}
     >
       {!showFallback && (
-        <AvatarImage
+        <OptimizedAvatarImage
           src={src}
           alt={alt || name || 'Avatar'}
           onError={handleImageError}
           onLoad={handleImageLoad}
+          sizes={`${getAvatarSize(size)}`}
+          placeholder="color"
+          placeholderColor={getAvatarBackground(name, theme)}
+          fadeInDuration={0.2}
+          responsive={false} // Avatars are usually small and don't need multiple sizes
+          priority={priority || false}
+          objectFit="cover"
           style={{ 
             opacity: imageLoaded ? 1 : 0,
             transition: 'opacity 0.2s ease-in-out'

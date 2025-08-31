@@ -350,9 +350,9 @@ function Login() {
             </div>
             <div 
               className="credential-item"
-              onClick={() => handleTestCredentialClick('manager@omnix.ai', 'manager123')}
+              onClick={() => handleTestCredentialClick('customer@omnix.ai', 'customer123')}
             >
-              👨‍💼 Manager: manager@omnix.ai / manager123
+              🛒 Customer: customer@omnix.ai / customer123
             </div>
             <Typography variant="caption" color="secondary" style={{ marginTop: '0.5rem', display: 'block' }}>
               Click to auto-fill credentials

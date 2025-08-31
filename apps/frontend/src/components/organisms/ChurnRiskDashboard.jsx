@@ -7,6 +7,9 @@ import Badge from '../atoms/Badge';
 import Button from '../atoms/Button';
 import Progress from '../atoms/Progress';
 import { useI18n } from '../../hooks/useI18n';
+import churnRiskService from '../../services/churnRiskService';
+import useCustomerBehaviorStore from '../../store/customerBehaviorStore';
+import useWebSocketStore from '../../store/websocketStore';
 
 const riskPulse = keyframes`
   0%, 100% {
@@ -555,9 +558,105 @@ const ChurnRiskDashboard = ({
   const { t } = useI18n();
   const [selectedRisk, setSelectedRisk] = useState(selectedRiskLevel);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [liveData, setLiveData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Default risk data
-  const defaultData = {
+  const { 
+    churnAlerts = [], 
+    churnPredictions = new Map(), 
+    churnInterventions = [] 
+  } = useCustomerBehaviorStore();
+  
+  const { isConnected } = useWebSocketStore();
+
+  // Sample customer IDs for real-time analysis
+  const sampleCustomerIds = [
+    'CUST001', 'CUST002', 'CUST003', 'CUST004', 'CUST005',
+    'CUST006', 'CUST007', 'CUST008', 'CUST009', 'CUST010'
+  ];
+
+  // Load live churn data on component mount
+  useEffect(() => {
+    const loadLiveData = async () => {
+      setRefreshing(true);
+      try {
+        const predictions = churnRiskService.analyzeCustomerBatch(sampleCustomerIds);
+        setLiveData(predictions);
+        
+        // Calculate live stats
+        const stats = churnRiskService.getStatistics();
+        setLiveStats(stats);
+      } catch (error) {
+        console.error('Error loading live churn data:', error);
+      } finally {
+        setRefreshing(false);
+      }
+    };
+
+    loadLiveData();
+  }, []);
+
+  // Auto-refresh every 30 seconds when connected
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const interval = setInterval(async () => {
+      if (!refreshing) {
+        setRefreshing(true);
+        try {
+          const predictions = churnRiskService.analyzeCustomerBatch(sampleCustomerIds);
+          setLiveData(predictions);
+        } catch (error) {
+          console.error('Error refreshing churn data:', error);
+        } finally {
+          setRefreshing(false);
+        }
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [isConnected, refreshing]);
+
+  // Calculate live statistics
+  const [liveStats, setLiveStats] = useState({
+    totalAnalyzed: 0,
+    interventionsGenerated: 0,
+    averageRiskScore: 0,
+    modelsUsed: 0
+  });
+
+  // Transform live data to match component interface
+  const transformedData = useMemo(() => {
+    const customers = liveData.map((prediction, index) => ({
+      id: prediction.customerId,
+      name: `Customer ${prediction.customerId}`,
+      email: `customer${index + 1}@example.com`,
+      riskScore: Math.round(prediction.score),
+      risk: prediction.riskLevel,
+      lastPurchase: prediction.timeToChurn ? 
+        `${Math.max(1, Math.round(prediction.timeToChurn.days / 3))} weeks ago` : 
+        '2 weeks ago',
+      totalSpent: Math.round(Math.random() * 3000 + 500),
+      segment: prediction.factors[0]?.factor || 'Unknown',
+      factors: prediction.factors.slice(0, 3).map(f => f.factor)
+    }));
+
+    const riskCounts = liveData.reduce((acc, pred) => {
+      acc[pred.riskLevel] = (acc[pred.riskLevel] || 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      totalAtRisk: liveData.length,
+      criticalRisk: riskCounts.critical || 0,
+      highRisk: riskCounts.high || 0,
+      mediumRisk: riskCounts.medium || 0,
+      lowRisk: riskCounts.low || 0,
+      customers
+    };
+  }, [liveData]);
+
+  const currentData = liveData.length > 0 ? transformedData : {
     totalAtRisk: 1247,
     criticalRisk: 156,
     highRisk: 342,
@@ -698,6 +797,16 @@ const ChurnRiskDashboard = ({
     onCustomerClick?.(customer);
   };
 
+  const handleInterventionClick = (customerId, intervention) => {
+    churnRiskService.trackInterventionOutcome(
+      customerId,
+      intervention.type || intervention.action,
+      'initiated',
+      { source: 'dashboard', timestamp: new Date().toISOString() }
+    );
+    onActionClick?.(intervention);
+  };
+
   return (
     <DashboardContainer
       initial={{ opacity: 0, y: 20 }}
@@ -722,6 +831,31 @@ const ChurnRiskDashboard = ({
         </HeaderLeft>
 
         <HeaderRight>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            fontSize: '14px',
+            color: isConnected ? '#059669' : '#dc2626'
+          }}>
+            <div style={{ 
+              width: '8px', 
+              height: '8px', 
+              borderRadius: '50%', 
+              background: isConnected ? '#059669' : '#dc2626' 
+            }} />
+            {isConnected ? 'Live' : 'Offline'}
+            {refreshing && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                style={{ fontSize: '14px' }}
+              >
+                ⟳
+              </motion.div>
+            )}
+          </div>
+          
           <RiskLevelSelector>
             {riskOptions.map(option => (
               <RiskOption
@@ -738,7 +872,14 @@ const ChurnRiskDashboard = ({
             ))}
           </RiskLevelSelector>
           
-          <Button variant="ghost" size="sm">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              const predictions = churnRiskService.analyzeCustomerBatch(sampleCustomerIds);
+              setLiveData(predictions);
+            }}
+          >
             <Icon name="refresh" size={16} />
           </Button>
         </HeaderRight>
@@ -925,7 +1066,7 @@ const ChurnRiskDashboard = ({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                   whileHover={{ scale: 1.02 }}
-                  onClick={() => onActionClick?.(action)}
+                  onClick={() => handleInterventionClick('demo-customer', action)}
                 >
                   <ActionIcon action={action.action}>
                     <Icon 

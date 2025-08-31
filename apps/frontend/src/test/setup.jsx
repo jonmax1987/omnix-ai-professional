@@ -17,10 +17,11 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+global.IntersectionObserver = vi.fn().mockImplementation((callback) => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
+  callback
 }));
 
 // Mock ResizeObserver
@@ -60,6 +61,39 @@ HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation(() => ({
   clip: vi.fn(),
 }));
 
+// Mock performance observer
+global.PerformanceObserver = vi.fn().mockImplementation((callback) => ({
+  observe: vi.fn(),
+  disconnect: vi.fn(),
+  callback
+}));
+
+// Mock navigator connection API
+Object.defineProperty(window.navigator, 'connection', {
+  writable: true,
+  value: {
+    effectiveType: '4g',
+    downlink: 10,
+    rtt: 50,
+    saveData: false
+  }
+});
+
+// Mock Performance API
+Object.defineProperty(window, 'performance', {
+  writable: true,
+  value: {
+    ...window.performance,
+    getEntriesByType: vi.fn(() => []),
+    getEntriesByName: vi.fn(() => []),
+    mark: vi.fn(),
+    measure: vi.fn(),
+    clearMarks: vi.fn(),
+    clearMeasures: vi.fn(),
+    now: vi.fn(() => Date.now())
+  }
+});
+
 // Mock HTML2Canvas for export functionality
 vi.mock('html2canvas', () => ({
   default: vi.fn().mockResolvedValue({
@@ -90,7 +124,16 @@ vi.mock('framer-motion', () => ({
     path: 'path',
     circle: 'circle',
     svg: 'svg',
-    g: 'g'
+    g: 'g',
+    input: 'input',
+    form: 'form',
+    section: 'section',
+    article: 'article',
+    header: 'header',
+    footer: 'footer',
+    main: 'main',
+    nav: 'nav',
+    aside: 'aside'
   },
   AnimatePresence: ({ children }) => children,
   useAnimation: () => ({
@@ -227,14 +270,42 @@ const mockTheme = {
   }
 };
 
+// Mock I18n provider
+const mockI18n = {
+  t: (key, params = {}) => {
+    let translation = key;
+    Object.keys(params).forEach(param => {
+      translation = translation.replace(`{{${param}}}`, params[param]);
+    });
+    return translation;
+  },
+  language: 'en',
+  changeLanguage: vi.fn()
+};
+
+export const useI18n = () => mockI18n;
+
+// Mock react-i18next
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: mockI18n.t,
+    i18n: mockI18n
+  }),
+  I18nextProvider: ({ children }) => children
+}));
+
 // Theme provider wrapper for tests
 import React from 'react';
 import { ThemeProvider } from 'styled-components';
 
+const I18nProvider = ({ children }) => children;
+
 export const TestWrapper = ({ children }) => (
-  <ThemeProvider theme={mockTheme}>
-    {children}
-  </ThemeProvider>
+  <I18nProvider>
+    <ThemeProvider theme={mockTheme}>
+      {children}
+    </ThemeProvider>
+  </I18nProvider>
 );
 
 // Custom render function

@@ -7,7 +7,7 @@ import Icon from '../atoms/Icon';
 import Badge from '../atoms/Badge';
 import Button from '../atoms/Button';
 import MetricCard from '../molecules/MetricCard';
-import LoadingAnimations from '../atoms/LoadingAnimations';
+import { SkeletonLoader, SpinLoader } from '../atoms/LoadingAnimations';
 import { useABTest } from '../../hooks/useABTesting';
 
 const VisualizerContainer = styled.div`
@@ -250,7 +250,7 @@ const ABTestResultsVisualizer = ({
   if (loading && !results) {
     return (
       <VisualizerContainer className={className}>
-        <LoadingAnimations.Skeleton height="400px" />
+        <SkeletonLoader height="400px" />
       </VisualizerContainer>
     );
   }

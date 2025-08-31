@@ -4,7 +4,7 @@ import unifiedAPI from './unifiedAPIClient';
 import httpService, { ApiError } from './httpClient';
 import useUserStore from '../store/userStore';
 import { wsService } from './websocketService';
-import { abTestingService } from './abTestingService';
+import abTestingService from './abTestingService';
 // Socket.IO is imported dynamically when needed
 
 // MIGRATION NOTE: Transitioning to unified API client

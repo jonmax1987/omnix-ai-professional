@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useWebSocketStore } from '../store/websocketStore';
+import useWebSocketStore from '../store/websocketStore';
 import { webSocketManager } from '../services/websocket';
 import { fallbackPollingService } from '../services/fallbackPollingService';
 import useUserStore from '../store/userStore';

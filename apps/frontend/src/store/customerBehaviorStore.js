@@ -7,6 +7,9 @@
 import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import customerBehaviorAnalytics from '../services/customerBehaviorAnalytics';
+import segmentMigrationService from '../services/segmentMigrationService';
+import consumptionPatternService from '../services/consumptionPatternService';
 
 const useCustomerBehaviorStore = create()(
   devtools(
@@ -64,6 +67,16 @@ const useCustomerBehaviorStore = create()(
           churnRisk: 70,
           anomalyThreshold: 2.5
         },
+        
+        // Segment migrations
+        segmentMigrations: [],
+        activeMigrations: new Map(),
+        
+        // Consumption patterns
+        consumptionPatterns: [],
+        customerPatterns: new Map(),
+        productPatterns: new Map(),
+        patternInsights: [],
         
         // Loading and error states
         loading: false,
@@ -133,6 +146,11 @@ const useCustomerBehaviorStore = create()(
             
             // Check for alerts
             get().checkBehaviorAlerts(behavior);
+            
+            // Track consumption patterns for purchase events
+            if (behavior.is_purchase || behavior.type === 'purchase') {
+              get().trackConsumptionPattern(behavior);
+            }
             
             state.lastUpdate = new Date().toISOString();
           }),
@@ -405,7 +423,84 @@ const useCustomerBehaviorStore = create()(
           }),
 
         /**
-         * Get real-time insights
+         * Track consumption patterns for purchase behaviors
+         */
+        trackConsumptionPattern: (behavior) =>
+          set((state) => {
+            const consumptionData = {
+              customerId: behavior.customerId,
+              productId: behavior.product?.id || 'unknown',
+              category: behavior.product?.category || 'general',
+              quantity: behavior.product?.quantity || 1,
+              value: behavior.value || 0,
+              timestamp: behavior.timestamp,
+              metadata: {
+                sessionId: behavior.sessionId,
+                device: behavior.device,
+                location: behavior.location
+              }
+            };
+
+            // Track pattern using consumption service
+            const patternUpdate = consumptionPatternService.trackConsumption(consumptionData);
+            
+            if (patternUpdate) {
+              // Update store with new patterns
+              state.consumptionPatterns.unshift({
+                ...patternUpdate,
+                id: `pattern-${Date.now()}`
+              });
+              
+              // Keep only last 200 patterns
+              if (state.consumptionPatterns.length > 200) {
+                state.consumptionPatterns = state.consumptionPatterns.slice(0, 200);
+              }
+              
+              // Update customer patterns map
+              if (patternUpdate.patterns && patternUpdate.patterns.length > 0) {
+                state.customerPatterns.set(behavior.customerId, {
+                  customerId: behavior.customerId,
+                  patterns: patternUpdate.patterns,
+                  predictions: patternUpdate.predictions,
+                  insights: patternUpdate.insights,
+                  confidence: patternUpdate.confidence,
+                  lastUpdate: patternUpdate.timestamp
+                });
+              }
+              
+              // Update product patterns
+              if (consumptionData.productId !== 'unknown') {
+                const productAnalytics = consumptionPatternService.getCustomerAnalytics(behavior.customerId);
+                if (productAnalytics) {
+                  state.productPatterns.set(consumptionData.productId, {
+                    productId: consumptionData.productId,
+                    category: consumptionData.category,
+                    customers: new Set([behavior.customerId]),
+                    totalConsumption: consumptionData.quantity,
+                    lastUpdate: patternUpdate.timestamp
+                  });
+                }
+              }
+              
+              // Add insights to pattern insights
+              if (patternUpdate.insights && patternUpdate.insights.length > 0) {
+                state.patternInsights.push(...patternUpdate.insights.map(insight => ({
+                  ...insight,
+                  customerId: behavior.customerId,
+                  timestamp: patternUpdate.timestamp,
+                  id: `insight-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                })));
+                
+                // Keep only last 100 insights
+                if (state.patternInsights.length > 100) {
+                  state.patternInsights = state.patternInsights.slice(-100);
+                }
+              }
+            }
+          }),
+
+        /**
+         * Get real-time insights using AI analytics
          */
         generateInsights: () =>
           set((state) => {
@@ -425,6 +520,81 @@ const useCustomerBehaviorStore = create()(
               .slice(0, 5)
               .map(([type, count]) => ({ type, count, percentage: (count / last24Hours.length) * 100 }));
             
+            // Use AI analytics for each unique customer
+            const uniqueCustomers = new Set(behaviors.map(b => b.customerId));
+            const customerAnalytics = [];
+            
+            uniqueCustomers.forEach(customerId => {
+              const analysis = customerBehaviorAnalytics.analyzeCustomerBehavior(behaviors, customerId);
+              customerAnalytics.push(analysis);
+              
+              // Update individual customer metrics
+              if (analysis.segment) {
+                const previousSegment = state.engagementLevels.get(customerId);
+                state.engagementLevels.set(customerId, analysis.segment);
+                
+                // Track segment migration
+                if (previousSegment && previousSegment !== analysis.segment) {
+                  const migration = segmentMigrationService.trackSegmentChange(
+                    customerId,
+                    analysis.segment,
+                    {
+                      score: analysis.score,
+                      predictions: analysis.predictions,
+                      timestamp: new Date().toISOString()
+                    }
+                  );
+                  
+                  if (migration && migration.analysis.isSignificant) {
+                    state.segmentMigrations.unshift({
+                      ...migration.migration,
+                      ...migration.analysis,
+                      id: `migration-${Date.now()}`
+                    });
+                    
+                    // Keep only last 100 migrations
+                    if (state.segmentMigrations.length > 100) {
+                      state.segmentMigrations = state.segmentMigrations.slice(0, 100);
+                    }
+                    
+                    // Add to active migrations if critical
+                    if (migration.analysis.severity === 'critical' || migration.analysis.severity === 'high') {
+                      state.activeMigrations.set(customerId, migration);
+                    }
+                  }
+                }
+              }
+              if (analysis.predictions && analysis.predictions.churnRisk) {
+                state.churnRisk.set(customerId, analysis.predictions.churnRisk);
+              }
+            });
+            
+            // Aggregate insights from AI analysis
+            const segments = {};
+            customerAnalytics.forEach(analysis => {
+              segments[analysis.segment] = (segments[analysis.segment] || 0) + 1;
+            });
+            
+            state.insights.segments = Object.entries(segments)
+              .map(([segment, count]) => ({
+                segment,
+                count,
+                percentage: (count / customerAnalytics.length) * 100
+              }))
+              .sort((a, b) => b.count - a.count);
+            
+            // Collect anomalies
+            const allAnomalies = [];
+            customerAnalytics.forEach(analysis => {
+              if (analysis.anomalies && analysis.anomalies.length > 0) {
+                allAnomalies.push(...analysis.anomalies.map(a => ({
+                  ...a,
+                  customerId: analysis.customerId
+                })));
+              }
+            });
+            state.insights.anomalies = allAnomalies.slice(0, 10);
+            
             // Emerging patterns
             const hourlyActivity = {};
             last24Hours.forEach(b => {
@@ -442,10 +612,15 @@ const useCustomerBehaviorStore = create()(
                 type: 'peak_hours',
                 data: peakHours,
                 description: `Peak activity hours: ${peakHours.map(p => `${p.hour}:00`).join(', ')}`
+              },
+              {
+                type: 'segment_distribution',
+                data: state.insights.segments,
+                description: `Top segment: ${state.insights.segments[0]?.segment || 'Unknown'} (${state.insights.segments[0]?.percentage.toFixed(1) || 0}%)`
               }
             ];
             
-            // Behavior trends
+            // Behavior trends with AI predictions
             const trends = [];
             const currentHourActivity = last24Hours.filter(b => 
               new Date() - new Date(b.timestamp) < 60 * 60 * 1000

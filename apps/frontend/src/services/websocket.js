@@ -62,8 +62,8 @@ class WebSocketManager {
         return false;
       }
 
-      // Create WebSocket connection with auth header
-      const wsUrl = `${this.wsUrl}?token=${encodeURIComponent(token)}`;
+      // Create WebSocket connection compatible with backend gateway
+      const wsUrl = `${this.wsUrl}/ws?token=${encodeURIComponent(token)}`;
       this.socket = new WebSocket(wsUrl);
 
       // Set up event handlers
@@ -109,7 +109,7 @@ class WebSocketManager {
   send(type, data = {}) {
     const message = {
       type,
-      data,
+      ...data,
       timestamp: Date.now(),
       id: this.generateMessageId()
     };
@@ -171,8 +171,8 @@ class WebSocketManager {
     this.reconnectAttempts = 0;
     this.updateConnectionState('connected');
     
-    // Authenticate the connection
-    this.authenticate();
+    // Backend auto-authenticates via token in URL
+    // Wait for authentication confirmation from backend
     
     // Start heartbeat
     this.startHeartbeat();
@@ -191,29 +191,42 @@ class WebSocketManager {
       
       console.log('WebSocket: Message received', message.type);
       
-      // Handle system messages
-      switch (message.type) {
-        case 'auth_success':
-          this.handleAuthSuccess(message);
+      // Handle backend gateway messages
+      switch (message.type || message.event) {
+        case 'connection':
+          this.handleConnectionConfirmation(message);
           break;
-        case 'auth_failed':
-          this.handleAuthFailed(message);
+        case 'error':
+          this.handleServerError(message);
           break;
-        case 'heartbeat_response':
+        case 'subscribed':
+        case 'unsubscribed':
+          this.handleSubscriptionResponse(message);
+          break;
+        case 'pong':
           // Heartbeat acknowledged
           break;
-        case 'notification':
-          this.handleNotification(message);
+        case 'dashboard_metrics':
+          this.handleDashboardMetrics(message);
           break;
-        case 'inventory_update':
-          this.handleInventoryUpdate(message);
+        case 'real_time_insight':
+          this.handleRealtimeInsight(message);
           break;
-        case 'customer_activity':
-          this.handleCustomerActivity(message);
+        case 'segment_migration':
+          this.handleSegmentMigration(message);
+          break;
+        case 'consumption_prediction':
+          this.handleConsumptionPrediction(message);
+          break;
+        case 'inventory_alert':
+          this.handleInventoryAlert(message);
+          break;
+        case 'customer_behavior_update':
+          this.handleCustomerBehaviorUpdate(message);
           break;
         default:
-          // Emit custom event
-          this.emit(message.type, message.data);
+          // Emit custom event with both type and event handling
+          this.emit(message.type || message.event, message.payload || message.data || message);
       }
     } catch (error) {
       console.error('WebSocket: Message parsing failed', error);
@@ -261,34 +274,33 @@ class WebSocketManager {
   }
 
   /**
-   * Authenticate WebSocket connection
+   * Handle connection confirmation from backend
    */
-  authenticate() {
-    const userStore = useUserStore.getState();
-    
-    this.send('authenticate', {
-      token: userStore.token,
-      userId: userStore.user?.id,
-      role: userStore.user?.role,
-      clientInfo: {
-        userAgent: navigator.userAgent,
-        timestamp: Date.now()
-      }
-    });
-  }
-
-  /**
-   * Handle successful authentication
-   */
-  handleAuthSuccess(message) {
-    console.log('WebSocket: Authentication successful');
+  handleConnectionConfirmation(message) {
+    console.log('WebSocket: Connection confirmed by backend', message);
     this.isAuthenticated = true;
     this.updateConnectionState('authenticated');
+    
+    // Subscribe to default channels
+    this.subscribeToDefaultChannels();
     
     // Process queued messages
     this.processMessageQueue();
     
-    this.emit('authenticated', message.data);
+    this.emit('authenticated', message);
+  }
+
+  /**
+   * Handle server errors
+   */
+  handleServerError(message) {
+    console.error('WebSocket: Server error', message);
+    
+    if (message.type === 'authentication_failed') {
+      this.handleAuthFailed(message);
+    } else {
+      this.emit('error', message);
+    }
   }
 
   /**
@@ -318,28 +330,68 @@ class WebSocketManager {
   }
 
   /**
-   * Handle inventory updates
+   * Handle subscription responses
    */
-  handleInventoryUpdate(message) {
-    console.log('WebSocket: Inventory update received', message.data);
-    this.emit('inventory_update', message.data);
+  handleSubscriptionResponse(message) {
+    console.log(`WebSocket: ${message.type} response`, message);
+    this.emit(message.type, message);
   }
 
   /**
-   * Handle customer activity updates
+   * Handle dashboard metrics from backend
    */
-  handleCustomerActivity(message) {
-    console.log('WebSocket: Customer activity update', message.data);
-    this.emit('customer_activity', message.data);
+  handleDashboardMetrics(message) {
+    console.log('WebSocket: Dashboard metrics received', message);
+    this.emit('dashboard_metrics', message.payload || message.data);
   }
 
   /**
-   * Start heartbeat mechanism
+   * Handle real-time insights from AI analysis
+   */
+  handleRealtimeInsight(message) {
+    console.log('WebSocket: Real-time insight received', message);
+    this.emit('real_time_insight', message.payload || message.data);
+  }
+
+  /**
+   * Handle customer segment migration events
+   */
+  handleSegmentMigration(message) {
+    console.log('WebSocket: Segment migration event', message);
+    this.emit('segment_migration', message.payload || message.data);
+  }
+
+  /**
+   * Handle consumption predictions from AI
+   */
+  handleConsumptionPrediction(message) {
+    console.log('WebSocket: Consumption prediction received', message);
+    this.emit('consumption_prediction', message.payload || message.data);
+  }
+
+  /**
+   * Handle inventory alerts
+   */
+  handleInventoryAlert(message) {
+    console.log('WebSocket: Inventory alert received', message);
+    this.emit('inventory_alert', message.payload || message.data);
+  }
+
+  /**
+   * Handle customer behavior updates
+   */
+  handleCustomerBehaviorUpdate(message) {
+    console.log('WebSocket: Customer behavior update', message);
+    this.emit('customer_behavior_update', message.payload || message.data);
+  }
+
+  /**
+   * Start heartbeat mechanism compatible with backend
    */
   startHeartbeat() {
     this.heartbeatTimer = setInterval(() => {
       if (this.isConnected()) {
-        this.send('heartbeat', { timestamp: Date.now() });
+        this.send('ping', { timestamp: Date.now() });
       }
     }, this.heartbeatInterval);
   }
@@ -470,11 +522,26 @@ class WebSocketManager {
   }
 
   /**
+   * Subscribe to default channels that backend auto-joins
+   */
+  subscribeToDefaultChannels() {
+    // Backend auto-joins: 'global', 'dashboard', `user.${userId}`
+    // Subscribe to additional channels as needed
+    const additionalChannels = ['alerts', 'products', 'inventory', 'recommendations'];
+    
+    additionalChannels.forEach(channel => {
+      this.send('subscribe', { channel });
+    });
+  }
+
+  /**
    * Subscribe to specific real-time channels
    */
   subscribeToChannels(channels) {
     if (this.isConnected()) {
-      this.send('subscribe_channels', { channels });
+      channels.forEach(channel => {
+        this.send('subscribe', { channel });
+      });
     }
   }
 
@@ -483,7 +550,45 @@ class WebSocketManager {
    */
   unsubscribeFromChannels(channels) {
     if (this.isConnected()) {
-      this.send('unsubscribe_channels', { channels });
+      channels.forEach(channel => {
+        this.send('unsubscribe', { channel });
+      });
+    }
+  }
+
+  /**
+   * Request dashboard metrics from backend
+   */
+  requestDashboardMetrics() {
+    if (this.isConnected()) {
+      this.send('GET_DASHBOARD_METRICS', {});
+    }
+  }
+
+  /**
+   * Subscribe to product-specific updates
+   */
+  subscribeToProduct(productId) {
+    if (this.isConnected()) {
+      this.send('SUBSCRIBE_PRODUCT', { productId });
+    }
+  }
+
+  /**
+   * Unsubscribe from product updates
+   */
+  unsubscribeFromProduct(productId) {
+    if (this.isConnected()) {
+      this.send('UNSUBSCRIBE_PRODUCT', { productId });
+    }
+  }
+
+  /**
+   * Subscribe to alerts
+   */
+  subscribeToAlerts() {
+    if (this.isConnected()) {
+      this.send('SUBSCRIBE_ALERTS', {});
     }
   }
 }

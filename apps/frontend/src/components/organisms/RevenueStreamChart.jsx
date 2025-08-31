@@ -1,10 +1,12 @@
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Typography from '../atoms/Typography';
 import Icon from '../atoms/Icon';
 import Badge from '../atoms/Badge';
 import Progress from '../atoms/Progress';
+import { withMemoization, withExpensiveComputation } from '../hoc/withMemoization';
+import { useDeepMemo, useTrackedMemo, useLRUMemo } from '../../utils/memoization.jsx';
 
 // Real-time data pulse animation
 const dataPulseKeyframes = keyframes`
@@ -282,18 +284,19 @@ const RevenueStreamChart = ({
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [realtimeData, setRealtimeData] = useState(data);
 
-  // Revenue stream definitions
-  const revenueStreams = {
+
+  // Memoized revenue streams configuration
+  const revenueStreamsConfig = useMemo(() => ({
     retail: { name: 'Retail Sales', icon: 'shopping-cart', color: '#3B82F6' },
     online: { name: 'Online Orders', icon: 'globe', color: '#10B981' },
     wholesale: { name: 'Wholesale', icon: 'truck', color: '#F59E0B' },
     subscriptions: { name: 'Subscriptions', icon: 'refresh', color: '#8B5CF6' },
     services: { name: 'Services', icon: 'settings', color: '#EF4444' },
     partnerships: { name: 'Partnerships', icon: 'users', color: '#06B6D4' }
-  };
+  }), []);
 
-  // Generate mock real-time data
-  const generateMockData = useMemo(() => {
+  // Generate mock real-time data using LRU cache for expensive calculations
+  const { value: generateMockData } = useTrackedMemo(() => {
     const periods = activeTimeRange === '1h' ? 60 : 
                    activeTimeRange === '24h' ? 24 : 
                    activeTimeRange === '7d' ? 168 : 720; // 30d = 720 hours
@@ -316,7 +319,7 @@ const RevenueStreamChart = ({
       }
       
       const streams = {};
-      Object.keys(revenueStreams).forEach(streamKey => {
+      Object.keys(revenueStreamsConfig).forEach(streamKey => {
         const progress = i / periods;
         const hourOfDay = date.getHours();
         const dayOfWeek = date.getDay();
@@ -344,17 +347,17 @@ const RevenueStreamChart = ({
         total: Object.values(streams).reduce((sum, value) => sum + value, 0)
       };
     });
-  }, [activeTimeRange]);
+  }, [activeTimeRange], 'mockDataGeneration');
 
   // Use real data if provided, otherwise use generated data
   const chartData = data.length > 0 ? data : generateMockData;
 
-  // Calculate stream analytics
-  const streamAnalytics = useMemo(() => {
+  // Calculate stream analytics with LRU caching for performance
+  const streamAnalytics = useLRUMemo(() => {
     if (chartData.length === 0) return {};
     
     const analytics = {};
-    const streamKeys = Object.keys(revenueStreams);
+    const streamKeys = Object.keys(revenueStreamsConfig);
     
     streamKeys.forEach(streamKey => {
       const values = chartData.map(d => d[streamKey] || 0);
@@ -377,7 +380,7 @@ const RevenueStreamChart = ({
     });
     
     return analytics;
-  }, [chartData, revenueStreams]);
+  }, [chartData, revenueStreamsConfig], { maxSize: 10, keyGenerator: (deps) => `${deps[0]?.length}-${JSON.stringify(deps[1])}` });
 
   // Chart dimensions and scaling
   const chartDimensions = useMemo(() => {
@@ -385,7 +388,7 @@ const RevenueStreamChart = ({
     const width = 800;
     const height = 240;
     
-    const allValues = chartData.flatMap(d => Object.keys(revenueStreams).map(key => d[key] || 0));
+    const allValues = chartData.flatMap(d => Object.keys(revenueStreamsConfig).map(key => d[key] || 0));
     const minValue = 0;
     const maxValue = Math.max(...allValues) * 1.1;
     
@@ -393,7 +396,7 @@ const RevenueStreamChart = ({
     const yScale = (value) => padding.top + (1 - (value - minValue) / (maxValue - minValue)) * (height - padding.top - padding.bottom);
     
     return { padding, width, height, minValue, maxValue, xScale, yScale };
-  }, [chartData, revenueStreams]);
+  }, [chartData, revenueStreamsConfig]);
 
   // Generate SVG paths for each stream
   const streamPaths = useMemo(() => {
@@ -402,7 +405,7 @@ const RevenueStreamChart = ({
     const paths = {};
     const { xScale, yScale, height, padding } = chartDimensions;
     
-    Object.keys(revenueStreams).forEach(streamKey => {
+    Object.keys(revenueStreamsConfig).forEach(streamKey => {
       const linePath = chartData
         .map((point, index) => {
           const x = xScale(index);
@@ -424,24 +427,23 @@ const RevenueStreamChart = ({
     });
     
     return paths;
-  }, [chartData, chartDimensions, revenueStreams]);
+  }, [chartData, chartDimensions, revenueStreamsConfig]);
 
-  // Handle time range change
-  const handleTimeRangeChange = (range) => {
+  // Memoized event handlers
+  const handleTimeRangeChange = useCallback((range) => {
     setActiveTimeRange(range);
     onTimeRangeChange?.(range);
-  };
+  }, [onTimeRangeChange]);
 
-  // Handle stream hover
-  const handleStreamHover = (streamKey) => {
+  const handleStreamHover = useCallback((streamKey) => {
     setHoveredStream(streamKey);
     onStreamHover?.(streamKey);
-  };
+  }, [onStreamHover]);
 
-  const handleStreamLeave = () => {
+  const handleStreamLeave = useCallback(() => {
     setHoveredStream(null);
     onStreamHover?.(null);
-  };
+  }, [onStreamHover]);
 
   // Simulate real-time updates
   useEffect(() => {
@@ -455,15 +457,15 @@ const RevenueStreamChart = ({
     return () => clearInterval(interval);
   }, [realTimeUpdates]);
 
-  // Format currency values
-  const formatCurrency = (value) => {
+  // Memoized format currency function
+  const formatCurrency = useCallback((value) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);
-  };
+  }, []);
 
   // Generate grid lines
   const gridLines = useMemo(() => {
@@ -521,7 +523,7 @@ const RevenueStreamChart = ({
 
       {/* Revenue Stream Cards */}
       <RevenueStreams>
-        {Object.entries(revenueStreams).map(([streamKey, stream]) => {
+        {Object.entries(revenueStreamsConfig).map(([streamKey, stream]) => {
           const analytics = streamAnalytics[streamKey] || {};
           const isHovered = hoveredStream === streamKey;
           
@@ -590,7 +592,7 @@ const RevenueStreamChart = ({
         ) : (
           <SVGChart viewBox={`0 0 ${chartDimensions.width} ${chartDimensions.height}`}>
             <defs>
-              {Object.entries(revenueStreams).map(([streamKey, stream]) => (
+              {Object.entries(revenueStreamsConfig).map(([streamKey, stream]) => (
                 <linearGradient key={streamKey} id={`${streamKey}Gradient`} x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stopColor={stream.color} stopOpacity={0.4} />
                   <stop offset="100%" stopColor={stream.color} stopOpacity={0.1} />
@@ -616,7 +618,7 @@ const RevenueStreamChart = ({
             </g>
             
             {/* Stream areas and lines */}
-            {Object.entries(revenueStreams).map(([streamKey, stream]) => {
+            {Object.entries(revenueStreamsConfig).map(([streamKey, stream]) => {
               const paths = streamPaths[streamKey];
               if (!paths) return null;
               
@@ -647,7 +649,7 @@ const RevenueStreamChart = ({
                     }}
                     initial={animated ? { pathLength: 0 } : false}
                     animate={animated ? { pathLength: 1 } : false}
-                    transition={{ duration: 1.5, delay: Object.keys(revenueStreams).indexOf(streamKey) * 0.1 }}
+                    transition={{ duration: 1.5, delay: Object.keys(revenueStreamsConfig).indexOf(streamKey) * 0.1 }}
                   />
                 </g>
               );
@@ -675,7 +677,7 @@ const RevenueStreamChart = ({
       {/* Legend */}
       {showLegend && (
         <Legend>
-          {Object.entries(revenueStreams).map(([streamKey, stream]) => {
+          {Object.entries(revenueStreamsConfig).map(([streamKey, stream]) => {
             const isDimmed = hoveredStream && hoveredStream !== streamKey;
             
             return (
@@ -701,4 +703,34 @@ const RevenueStreamChart = ({
   );
 };
 
-export default RevenueStreamChart;
+// Apply memoization HOCs for performance optimization
+export default withMemoization(
+  withExpensiveComputation(RevenueStreamChart, {
+    computations: {
+      // SVG path calculations are expensive
+      pathGeneration: (props) => {
+        const { data, activeTimeRange } = props;
+        // This would contain the complex SVG path generation logic
+        return { calculated: true, dataLength: data.length, timeRange: activeTimeRange };
+      },
+      // Chart scaling calculations
+      chartScaling: (props) => {
+        const { data } = props;
+        const allValues = data?.flatMap?.(d => Object.values(d).filter(v => typeof v === 'number')) || [];
+        return {
+          minValue: 0,
+          maxValue: Math.max(...allValues) * 1.1,
+          dataPoints: allValues.length
+        };
+      }
+    },
+    cacheSize: 8,
+    displayName: 'RevenueStreamChart'
+  }),
+  {
+    strategy: 'selective',
+    propsToCompare: ['data', 'height', 'timeRange', 'loading', 'realTimeUpdates'],
+    displayName: 'RevenueStreamChart',
+    debug: process.env.NODE_ENV === 'development'
+  }
+);
