@@ -26,6 +26,26 @@ export class UsersService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
+    {
+      id: 'customer-001',
+      email: 'customer@omnix.ai',
+      passwordHash: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG', // password: customer123
+      name: 'Sarah Johnson',
+      role: UserRole.CUSTOMER,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'customer-002',
+      email: 'john.customer@omnix.ai',
+      passwordHash: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG', // password: customer123
+      name: 'John Smith',
+      role: UserRole.CUSTOMER,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
   ];
 
   async findOne(email: string): Promise<User | undefined> {

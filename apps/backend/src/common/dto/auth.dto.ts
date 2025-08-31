@@ -5,6 +5,7 @@ export enum UserRole {
   ADMIN = 'admin',
   MANAGER = 'manager',
   ANALYST = 'analyst',
+  CUSTOMER = 'customer',
 }
 
 export class UserProfile {
