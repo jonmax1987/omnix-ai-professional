@@ -1093,7 +1093,7 @@ const ABTesting = () => {
         onAction={handleAction}
         onBulkAction={handleBulkAction}
         onSelect={setSelectedTests}
-        selectedIds={selectedTests}
+        selectedItems={selectedTests.map(id => tests.find(t => t.id === id)).filter(Boolean)}
         exportable
         exportFilename="ab-tests"
         exportFormats={['csv', 'xlsx']}

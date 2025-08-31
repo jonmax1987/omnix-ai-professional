@@ -369,7 +369,7 @@ const Recommendations = () => {
       align: 'right',
       render: (_, recommendation) => (
         <Typography variant="body2" weight="medium" color="success">
-          ${recommendation.estimatedValue.toLocaleString()}
+          ${(recommendation.estimatedValue || 0).toLocaleString()}
         </Typography>
       )
     },

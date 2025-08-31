@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { baseShouldForwardProp } from '../../utils/styledUtils';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Icon from '../atoms/Icon';
 import Button from '../atoms/Button';
 import Typography from '../atoms/Typography';
@@ -15,9 +15,9 @@ import { useI18n } from '../../hooks/useI18n.jsx';
 const TableContainer = styled.div`
   display: flex;
   flex-direction: column;
-  background: ${props => props.theme.colors.background.elevated};
-  border: 1px solid ${props => props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[3]};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   overflow: hidden;
   
   &.data-table {
@@ -29,25 +29,25 @@ const TableHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: between;
-  gap: ${props => props.theme.spacing[4]};
-  padding: ${props => props.theme.spacing[4]} ${props => props.theme.spacing[6]};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
+  padding: ${props => props.theme?.spacing?.[4] || '1rem'} ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#f1f5f9'};
   flex-wrap: wrap;
   
   &.table-header {
     /* Print-specific styles are handled in global CSS */
   }
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[4]};
-    gap: ${props => props.theme.spacing[3]};
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
+    padding: ${props => props.theme?.spacing?.[3] || '0.75rem'} ${props => props.theme?.spacing?.[4] || '1rem'};
+    gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   }
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
   flex: 1;
   min-width: 0;
 `;
@@ -55,14 +55,14 @@ const HeaderLeft = styled.div`
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   flex-shrink: 0;
 `;
 
 const TableTitle = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const SearchContainer = styled.div`
@@ -76,18 +76,18 @@ const FiltersContainer = styled(motion.div).withConfig({
 })`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
-  padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[6]};
-  background: ${props => props.theme.colors.background.secondary};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'} ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  background: ${props => props.theme?.colors?.background?.secondary || '#f8fafc'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#f1f5f9'};
   overflow-x: auto;
   
   &.filters {
     /* Print-specific styles are handled in global CSS */
   }
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[4]};
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
+    padding: ${props => props.theme?.spacing?.[3] || '0.75rem'} ${props => props.theme?.spacing?.[4] || '1rem'};
   }
 `;
 
@@ -96,19 +96,19 @@ const FilterChip = styled(motion.button).withConfig({
 })`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[1]};
-  padding: ${props => props.theme.spacing[1]} ${props => props.theme.spacing[2]};
-  background: ${props => props.theme.colors.background.elevated};
-  border: 1px solid ${props => props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[4]};
-  font-size: ${props => props.theme.typography.fontSize.sm};
+  gap: ${props => props.theme?.spacing?.[1] || '0.25rem'};
+  padding: ${props => props.theme?.spacing?.[1] || '0.25rem'} ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-radius: ${props => props.theme?.spacing?.[4] || '1rem'};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
   cursor: pointer;
   white-space: nowrap;
-  transition: all ${props => props.theme.animation.duration.fast} ${props => props.theme.animation.easing.easeInOut};
+  transition: all ${props => props.theme?.animation?.duration?.fast || '150ms'} ${props => props.theme?.animation?.easing?.easeInOut || 'ease-in-out'};
   
   &:hover {
-    border-color: ${props => props.theme.colors.border.strong};
-    background: ${props => props.theme.colors.background.secondary};
+    border-color: ${props => props.theme?.colors?.border?.strong || '#d1d5db'};
+    background: ${props => props.theme?.colors?.background?.secondary || '#f8fafc'};
   }
 `;
 
@@ -118,32 +118,32 @@ const BulkActionsBar = styled(motion.div).withConfig({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[6]};
-  background: ${props => props.theme.colors.primary[50]};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'} ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  background: ${props => props.theme?.colors?.primary?.[50] || '#f0f9ff'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#f1f5f9'};
   
   &.bulk-actions {
     /* Print-specific styles are handled in global CSS */
   }
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[4]};
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
+    padding: ${props => props.theme?.spacing?.[3] || '0.75rem'} ${props => props.theme?.spacing?.[4] || '1rem'};
     flex-direction: column;
     align-items: flex-start;
-    gap: ${props => props.theme.spacing[2]};
+    gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   }
 `;
 
 const BulkActionsLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[3]};
+  gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
 `;
 
 const BulkActionsRight = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const TableWrapper = styled.div`
@@ -159,30 +159,30 @@ const Table = styled.table.withConfig({
   
   ${props => props.density === 'compact' && css`
     th, td {
-      padding: ${props.theme.spacing[2]} ${props.theme.spacing[3]};
+      padding: ${props.theme?.spacing?.[2] || '0.5rem'} ${props.theme?.spacing?.[3] || '0.75rem'};
     }
   `}
   
   ${props => props.density === 'comfortable' && css`
     th, td {
-      padding: ${props.theme.spacing[4]} ${props.theme.spacing[4]};
+      padding: ${props.theme?.spacing?.[4] || '1rem'} ${props.theme?.spacing?.[4] || '1rem'};
     }
   `}
 `;
 
 const TableHead = styled.thead`
-  background: ${props => props.theme.colors.background.secondary};
-  border-bottom: 1px solid ${props => props.theme.colors.border.default};
+  background: ${props => props.theme?.colors?.background?.secondary || '#f8fafc'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
 `;
 
 const TableHeaderCell = styled.th.withConfig({
   shouldForwardProp: (prop) => !['sortable', 'width', 'align'].includes(prop),
 })`
-  padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[4]};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'} ${props => props.theme?.spacing?.[4] || '1rem'};
   text-align: left;
-  font-weight: ${props => props.theme.typography.fontWeight.medium};
-  color: ${props => props.theme.colors.text.secondary};
-  font-size: ${props => props.theme.typography.fontSize.sm};
+  font-weight: ${props => props.theme?.typography?.fontWeight?.medium || '500'};
+  color: ${props => props.theme?.colors?.text?.secondary || '#6b7280'};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
   white-space: nowrap;
   user-select: none;
   
@@ -190,7 +190,7 @@ const TableHeaderCell = styled.th.withConfig({
     cursor: pointer;
     
     &:hover {
-      background: ${props.theme.colors.background.primary};
+      background: ${props.theme?.colors?.background?.primary || '#ffffff'};
     }
   `}
   
@@ -208,10 +208,10 @@ const SortButton = styled.div.withConfig({
 })`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[1]};
+  gap: ${props => props.theme?.spacing?.[1] || '0.25rem'};
   
   ${props => props.active && css`
-    color: ${props.theme.colors.primary[600]};
+    color: ${props.theme?.colors?.primary?.[600] || '#2563eb'};
   `}
 `;
 
@@ -221,50 +221,50 @@ const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: ${props => props.theme.spacing[3]};
-  padding: ${props => props.theme.spacing[8]} ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  padding: ${props => props.theme?.spacing?.[8] || '2rem'} ${props => props.theme?.spacing?.[4] || '1rem'};
   text-align: center;
-  color: ${props => props.theme.colors.text.tertiary};
+  color: ${props => props.theme?.colors?.text?.tertiary || '#9ca3af'};
 `;
 
 const LoadingState = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${props => props.theme.spacing[8]};
+  padding: ${props => props.theme?.spacing?.[8] || '2rem'};
 `;
 
 const TableFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: ${props => props.theme.spacing[4]} ${props => props.theme.spacing[6]};
-  border-top: 1px solid ${props => props.theme.colors.border.subtle};
-  background: ${props => props.theme.colors.background.secondary};
+  padding: ${props => props.theme?.spacing?.[4] || '1rem'} ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  border-top: 1px solid ${props => props.theme?.colors?.border?.subtle || '#f1f5f9'};
+  background: ${props => props.theme?.colors?.background?.secondary || '#f8fafc'};
   
   &.table-footer {
     /* Print-specific styles are handled in global CSS */
   }
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[4]};
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
+    padding: ${props => props.theme?.spacing?.[3] || '0.75rem'} ${props => props.theme?.spacing?.[4] || '1rem'};
     flex-direction: column;
-    gap: ${props => props.theme.spacing[3]};
+    gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   }
 `;
 
 const PaginationInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
-  color: ${props => props.theme.colors.text.secondary};
-  font-size: ${props => props.theme.typography.fontSize.sm};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  color: ${props => props.theme?.colors?.text?.secondary || '#6b7280'};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
 `;
 
 const PaginationControls = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   
   &.pagination-controls {
     /* Print-specific styles are handled in global CSS */
@@ -272,11 +272,11 @@ const PaginationControls = styled.div`
 `;
 
 const PageSizeSelect = styled.select`
-  padding: ${props => props.theme.spacing[1]} ${props => props.theme.spacing[2]};
-  border: 1px solid ${props => props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[1]};
-  background: ${props => props.theme.colors.background.elevated};
-  font-size: ${props => props.theme.typography.fontSize.sm};
+  padding: ${props => props.theme?.spacing?.[1] || '0.25rem'} ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  border: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-radius: ${props => props.theme?.spacing?.[1] || '0.25rem'};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
 `;
 
 const Checkbox = styled.input.attrs({ type: 'checkbox' })`
@@ -303,11 +303,11 @@ const ExportMenu = styled(motion.div).withConfig({
   top: 100%;
   right: 0;
   z-index: 10;
-  background: ${props => props.theme.colors.background.elevated};
-  border: 1px solid ${props => props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[2]};
-  box-shadow: ${props => props.theme.shadows.lg};
-  margin-top: ${props => props.theme.spacing[1]};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  box-shadow: ${props => props.theme?.shadows?.lg || '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'};
+  margin-top: ${props => props.theme?.spacing?.[1] || '0.25rem'};
   min-width: 120px;
   overflow: hidden;
   
@@ -323,18 +323,18 @@ const ExportMenuItem = styled(motion.button).withConfig({
 })`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   width: 100%;
-  padding: ${props => props.theme.spacing[2]} ${props => props.theme.spacing[3]};
+  padding: ${props => props.theme?.spacing?.[2] || '0.5rem'} ${props => props.theme?.spacing?.[3] || '0.75rem'};
   background: none;
   border: none;
   cursor: pointer;
-  font-size: ${props => props.theme.typography.fontSize.sm};
-  color: ${props => props.theme.colors.text.primary};
-  transition: background-color ${props => props.theme.animation.duration.fast} ${props => props.theme.animation.easing.easeInOut};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
+  color: ${props => props.theme?.colors?.text?.primary || '#1f2937'};
+  transition: background-color ${props => props.theme?.animation?.duration?.fast || '150ms'} ${props => props.theme?.animation?.easing?.easeInOut || 'ease-in-out'};
   
   &:hover {
-    background-color: ${props => props.theme.colors.background.secondary};
+    background-color: ${props => props.theme?.colors?.background?.secondary || '#f8fafc'};
   }
   
   &:last-child {
@@ -352,6 +352,7 @@ const DataTable = ({
   searchPlaceholder = 'Search...',
   sortable = true,
   selectable = false,
+  selectedItems = [],
   filterable = false,
   filters = [],
   actions = [],
@@ -376,13 +377,24 @@ const DataTable = ({
   onFilter,
   onExport,
   className,
+  sortField,
+  sortDirection,
+  emptyMessage,
   ...props
 }) => {
   const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [sortConfig, setSortConfig] = useState({ key: sortField || null, direction: sortDirection || 'asc' });
+  const [internalSelectedRows, setInternalSelectedRows] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Use external selectedItems if provided, otherwise use internal state
+  const selectedRows = useMemo(() => {
+    if (selectable && selectedItems && selectedItems.length >= 0) {
+      return new Set(selectedItems.map(item => item.id || item.key || JSON.stringify(item)));
+    }
+    return internalSelectedRows;
+  }, [selectedItems, internalSelectedRows, selectable]);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [activeFilters, setActiveFilters] = useState(new Map());
   const [showFilters, setShowFilters] = useState(false);
@@ -471,29 +483,45 @@ const DataTable = ({
   }, [sortConfig, onSort]);
 
   const handleSelectRow = useCallback((rowData, checked) => {
-    const newSelection = new Set(selectedRows);
-    const rowId = rowData.id || rowData.key || JSON.stringify(rowData);
-    
-    if (checked) {
-      newSelection.add(rowId);
+    if (selectable && selectedItems && selectedItems.length >= 0) {
+      // External state management - just call the callback
+      onSelect?.(rowData, checked);
     } else {
-      newSelection.delete(rowId);
+      // Internal state management
+      const newSelection = new Set(selectedRows);
+      const rowId = rowData.id || rowData.key || JSON.stringify(rowData);
+      
+      if (checked) {
+        newSelection.add(rowId);
+      } else {
+        newSelection.delete(rowId);
+      }
+      
+      setInternalSelectedRows(newSelection);
+      onSelect?.(Array.from(newSelection));
     }
-    
-    setSelectedRows(newSelection);
-    onSelect?.(Array.from(newSelection));
-  }, [selectedRows, onSelect]);
+  }, [selectedRows, onSelect, selectable, selectedItems]);
 
   const handleSelectAll = useCallback((checked) => {
-    if (checked) {
-      const allIds = paginatedData.map(row => row.id || row.key || JSON.stringify(row));
-      setSelectedRows(new Set(allIds));
-      onSelectAll?.(allIds);
+    if (selectable && selectedItems && selectedItems.length >= 0) {
+      // External state management - just call the callback
+      if (checked) {
+        onSelectAll?.(paginatedData);
+      } else {
+        onSelectAll?.([]);
+      }
     } else {
-      setSelectedRows(new Set());
-      onSelectAll?.([]);
+      // Internal state management
+      if (checked) {
+        const allIds = paginatedData.map(row => row.id || row.key || JSON.stringify(row));
+        setInternalSelectedRows(new Set(allIds));
+        onSelectAll?.(allIds);
+      } else {
+        setInternalSelectedRows(new Set());
+        onSelectAll?.([]);
+      }
     }
-  }, [paginatedData, onSelectAll]);
+  }, [paginatedData, onSelectAll, selectable, selectedItems]);
 
   const handleFilter = useCallback((filterKey, value) => {
     const newFilters = new Map(activeFilters);
@@ -571,8 +599,11 @@ const DataTable = ({
     }
   };
 
+  // Extract DOM-safe props only
+  const { error, selectedIds, ...domSafeProps } = props;
+
   return (
-    <TableContainer className={`data-table ${className || ''}`} {...props}>
+    <TableContainer className={`data-table ${className || ''}`} {...domSafeProps}>
       <TableHeader className="table-header">
         <HeaderLeft>
           <TableTitle>
@@ -810,7 +841,7 @@ const DataTable = ({
                         {emptyStateTitle}
                       </Typography>
                       <Typography variant="body2" color="secondary">
-                        {emptyStateDescription}
+                        {emptyMessage || emptyStateDescription}
                       </Typography>
                     </div>
                   </EmptyState>

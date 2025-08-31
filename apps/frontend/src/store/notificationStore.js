@@ -175,6 +175,38 @@ export const useNotificationStore = create(
         });
       },
 
+      requestPermission: async () => {
+        if (!('Notification' in window)) {
+          console.warn('This browser does not support notifications');
+          return 'unsupported';
+        }
+
+        if (Notification.permission === 'granted') {
+          set((state) => {
+            state.permission = 'granted';
+          });
+          return 'granted';
+        }
+
+        if (Notification.permission !== 'denied') {
+          try {
+            const permission = await Notification.requestPermission();
+            set((state) => {
+              state.permission = permission;
+            });
+            return permission;
+          } catch (error) {
+            console.error('Error requesting notification permission:', error);
+            return 'default';
+          }
+        }
+
+        set((state) => {
+          state.permission = 'denied';
+        });
+        return 'denied';
+      },
+
       setPermission: (permission) => {
         set((state) => {
           state.permission = permission;

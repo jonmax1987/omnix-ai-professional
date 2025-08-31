@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { RecommendationsService } from './recommendations.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,6 +20,19 @@ export class RecommendationsController {
     return await this.recommendationsService.getRecommendations(query);
   }
 
+  @Get('orders')
+  @ApiOperation({ summary: 'Get order recommendations' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'type', required: false, enum: ['reorder', 'optimize', 'discontinue', 'promotion'] })
+  @ApiQuery({ name: 'priority', required: false, enum: ['high', 'medium', 'low'] })
+  @ApiResponse({ status: 200, description: 'Returns paginated list of order recommendations' })
+  async getOrderRecommendations(@Query() query: any) {
+    // For now, return the same recommendations as the general endpoint
+    // In the future, this could be filtered to only order-specific recommendations
+    return await this.recommendationsService.getRecommendations(query);
+  }
+
   @Post(':recommendationId/accept')
   @ApiOperation({ summary: 'Accept a recommendation' })
   @ApiResponse({ status: 200, description: 'Recommendation accepted successfully' })
@@ -32,6 +45,47 @@ export class RecommendationsController {
   @ApiResponse({ status: 200, description: 'Recommendation dismissed successfully' })
   async dismissRecommendation(@Param('recommendationId') recommendationId: string) {
     return await this.recommendationsService.dismissRecommendation(recommendationId);
+  }
+
+  @Get('history')
+  @ApiOperation({ summary: 'Get recommendation history' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Returns recommendation history' })
+  async getRecommendationHistory(@Query() query: any) {
+    // Return recommendation history with mock data for now
+    return {
+      data: [],
+      total: 0,
+      page: query.page || 1,
+      limit: query.limit || 10,
+      totalPages: 0
+    };
+  }
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Get recommendation settings' })
+  @ApiResponse({ status: 200, description: 'Returns recommendation settings' })
+  async getRecommendationSettings() {
+    // Return default recommendation settings
+    return {
+      autoApply: false,
+      notificationEnabled: true,
+      minConfidence: 0.7,
+      maxRecommendationsPerDay: 10,
+      categories: ['reorder', 'optimize', 'discontinue', 'promotion']
+    };
+  }
+
+  @Patch('settings')
+  @ApiOperation({ summary: 'Update recommendation settings' })
+  @ApiResponse({ status: 200, description: 'Settings updated successfully' })
+  async updateRecommendationSettings(@Body() settings: any) {
+    // For now, just return the updated settings
+    return {
+      ...settings,
+      updatedAt: new Date().toISOString()
+    };
   }
 
   // Customer product recommendation endpoints

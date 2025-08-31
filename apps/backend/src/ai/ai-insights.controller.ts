@@ -35,7 +35,10 @@ export class AIInsightsController {
         '/personalization',
         '/pricing-optimization',
         '/feedback',
-        '/model-performance'
+        '/model-performance',
+        '/demand-forecasting',
+        '/ab-test-recommendations',
+        '/business-intelligence'
       ]
     };
   }
@@ -383,6 +386,122 @@ export class AIInsightsController {
     }
   }
 
+  @Get('demand-forecasting')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get inventory demand forecasting' })
+  @ApiResponse({ status: 200, description: 'Returns demand forecasting data' })
+  async getDemandForecasting(
+    @Query('productId') productId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('forecastPeriod') forecastPeriod?: string,
+    @Query('includeSeasonality') includeSeasonality?: string,
+    @Query('includeExternalFactors') includeExternalFactors?: string,
+    @Query('confidenceLevel') confidenceLevel?: string,
+  ) {
+    try {
+      const forecasts = await this.generateMockDemandForecasting({
+        productId,
+        categoryId,
+        forecastPeriod: forecastPeriod ? parseInt(forecastPeriod) : 60,
+        includeSeasonality: includeSeasonality === 'true',
+        includeExternalFactors: includeExternalFactors === 'true',
+        confidenceLevel: confidenceLevel ? parseFloat(confidenceLevel) : 0.95,
+      });
+
+      return {
+        success: true,
+        forecasts,
+        metadata: {
+          productId,
+          categoryId,
+          forecastPeriod: forecastPeriod ? parseInt(forecastPeriod) : 60,
+          generatedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        forecasts: [],
+      };
+    }
+  }
+
+  @Get('ab-test-recommendations')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get A/B test recommendations' })
+  @ApiResponse({ status: 200, description: 'Returns A/B test recommendations' })
+  async getABTestRecommendations(
+    @Query('feature') feature?: string,
+    @Query('targetMetric') targetMetric?: string,
+    @Query('includeDesignSuggestions') includeDesignSuggestions?: string,
+    @Query('includeStatisticalPower') includeStatisticalPower?: string,
+  ) {
+    try {
+      const recommendations = await this.generateMockABTestRecommendations({
+        feature,
+        targetMetric: targetMetric || 'revenue',
+        includeDesignSuggestions: includeDesignSuggestions === 'true',
+        includeStatisticalPower: includeStatisticalPower === 'true',
+      });
+
+      return {
+        success: true,
+        recommendations,
+        metadata: {
+          feature,
+          targetMetric: targetMetric || 'revenue',
+          generatedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        recommendations: [],
+      };
+    }
+  }
+
+  @Get('business-intelligence')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get business intelligence summary' })
+  @ApiResponse({ status: 200, description: 'Returns business intelligence summary' })
+  async getBusinessIntelligenceSummary(
+    @Query('timeRange') timeRange?: string,
+    @Query('includeKeyInsights') includeKeyInsights?: string,
+    @Query('includeActionItems') includeActionItems?: string,
+    @Query('includePerformanceMetrics') includePerformanceMetrics?: string,
+    @Query('includePredictions') includePredictions?: string,
+  ) {
+    try {
+      const summary = await this.generateMockBusinessIntelligence({
+        timeRange: timeRange || '24h',
+        includeKeyInsights: includeKeyInsights === 'true',
+        includeActionItems: includeActionItems === 'true',
+        includePerformanceMetrics: includePerformanceMetrics === 'true',
+        includePredictions: includePredictions === 'true',
+      });
+
+      return {
+        success: true,
+        summary: summary.summary,
+        insights: summary.insights,
+        metadata: {
+          timeRange: timeRange || '24h',
+          generatedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        summary: {},
+        insights: [],
+      };
+    }
+  }
+
   // Private helper methods for generating mock data
   private async generateMockInsights(customerId: string, options: any) {
     const insightTypes = options.types || ['savings', 'behavior', 'health', 'efficiency'];
@@ -506,5 +625,101 @@ export class AIInsightsController {
     }
 
     return [];
+  }
+
+  private async generateMockDemandForecasting(options: any) {
+    return [
+      {
+        productId: options.productId || 'prod_001',
+        productName: 'Organic Bananas',
+        currentDemand: 150,
+        forecastedDemand: [
+          { period: 'Week 1', demand: 165, confidence: 0.92 },
+          { period: 'Week 2', demand: 158, confidence: 0.89 },
+          { period: 'Week 3', demand: 172, confidence: 0.85 },
+          { period: 'Week 4', demand: 180, confidence: 0.81 },
+        ],
+        seasonalFactors: options.includeSeasonality ? {
+          spring: 1.1,
+          summer: 1.3,
+          autumn: 1.0,
+          winter: 0.8,
+        } : undefined,
+        externalFactors: options.includeExternalFactors ? [
+          'weather_conditions',
+          'local_events',
+          'economic_indicators',
+        ] : undefined,
+      },
+    ];
+  }
+
+  private async generateMockABTestRecommendations(options: any) {
+    return [
+      {
+        testId: `ab_test_${Date.now()}`,
+        feature: options.feature || 'product_recommendations',
+        hypothesis: 'Personalized AI recommendations will increase conversion rate',
+        suggestedVariants: [
+          {
+            name: 'Control',
+            description: 'Current recommendation algorithm',
+            expectedMetric: { conversionRate: 0.08 },
+          },
+          {
+            name: 'AI Enhanced',
+            description: 'AWS Bedrock powered personalized recommendations',
+            expectedMetric: { conversionRate: 0.12 },
+          },
+        ],
+        statisticalPower: options.includeStatisticalPower ? 0.80 : undefined,
+        designSuggestions: options.includeDesignSuggestions ? [
+          'Use 50/50 traffic split',
+          'Run test for minimum 2 weeks',
+          'Track both primary and secondary metrics',
+        ] : undefined,
+        estimatedDuration: '14 days',
+        confidence: 0.87,
+      },
+    ];
+  }
+
+  private async generateMockBusinessIntelligence(options: any) {
+    return {
+      summary: {
+        keyMetrics: {
+          totalRevenue: 45620,
+          customerGrowth: 12.5,
+          conversionRate: 8.3,
+          averageOrderValue: 67.89,
+        },
+        trends: {
+          revenue: 'up',
+          customers: 'up',
+          conversion: 'stable',
+          orderValue: 'up',
+        },
+      },
+      insights: options.includeKeyInsights ? [
+        {
+          type: 'revenue',
+          message: 'Revenue increased 15% compared to last month',
+          impact: 'high',
+          confidence: 0.94,
+        },
+        {
+          type: 'customer_behavior',
+          message: 'Organic products showing 25% higher engagement',
+          impact: 'medium',
+          confidence: 0.87,
+        },
+        {
+          type: 'inventory',
+          message: 'Fresh produce category performing above forecast',
+          impact: 'medium',
+          confidence: 0.91,
+        },
+      ] : [],
+    };
   }
 }

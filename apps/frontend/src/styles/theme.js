@@ -148,7 +148,8 @@ export const lightTheme = {
       border: colors.gray[200],
       light: colors.gray[100],
       hover: colors.gray[50],
-      main: colors.gray[500]
+      main: colors.gray[500],
+      subtle: colors.gray[100] || '#f3f4f6'
     },
     text: {
       primary: colors.gray[900],
@@ -476,7 +477,8 @@ export const darkTheme = {
       border: colors.gray[700],
       light: colors.gray[600],
       hover: colors.gray[800],
-      main: colors.gray[500]
+      main: colors.gray[500],
+      subtle: colors.gray[700] || '#374151'
     },
     text: {
       primary: colors.gray[50],

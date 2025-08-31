@@ -133,7 +133,7 @@ function Orders() {
   useEffect(() => {
     fetchOrders();
     fetchStatistics();
-  }, [filters, pagination.page, pagination.limit, sort]);
+  }, [fetchOrders, fetchStatistics, filters, pagination.page, pagination.limit, sort]);
 
   // Handle search
   const handleSearch = (query) => {
@@ -556,10 +556,18 @@ function Orders() {
           columns={columns}
           loading={loading.orders}
           error={errors.orders}
+          selectable={true}
           selectedItems={selectedOrders}
-          onSelectItem={toggleOrderSelection}
-          onSelectAll={selectAllOrders}
-          onDeselectAll={deselectAllOrders}
+          onSelect={(rowData, checked) => {
+            toggleOrderSelection(rowData);
+          }}
+          onSelectAll={(selectedData) => {
+            if (selectedData.length > 0) {
+              selectAllOrders();
+            } else {
+              deselectAllOrders();
+            }
+          }}
           onSort={handleSort}
           sortField={sort.field}
           sortDirection={sort.direction}
@@ -570,7 +578,7 @@ function Orders() {
             onPageChange: handlePageChange,
             onLimitChange: handleLimitChange
           }}
-          emptyMessage="No orders found. Create your first order to get started."
+          emptyStateDescription="No orders found. Create your first order to get started."
         />
 
         {/* Order Form Modal */}

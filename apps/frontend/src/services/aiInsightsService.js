@@ -7,7 +7,7 @@ import httpClient from './httpClient';
 
 class AIInsightsService {
   constructor() {
-    this.baseEndpoint = '/v1/ai/insights';
+    this.baseEndpoint = '/ai/insights';
     this.cache = new Map();
     this.cacheTimeout = 60000; // 1 minute
   }
