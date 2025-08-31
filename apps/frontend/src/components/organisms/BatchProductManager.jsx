@@ -13,42 +13,42 @@ import useProductsStore from '../../store/productsStore';
 import { useI18n } from '../../hooks/useI18n';
 
 const BatchManagerContainer = styled(motion.div)`
-  background: ${props => props.theme.colors.background.elevated};
-  border-radius: ${props => props.theme.spacing[4]};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border-radius: ${props => props.theme?.spacing?.[4] || '1rem'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 `;
 
 const BatchManagerHeader = styled.div`
-  padding: ${props => props.theme.spacing[6]};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
   background: linear-gradient(135deg, 
-    ${props => props.theme.colors.blue[25]} 0%, 
-    ${props => props.theme.colors.blue[50]} 100%);
+    ${props => props.theme?.colors?.blue?.[25] || '#eff6ff'} 0%, 
+    ${props => props.theme?.colors?.blue?.[50] || '#dbeafe'} 100%);
 `;
 
 const HeaderContent = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
   flex-wrap: wrap;
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[3]};
+  gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
 `;
 
 const HeaderIcon = styled.div`
   width: 56px;
   height: 56px;
-  border-radius: ${props => props.theme.spacing[3]};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   background: linear-gradient(135deg, 
-    ${props => props.theme.colors.blue[500]} 0%, 
-    ${props => props.theme.colors.blue[600]} 100%);
+    ${props => props.theme?.colors?.blue?.[500] || '#3b82f6'} 0%, 
+    ${props => props.theme?.colors?.blue?.[600] || '#2563eb'} 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,30 +59,30 @@ const HeaderIcon = styled.div`
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   flex-wrap: wrap;
 `;
 
 const ActionSection = styled.div`
-  padding: ${props => props.theme.spacing[6]};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
 `;
 
 const ActionGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const ActionCard = styled(motion.div).withConfig({
   shouldForwardProp: (prop) => prop !== 'variant'
 })`
-  background: ${props => props.theme.colors.background.secondary};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
-  border-radius: ${props => props.theme.spacing[3]};
-  padding: ${props => props.theme.spacing[5]};
+  background: ${props => props.theme?.colors?.background?.secondary || '#f9fafb'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  padding: ${props => props.theme?.spacing?.[5] || '1.25rem'};
   cursor: pointer;
-  transition: all ${props => props.theme.animation.duration.fast} ${props => props.theme.animation.easing.easeInOut};
+  transition: all ${props => props.theme?.animation?.duration?.fast || '150ms'} ${props => props.theme?.animation?.easing?.easeInOut || 'cubic-bezier(0.4, 0, 0.2, 1)'};
   position: relative;
   overflow: hidden;
   
@@ -98,7 +98,7 @@ const ActionCard = styled(motion.div).withConfig({
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.lg};
+    box-shadow: ${props => props.theme?.shadows?.lg || '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'};
     border-color: ${props => getActionColor(props.variant, props.theme)};
   }
 `;
@@ -108,13 +108,13 @@ const ActionIcon = styled.div.withConfig({
 })`
   width: 48px;
   height: 48px;
-  border-radius: ${props => props.theme.spacing[2]};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   background: ${props => getActionColor(props.variant, props.theme)}20;
   color: ${props => getActionColor(props.variant, props.theme)};
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: ${props => props.theme.spacing[3]};
+  margin-bottom: ${props => props.theme?.spacing?.[3] || '0.75rem'};
 `;
 
 const FileInputWrapper = styled.div`
@@ -131,66 +131,66 @@ const FileInput = styled.input`
 const DropZone = styled(motion.div).withConfig({
   shouldForwardProp: (prop) => !['isDragOver', 'hasError'].includes(prop)
 })`
-  border: 2px dashed ${props => props.isDragOver ? props.theme.colors.blue[400] : 
-    props.hasError ? props.theme.colors.red[300] : props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[3]};
-  padding: ${props => props.theme.spacing[8]};
+  border: 2px dashed ${props => props.isDragOver ? props.theme?.colors?.blue?.[400] || '#60a5fa' : 
+    props.hasError ? props.theme?.colors?.red?.[300] || '#fca5a5' : props.theme?.colors?.border?.default || '#d1d5db'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  padding: ${props => props.theme?.spacing?.[8] || '2rem'};
   text-align: center;
-  background: ${props => props.isDragOver ? props.theme.colors.blue[25] : 
-    props.hasError ? props.theme.colors.red[25] : props.theme.colors.background.secondary};
+  background: ${props => props.isDragOver ? props.theme?.colors?.blue?.[25] || '#eff6ff' : 
+    props.hasError ? props.theme?.colors?.red?.[25] || '#fef2f2' : props.theme?.colors?.background?.secondary || '#f9fafb'};
   transition: all 0.3s ease;
   cursor: pointer;
   
   &:hover {
-    border-color: ${props => props.theme.colors.blue[400]};
-    background: ${props => props.theme.colors.blue[25]};
+    border-color: ${props => props.theme?.colors?.blue?.[400] || '#60a5fa'};
+    background: ${props => props.theme?.colors?.blue?.[25] || '#eff6ff'};
   }
 `;
 
 const ProcessingSection = styled.div`
-  padding: ${props => props.theme.spacing[6]};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
 `;
 
 const ProcessingCard = styled.div`
-  background: ${props => props.theme.colors.background.secondary};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
-  border-radius: ${props => props.theme.spacing[3]};
-  padding: ${props => props.theme.spacing[5]};
+  background: ${props => props.theme?.colors?.background?.secondary || '#f9fafb'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  padding: ${props => props.theme?.spacing?.[5] || '1.25rem'};
 `;
 
 const ProcessingHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: ${props => props.theme.spacing[4]};
+  margin-bottom: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: ${props => props.theme.spacing[3]};
-  margin: ${props => props.theme.spacing[4]} 0;
+  gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  margin: ${props => props.theme?.spacing?.[4] || '1rem'} 0;
 `;
 
 const StatItem = styled.div`
   text-align: center;
-  padding: ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.background.elevated};
-  border-radius: ${props => props.theme.spacing[2]};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
 `;
 
 const StatValue = styled.div`
-  font-size: ${props => props.theme.typography.fontSize.lg};
-  font-weight: ${props => props.theme.typography.fontWeight.bold};
-  color: ${props => props.theme.colors.primary[600]};
-  margin-bottom: ${props => props.theme.spacing[1]};
+  font-size: ${props => props.theme?.typography?.fontSize?.lg || '1.125rem'};
+  font-weight: ${props => props.theme?.typography?.fontWeight?.bold || '700'};
+  color: ${props => props.theme?.colors?.primary?.[600] || '#2563eb'};
+  margin-bottom: ${props => props.theme?.spacing?.[1] || '0.25rem'};
 `;
 
 const StatLabel = styled.div`
-  font-size: ${props => props.theme.typography.fontSize.xs};
-  color: ${props => props.theme.colors.text.tertiary};
+  font-size: ${props => props.theme?.typography?.fontSize?.xs || '0.75rem'};
+  color: ${props => props.theme?.colors?.text?.tertiary || '#6b7280'};
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
@@ -198,38 +198,38 @@ const StatLabel = styled.div`
 const ErrorList = styled.div`
   max-height: 300px;
   overflow-y: auto;
-  margin-top: ${props => props.theme.spacing[4]};
+  margin-top: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const ErrorItem = styled.div`
   display: flex;
   align-items: flex-start;
-  gap: ${props => props.theme.spacing[2]};
-  padding: ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.red[25]};
-  border: 1px solid ${props => props.theme.colors.red[200]};
-  border-radius: ${props => props.theme.spacing[2]};
-  margin-bottom: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  background: ${props => props.theme?.colors?.red?.[25] || '#fef2f2'};
+  border: 1px solid ${props => props.theme?.colors?.red?.[200] || '#fecaca'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  margin-bottom: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const PreviewSection = styled.div`
-  padding: ${props => props.theme.spacing[6]};
+  padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
 `;
 
 const PreviewHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: ${props => props.theme.spacing[4]};
+  margin-bottom: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 // Utility functions
 const getActionColor = (variant, theme) => {
   const colors = {
-    import: theme.colors?.blue?.[500] || '#3B82F6',
-    export: theme.colors?.green?.[500] || '#10B981',
-    template: theme.colors?.purple?.[500] || '#8B5CF6',
-    bulk: theme.colors?.orange?.[500] || '#F97316'
+    import: theme?.colors?.blue?.[500] || '#3B82F6',
+    export: theme?.colors?.green?.[500] || '#10B981',
+    template: theme?.colors?.purple?.[500] || '#8B5CF6',
+    bulk: theme?.colors?.orange?.[500] || '#F97316'
   };
   return colors[variant] || colors.import;
 };
@@ -787,7 +787,7 @@ const BatchProductManager = ({
             <ErrorList>
               {errors.slice(0, 10).map((error, index) => (
                 <ErrorItem key={index}>
-                  <Icon name="alert-circle" size={16} color={theme => theme.colors.red[500]} />
+                  <Icon name="alert-circle" size={16} color={theme => theme?.colors?.red?.[500] || '#ef4444'} />
                   <div style={{ flex: 1 }}>
                     <Typography variant="body2" weight="medium">
                       {error.row && `Row ${error.row}: `}{error.message}
@@ -1001,7 +1001,7 @@ const BatchProductManager = ({
             <ErrorList>
               {processResults.errors.slice(0, 5).map((error, index) => (
                 <ErrorItem key={index}>
-                  <Icon name="alert-triangle" size={16} color={theme => theme.colors.yellow[500]} />
+                  <Icon name="alert-triangle" size={16} color={theme => theme?.colors?.yellow?.[500] || '#eab308'} />
                   <div style={{ flex: 1 }}>
                     <Typography variant="body2" weight="medium">
                       {error.product}
@@ -1179,7 +1179,7 @@ const BatchProductManager = ({
             }}
           >
             <div style={{
-              background: props.theme?.colors?.background?.elevated || 'white',
+              background: props.theme?.colors?.background?.elevated || '#ffffff',
               padding: '24px',
               borderRadius: '12px',
               textAlign: 'center',

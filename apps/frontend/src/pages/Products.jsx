@@ -20,16 +20,16 @@ import useProductsStore from '../store/productsStore';
 import { useRealtimeProducts } from '../hooks/useWebSocket';
 
 const ProductsContainer = styled(motion.div)`
-  padding: ${props => props.theme.spacing[6]};
+  padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
   min-height: 100vh;
-  background: ${props => props.theme.colors.background.primary};
+  background: ${props => props.theme?.colors?.background?.primary || '#ffffff'};
   
-  @media (max-width: ${props => props.theme.breakpoints.lg}) {
-    padding: ${props => props.theme.spacing[4]};
+  @media (max-width: ${props => props.theme?.breakpoints?.lg || '1024px'}) {
+    padding: ${props => props.theme?.spacing?.[4] || '1rem'};
   }
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    padding: ${props => props.theme.spacing[3]};
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
+    padding: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   }
 `;
 
@@ -37,28 +37,28 @@ const ProductsHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: ${props => props.theme.spacing[6]};
+  margin-bottom: ${props => props.theme?.spacing?.[6] || '1.5rem'};
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
     flex-direction: column;
     align-items: flex-start;
-    gap: ${props => props.theme.spacing[4]};
-    margin-bottom: ${props => props.theme.spacing[4]};
+    gap: ${props => props.theme?.spacing?.[4] || '1rem'};
+    margin-bottom: ${props => props.theme?.spacing?.[4] || '1rem'};
   }
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing[1]};
+  gap: ${props => props.theme?.spacing?.[1] || '0.25rem'};
 `;
 
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
     width: 100%;
     justify-content: space-between;
   }
@@ -66,9 +66,9 @@ const HeaderRight = styled.div`
 
 const QuickActions = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   
-  @media (max-width: ${props => props.theme.breakpoints.sm}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.sm || '640px'}) {
     flex-direction: column;
     width: 100%;
     
@@ -81,7 +81,7 @@ const QuickActions = styled.div`
 const StockStatus = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[1]};
+  gap: ${props => props.theme?.spacing?.[1] || '0.25rem'};
 `;
 
 const StockDot = styled.div.withConfig({
@@ -96,8 +96,8 @@ const StockDot = styled.div.withConfig({
 const ProductImage = styled.div`
   width: 40px;
   height: 40px;
-  border-radius: ${props => props.theme.spacing[1]};
-  background: ${props => props.theme.colors.gray[100]};
+  border-radius: ${props => props.theme?.spacing?.[1] || '0.25rem'};
+  background: ${props => props.theme?.colors?.gray?.[100] || '#f3f4f6'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,10 +111,10 @@ const ProductImage = styled.div`
 `;
 
 const getStockColor = (level, theme) => {
-  if (level === 'out') return theme.colors.red[500];
-  if (level === 'low') return theme.colors.yellow[500];
-  if (level === 'medium') return theme.colors.primary[500];
-  return theme.colors.green[500];
+  if (level === 'out') return theme?.colors?.red?.[500] || '#ef4444';
+  if (level === 'low') return theme?.colors?.yellow?.[500] || '#eab308';
+  if (level === 'medium') return theme?.colors?.primary?.[500] || '#3b82f6';
+  return theme?.colors?.green?.[500] || '#10b981';
 };
 
 const getStockLabel = (current, min = 0, max = 0, t) => {

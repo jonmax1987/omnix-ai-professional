@@ -217,9 +217,24 @@ class StoreInitializer {
       const metrics = optimizedDataService.getPerformanceMetrics();
       this.log('info', 'Performance metrics:', metrics);
       
-      // Cache efficiency warning
+      // Cache efficiency warnings based on status
       if (metrics.cache.efficiency === 'poor') {
-        this.log('warn', 'Cache efficiency is poor, consider reviewing cache TTL settings');
+        this.log('warn', 'Cache efficiency is poor, consider reviewing cache TTL settings or API usage patterns', {
+          hitRate: metrics.cache.hitRate,
+          totalRequests: metrics.cache.totalRequests
+        });
+      } else if (metrics.cache.efficiency === 'fair') {
+        this.log('info', 'Cache efficiency is fair, monitoring for improvements', {
+          hitRate: metrics.cache.hitRate,
+          totalRequests: metrics.cache.totalRequests
+        });
+      } else if (metrics.cache.efficiency === 'initializing') {
+        this.log('debug', 'Cache is still initializing, not enough data for efficiency analysis');
+      } else if (metrics.cache.efficiency === 'good' || metrics.cache.efficiency === 'excellent') {
+        this.log('info', `Cache efficiency is ${metrics.cache.efficiency}`, {
+          hitRate: metrics.cache.hitRate,
+          totalRequests: metrics.cache.totalRequests
+        });
       }
     } catch (error) {
       this.log('debug', 'Failed to get performance metrics', error);

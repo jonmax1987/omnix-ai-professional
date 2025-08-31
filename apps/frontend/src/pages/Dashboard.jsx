@@ -416,20 +416,39 @@ const Dashboard = () => {
     });
     
     // Add customer behavior insights as alerts
-    customerInsights.slice(0, 5).forEach(insight => {
-      alerts.push({
-        id: insight.id,
-        severity: insight.priority === 'high' ? 'warning' : 'info',
-        title: `Customer Insight: ${insight.type}`,
-        message: insight.message,
-        category: 'Customer Behavior',
-        timestamp: new Date(insight.timestamp),
-        read: false,
-        source: 'ai',
-        aiGenerated: true,
-        customerId: insight.customerId
+    if (customerInsights?.anomalies && Array.isArray(customerInsights.anomalies)) {
+      customerInsights.anomalies.slice(0, 3).forEach(insight => {
+        alerts.push({
+          id: insight.id || `anomaly-${Date.now()}-${Math.random()}`,
+          severity: insight.severity || 'warning',
+          title: `Customer Anomaly: ${insight.type || 'Behavior Pattern'}`,
+          message: insight.description || insight.message || 'Unusual behavior detected',
+          category: 'Customer Behavior',
+          timestamp: new Date(insight.timestamp || Date.now()),
+          read: false,
+          source: 'ai',
+          aiGenerated: true,
+          customerId: insight.customerId
+        });
       });
-    });
+    }
+    
+    // Add trending insights
+    if (customerInsights?.trends && Array.isArray(customerInsights.trends)) {
+      customerInsights.trends.slice(0, 2).forEach(trend => {
+        alerts.push({
+          id: `trend-${Date.now()}-${Math.random()}`,
+          severity: trend.direction === 'down' ? 'warning' : 'info',
+          title: `Customer Trend: ${trend.metric}`,
+          message: trend.description || `${trend.metric} trend detected`,
+          category: 'Customer Analytics',
+          timestamp: new Date(),
+          read: false,
+          source: 'ai',
+          aiGenerated: true
+        });
+      });
+    }
     
     // Add churn risk alerts
     churnAlerts.slice(0, 3).forEach(alert => {

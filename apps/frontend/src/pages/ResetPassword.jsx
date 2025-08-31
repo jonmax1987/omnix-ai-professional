@@ -26,8 +26,8 @@ const ResetContainer = styled.div`
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, 
-    ${props => props.theme.colors.primary[50]} 0%, 
-    ${props => props.theme.colors.secondary[50]} 100%
+    ${props => props.theme?.colors?.primary?.[50] || '#eff6ff'} 0%, 
+    ${props => props.theme?.colors?.secondary?.[50] || '#f5f3ff'} 100%
   );
   padding: 2rem;
   position: relative;
@@ -40,16 +40,16 @@ const ResetContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23${props => props.theme.colors.primary[100].slice(1)}' fill-opacity='0.1'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E") repeat;
+    background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23${(props.theme?.colors?.primary?.[100] || '#dbeafe').slice(1)}' fill-opacity='0.1'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E") repeat;
     opacity: 0.5;
   }
 `;
 
 const ResetCard = styled(motion.div)`
-  background: ${props => props.theme.colors.background.primary};
-  border-radius: ${props => props.theme.borderRadius.xl};
-  box-shadow: ${props => props.theme.shadows.xl};
-  border: 1px solid ${props => props.theme.colors.border.light};
+  background: ${props => props.theme?.colors?.background?.primary || '#ffffff'};
+  border-radius: ${props => props.theme?.borderRadius?.xl || '0.75rem'};
+  box-shadow: ${props => props.theme?.shadows?.xl || '0 20px 25px -5px rgba(0, 0, 0, 0.1)'};
+  border: 1px solid ${props => props.theme?.colors?.border?.light || '#e2e8f0'};
   padding: 3rem;
   width: 100%;
   max-width: 400px;
@@ -57,7 +57,7 @@ const ResetCard = styled(motion.div)`
   z-index: 1;
   animation: ${fadeIn} 0.6s ease-out;
 
-  @media (max-width: ${props => props.theme.breakpoints.sm}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.sm || '640px'}) {
     padding: 2rem;
     margin: 1rem;
   }
@@ -73,10 +73,10 @@ const Logo = styled.div`
   width: 64px;
   height: 64px;
   background: linear-gradient(135deg, 
-    ${props => props.theme.colors.primary[500]}, 
-    ${props => props.theme.colors.secondary[500]}
+    ${props => props.theme?.colors?.primary?.[500] || '#3b82f6'}, 
+    ${props => props.theme?.colors?.secondary?.[500] || '#8b5cf6'}
   );
-  border-radius: ${props => props.theme.borderRadius.xl};
+  border-radius: ${props => props.theme?.borderRadius?.xl || '0.75rem'};
   margin: 0 auto 1rem;
   display: flex;
   align-items: center;
@@ -100,10 +100,10 @@ const InputGroup = styled.div`
 `;
 
 const ErrorMessage = styled(motion.div)`
-  background: ${props => props.theme.colors.status.error.background};
-  color: ${props => props.theme.colors.status.error.text};
-  border: 1px solid ${props => props.theme.colors.status.error.border};
-  border-radius: ${props => props.theme.borderRadius.md};
+  background: ${props => props.theme?.colors?.status?.error?.background || '#fef2f2'};
+  color: ${props => props.theme?.colors?.status?.error?.text || '#b91c1c'};
+  border: 1px solid ${props => props.theme?.colors?.status?.error?.border || '#fecaca'};
+  border-radius: ${props => props.theme?.borderRadius?.md || '0.375rem'};
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   display: flex;
@@ -117,10 +117,10 @@ const ErrorMessage = styled(motion.div)`
 `;
 
 const SuccessMessage = styled(motion.div)`
-  background: ${props => props.theme.colors.status.success.background};
-  color: ${props => props.theme.colors.status.success.text};
-  border: 1px solid ${props => props.theme.colors.status.success.border};
-  border-radius: ${props => props.theme.borderRadius.md};
+  background: ${props => props.theme?.colors?.status?.success?.background || '#f0fdf4'};
+  color: ${props => props.theme?.colors?.status?.success?.text || '#15803d'};
+  border: 1px solid ${props => props.theme?.colors?.status?.success?.border || '#bbf7d0'};
+  border-radius: ${props => props.theme?.borderRadius?.md || '0.375rem'};
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   display: flex;
@@ -150,15 +150,15 @@ const BackLink = styled.div`
   text-align: center;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid ${props => props.theme.colors.border.light};
+  border-top: 1px solid ${props => props.theme?.colors?.border?.light || '#e2e8f0'};
   
   a {
-    color: ${props => props.theme.colors.primary[600]};
+    color: ${props => props.theme?.colors?.primary?.[600] || '#2563eb'};
     text-decoration: none;
     font-weight: 500;
     
     &:hover {
-      color: ${props => props.theme.colors.primary[700]};
+      color: ${props => props.theme?.colors?.primary?.[700] || '#1d4ed8'};
       text-decoration: underline;
     }
   }
@@ -173,13 +173,13 @@ const PasswordStrength = styled.div`
 const StrengthBar = styled.div`
   flex: 1;
   height: 4px;
-  background: ${props => props.theme.colors.border.light};
+  background: ${props => props.theme?.colors?.border?.light || '#e2e8f0'};
   border-radius: 2px;
   transition: background-color 0.3s ease;
   
-  &.weak { background: ${props => props.theme.colors.status.error.text}; }
-  &.medium { background: ${props => props.theme.colors.status.warning.text}; }
-  &.strong { background: ${props => props.theme.colors.status.success.text}; }
+  &.weak { background: ${props => props.theme?.colors?.status?.error?.text || '#b91c1c'}; }
+  &.medium { background: ${props => props.theme?.colors?.status?.warning?.text || '#d97706'}; }
+  &.strong { background: ${props => props.theme?.colors?.status?.success?.text || '#15803d'}; }
 `;
 
 function ResetPassword() {

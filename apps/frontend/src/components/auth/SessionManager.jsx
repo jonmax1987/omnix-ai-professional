@@ -104,17 +104,15 @@ const SessionManager = ({
   onSessionExtended = null,
   ...props 
 }) => {
-  const {
-    isAuthenticated,
-    isSessionExpiring,
-    isSessionExpired,
-    getSessionTimeRemaining,
-    showSessionWarning,
-    extendSession,
-    logout,
-    updateLastActivity,
-    session
-  } = useUserStore();
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
+  const session = useUserStore((state) => state.session);
+  const isSessionExpiring = useUserStore((state) => state.isSessionExpiring);
+  const isSessionExpired = useUserStore((state) => state.isSessionExpired);
+  const getSessionTimeRemaining = useUserStore((state) => state.getSessionTimeRemaining);
+  const showSessionWarning = useUserStore((state) => state.showSessionWarning);
+  const extendSession = useUserStore((state) => state.extendSession);
+  const logout = useUserStore((state) => state.logout);
+  const updateLastActivity = useUserStore((state) => state.updateLastActivity);
 
   const [countdown, setCountdown] = useState(0);
   const [showWarning, setShowWarning] = useState(false);

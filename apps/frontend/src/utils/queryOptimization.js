@@ -3,7 +3,7 @@
  * Advanced client-side query optimization, caching, and data management strategies
  */
 
-import { LRUCache } from 'lru-cache';
+import LRUCache from 'lru-cache';
 
 /**
  * Query cache configuration

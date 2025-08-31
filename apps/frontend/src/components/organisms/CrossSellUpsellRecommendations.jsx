@@ -14,43 +14,43 @@ import inventoryService from '../../services/inventoryService';
 import { useI18n } from '../../hooks/useI18n';
 
 const RecommendationsContainer = styled(motion.div)`
-  background: ${props => props.theme.colors.background.elevated};
-  border-radius: ${props => props.theme.spacing[4]};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border-radius: ${props => props.theme?.spacing?.[4] || '16px'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 `;
 
 const RecommendationsHeader = styled.div`
-  padding: ${props => props.theme.spacing[6]};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[6] || '24px'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
   background: linear-gradient(135deg, 
-    ${props => props.theme.colors.primary[25]} 0%, 
-    ${props => props.theme.colors.primary[50]} 100%);
+    ${props => props.theme?.colors?.primary?.[25] || '#eff6ff'} 0%, 
+    ${props => props.theme?.colors?.primary?.[50] || '#dbeafe'} 100%);
 `;
 
 const HeaderTop = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: ${props => props.theme.spacing[4]};
-  margin-bottom: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '16px'};
+  margin-bottom: ${props => props.theme?.spacing?.[4] || '16px'};
   flex-wrap: wrap;
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[3]};
+  gap: ${props => props.theme?.spacing?.[3] || '12px'};
 `;
 
 const HeaderIcon = styled.div`
   width: 56px;
   height: 56px;
-  border-radius: ${props => props.theme.spacing[3]};
+  border-radius: ${props => props.theme?.spacing?.[3] || '12px'};
   background: linear-gradient(135deg, 
-    ${props => props.theme.colors.primary[500]} 0%, 
-    ${props => props.theme.colors.primary[600]} 100%);
+    ${props => props.theme?.colors?.primary?.[500] || '#3b82f6'} 0%, 
+    ${props => props.theme?.colors?.primary?.[600] || '#2563eb'} 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -61,59 +61,59 @@ const HeaderIcon = styled.div`
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '8px'};
   flex-wrap: wrap;
 `;
 
 const FilterSection = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[3]};
+  gap: ${props => props.theme?.spacing?.[3] || '12px'};
   flex-wrap: wrap;
-  margin-top: ${props => props.theme.spacing[4]};
+  margin-top: ${props => props.theme?.spacing?.[4] || '16px'};
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${props => props.theme.spacing[3]};
-  margin-bottom: ${props => props.theme.spacing[6]};
-  padding: ${props => props.theme.spacing[5]};
-  background: ${props => props.theme.colors.background.secondary};
+  gap: ${props => props.theme?.spacing?.[3] || '12px'};
+  margin-bottom: ${props => props.theme?.spacing?.[6] || '24px'};
+  padding: ${props => props.theme?.spacing?.[5] || '20px'};
+  background: ${props => props.theme?.colors?.background?.secondary || '#f8fafc'};
 `;
 
 const StatCard = styled(motion.div)`
   text-align: center;
-  padding: ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.background.elevated};
-  border-radius: ${props => props.theme.spacing[2]};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[3] || '12px'};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '8px'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
 `;
 
 const TabsContainer = styled.div`
   display: flex;
-  border-bottom: 2px solid ${props => props.theme.colors.border.subtle};
-  padding: 0 ${props => props.theme.spacing[6]};
-  background: ${props => props.theme.colors.background.elevated};
+  border-bottom: 2px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
+  padding: 0 ${props => props.theme?.spacing?.[6] || '24px'};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
 `;
 
 const Tab = styled.button.withConfig({
   shouldForwardProp: (prop) => prop !== 'active'
 })`
-  padding: ${props => props.theme.spacing[3]} ${props => props.theme.spacing[4]};
+  padding: ${props => props.theme?.spacing?.[3] || '12px'} ${props => props.theme?.spacing?.[4] || '16px'};
   background: none;
   border: none;
-  font-size: ${props => props.theme.typography.fontSize.sm};
-  font-weight: ${props => props.theme.typography.fontWeight.medium};
-  color: ${props => props.active ? props.theme.colors.primary[600] : props.theme.colors.text.secondary};
+  font-size: ${props => props.theme?.typography?.fontSize?.sm || '0.875rem'};
+  font-weight: ${props => props.theme?.typography?.fontWeight?.medium || '500'};
+  color: ${props => props.active ? props.theme?.colors?.primary?.[600] || '#2563eb' : props.theme?.colors?.text?.secondary || '#6b7280'};
   cursor: pointer;
   transition: all 0.2s ease;
-  border-bottom: 2px solid ${props => props.active ? props.theme.colors.primary[500] : 'transparent'};
+  border-bottom: 2px solid ${props => props.active ? props.theme?.colors?.primary?.[500] || '#3b82f6' : 'transparent'};
   position: relative;
   
   &:hover:not(:disabled) {
-    color: ${props => props.theme.colors.primary[500]};
-    background: ${props => props.theme.colors.primary[25]};
+    color: ${props => props.theme?.colors?.primary?.[500] || '#3b82f6'};
+    background: ${props => props.theme?.colors?.primary?.[25] || '#eff6ff'};
   }
   
   &:disabled {
@@ -123,27 +123,27 @@ const Tab = styled.button.withConfig({
 `;
 
 const TabContent = styled(motion.div)`
-  padding: ${props => props.theme.spacing[6]};
+  padding: ${props => props.theme?.spacing?.[6] || '24px'};
 `;
 
 const RecommendationsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: ${props => props.theme.spacing[4]};
-  margin-bottom: ${props => props.theme.spacing[6]};
+  gap: ${props => props.theme?.spacing?.[4] || '16px'};
+  margin-bottom: ${props => props.theme?.spacing?.[6] || '24px'};
 `;
 
 const RecommendationCard = styled(motion.div).withConfig({
   shouldForwardProp: (prop) => !['type', 'priority'].includes(prop)
 })`
-  background: ${props => props.theme.colors.background.elevated};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
-  border-radius: ${props => props.theme.spacing[3]};
-  padding: ${props => props.theme.spacing[5]};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '12px'};
+  padding: ${props => props.theme?.spacing?.[5] || '20px'};
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all ${props => props.theme.animation.duration.fast} ${props => props.theme.animation.easing.easeInOut};
+  transition: all ${props => props.theme?.animation?.duration?.fast || '150ms'} ${props => props.theme?.animation?.easing?.easeInOut || 'ease-in-out'};
   
   &::before {
     content: '';
@@ -157,8 +157,8 @@ const RecommendationCard = styled(motion.div).withConfig({
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: ${props => props.theme.shadows.lg};
-    border-color: ${props => props.theme.colors.primary[200]};
+    box-shadow: ${props => props.theme?.shadows?.lg || '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'};
+    border-color: ${props => props.theme?.colors?.primary?.[200] || '#bfdbfe'};
   }
 `;
 
@@ -166,7 +166,7 @@ const RecommendationHeader = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: ${props => props.theme.spacing[4]};
+  margin-bottom: ${props => props.theme?.spacing?.[4] || '16px'};
 `;
 
 const RecommendationIcon = styled.div.withConfig({
@@ -174,13 +174,13 @@ const RecommendationIcon = styled.div.withConfig({
 })`
   width: 48px;
   height: 48px;
-  border-radius: ${props => props.theme.spacing[2]};
+  border-radius: ${props => props.theme?.spacing?.[2] || '8px'};
   background: ${props => getRecommendationGradient(props.type, props.theme)};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  margin-right: ${props => props.theme.spacing[3]};
+  margin-right: ${props => props.theme?.spacing?.[3] || '12px'};
   flex-shrink: 0;
 `;
 
@@ -192,22 +192,22 @@ const RecommendationContent = styled.div`
 const ProductPair = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[3]};
-  margin: ${props => props.theme.spacing[3]} 0;
-  padding: ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.background.secondary};
-  border-radius: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[3] || '12px'};
+  margin: ${props => props.theme?.spacing?.[3] || '12px'} 0;
+  padding: ${props => props.theme?.spacing?.[3] || '12px'};
+  background: ${props => props.theme?.colors?.background?.secondary || '#f8fafc'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '8px'};
 `;
 
 const ProductImage = styled.div`
   width: 40px;
   height: 40px;
-  border-radius: ${props => props.theme.spacing[1]};
-  background: ${props => props.theme.colors.background.primary};
+  border-radius: ${props => props.theme?.spacing?.[1] || '4px'};
+  background: ${props => props.theme?.colors?.background?.primary || '#ffffff'};
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid ${props => props.theme.colors.border.subtle};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#e5e7eb'};
 `;
 
 const ProductInfo = styled.div`
@@ -219,8 +219,8 @@ const ArrowIcon = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: ${props => props.theme.colors.primary[100]};
-  color: ${props => props.theme.colors.primary[600]};
+  background: ${props => props.theme?.colors?.primary?.[100] || '#dbeafe'};
+  color: ${props => props.theme?.colors?.primary?.[600] || '#2563eb'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,48 +230,48 @@ const ArrowIcon = styled.div`
 const MetricsRow = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: ${props => props.theme.spacing[3]};
-  margin: ${props => props.theme.spacing[4]} 0;
+  gap: ${props => props.theme?.spacing?.[3] || '12px'};
+  margin: ${props => props.theme?.spacing?.[4] || '16px'} 0;
 `;
 
 const MetricItem = styled.div`
   text-align: center;
-  padding: ${props => props.theme.spacing[2]};
-  background: ${props => props.theme.colors.background.subtle};
-  border-radius: ${props => props.theme.spacing[1]};
+  padding: ${props => props.theme?.spacing?.[2] || '8px'};
+  background: ${props => props.theme?.colors?.background?.subtle || '#f1f5f9'};
+  border-radius: ${props => props.theme?.spacing?.[1] || '4px'};
 `;
 
 const MetricValue = styled.div`
-  font-size: ${props => props.theme.typography.fontSize.lg};
-  font-weight: ${props => props.theme.typography.fontWeight.bold};
-  color: ${props => props.theme.colors.primary[600]};
-  margin-bottom: ${props => props.theme.spacing[1]};
+  font-size: ${props => props.theme?.typography?.fontSize?.lg || '1.125rem'};
+  font-weight: ${props => props.theme?.typography?.fontWeight?.bold || '700'};
+  color: ${props => props.theme?.colors?.primary?.[600] || '#2563eb'};
+  margin-bottom: ${props => props.theme?.spacing?.[1] || '4px'};
 `;
 
 const MetricLabel = styled.div`
-  font-size: ${props => props.theme.typography.fontSize.xs};
-  color: ${props => props.theme.colors.text.tertiary};
+  font-size: ${props => props.theme?.typography?.fontSize?.xs || '0.75rem'};
+  color: ${props => props.theme?.colors?.text?.tertiary || '#9ca3af'};
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
 
 const ActionButtons = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing[2]};
-  margin-top: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[2] || '8px'};
+  margin-top: ${props => props.theme?.spacing?.[4] || '16px'};
   
-  @media (max-width: ${props => props.theme.breakpoints.sm}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.sm || '640px'}) {
     flex-direction: column;
   }
 `;
 
 const ConfidenceIndicator = styled.div`
   position: absolute;
-  top: ${props => props.theme.spacing[3]};
-  right: ${props => props.theme.spacing[3]};
+  top: ${props => props.theme?.spacing?.[3] || '12px'};
+  right: ${props => props.theme?.spacing?.[3] || '12px'};
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[1]};
+  gap: ${props => props.theme?.spacing?.[1] || '4px'};
 `;
 
 const LoadingState = styled.div`
@@ -279,9 +279,9 @@ const LoadingState = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${props => props.theme.spacing[8]};
+  padding: ${props => props.theme?.spacing?.[8] || '32px'};
   text-align: center;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => props.theme?.colors?.text?.secondary || '#6b7280'};
 `;
 
 const EmptyState = styled.div`
@@ -289,9 +289,9 @@ const EmptyState = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: ${props => props.theme.spacing[8]};
+  padding: ${props => props.theme?.spacing?.[8] || '32px'};
   text-align: center;
-  color: ${props => props.theme.colors.text.secondary};
+  color: ${props => props.theme?.colors?.text?.secondary || '#6b7280'};
 `;
 
 // Utility functions
@@ -920,7 +920,7 @@ const CrossSellUpsellRecommendations = ({
                   {/* Product Pair */}
                   <ProductPair>
                     <ProductImage>
-                      <Icon name="package" size={20} color={theme => theme.colors.text.secondary} />
+                      <Icon name="package" size={20} color={theme => theme?.colors?.text?.secondary || '#6b7280'} />
                     </ProductImage>
                     <ProductInfo>
                       <Typography variant="body2" weight="medium">
@@ -934,7 +934,7 @@ const CrossSellUpsellRecommendations = ({
                       <Icon name="arrow-right" size={16} />
                     </ArrowIcon>
                     <ProductImage>
-                      <Icon name="package" size={20} color={theme => theme.colors.primary[500]} />
+                      <Icon name="package" size={20} color={theme => theme?.colors?.primary?.[500] || '#3b82f6'} />
                     </ProductImage>
                     <ProductInfo>
                       <Typography variant="body2" weight="medium">
@@ -959,7 +959,7 @@ const CrossSellUpsellRecommendations = ({
                   </MetricsRow>
 
                   {/* Expected Impact */}
-                  <div style={{ margin: `${props.theme?.spacing?.[3] || '12px'} 0` }}>
+                  <div style={{ margin: `${props?.theme?.spacing?.[3] || '12px'} 0` }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <Typography variant="body2" weight="medium">
                         Expected Revenue Impact

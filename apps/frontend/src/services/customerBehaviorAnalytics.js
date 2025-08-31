@@ -536,6 +536,219 @@ class CustomerBehaviorAnalytics {
     
     return Math.round(clv * engagementMultiplier);
   }
+
+  /**
+   * Get real-time customer behavior insights
+   */
+  async getRealtimeInsights(options = {}) {
+    const { limit = 10, timeRange = '24h' } = options;
+    
+    try {
+      // Generate mock real-time insights
+      const insights = [
+        {
+          id: `insight_${Date.now()}_1`,
+          type: 'customer_segment_shift',
+          title: 'High-Value Customer Segment Growing',
+          description: 'We\'ve detected a 15% increase in high-value customer conversions over the last 4 hours',
+          priority: 'high',
+          confidence: 0.89,
+          timestamp: new Date().toISOString(),
+          data: {
+            segmentChange: { from: 'active', to: 'high_value' },
+            growthRate: 0.15,
+            customerCount: 23
+          },
+          actionable: true,
+          recommendations: [
+            'Consider increasing marketing spend on similar customer profiles',
+            'Prepare inventory for potential demand surge'
+          ]
+        },
+        {
+          id: `insight_${Date.now()}_2`,
+          type: 'churn_risk_alert',
+          title: 'Churn Risk Spike Detected',
+          description: '12 previously active customers showing early churn indicators',
+          priority: 'critical',
+          confidence: 0.76,
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          data: {
+            atRiskCustomers: 12,
+            riskFactors: ['decreased_engagement', 'abandoned_cart', 'support_tickets'],
+            averageChurnProbability: 0.73
+          },
+          actionable: true,
+          recommendations: [
+            'Send personalized retention emails to at-risk customers',
+            'Offer targeted discounts to re-engage these users'
+          ]
+        },
+        {
+          id: `insight_${Date.now()}_3`,
+          type: 'purchase_pattern_anomaly',
+          title: 'Unusual Purchase Timing Detected',
+          description: 'Evening purchases are up 40% from typical patterns',
+          priority: 'medium',
+          confidence: 0.82,
+          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          data: {
+            timeSlot: '18:00-22:00',
+            increasePercentage: 0.40,
+            categoryBreakdown: {
+              electronics: 0.35,
+              home_garden: 0.25,
+              clothing: 0.40
+            }
+          },
+          actionable: false,
+          recommendations: []
+        },
+        {
+          id: `insight_${Date.now()}_4`,
+          type: 'engagement_surge',
+          title: 'Mobile Engagement Spike',
+          description: 'Mobile users showing 25% higher engagement rates than usual',
+          priority: 'medium',
+          confidence: 0.91,
+          timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+          data: {
+            platform: 'mobile',
+            engagementIncrease: 0.25,
+            keyMetrics: {
+              sessionDuration: '+18%',
+              pageViews: '+32%',
+              conversionRate: '+12%'
+            }
+          },
+          actionable: true,
+          recommendations: [
+            'Optimize mobile user experience further',
+            'Consider mobile-specific promotions'
+          ]
+        }
+      ];
+
+      return {
+        insights: insights.slice(0, limit),
+        totalInsights: insights.length,
+        generatedAt: new Date().toISOString(),
+        timeRange
+      };
+    } catch (error) {
+      throw new Error(`Failed to get realtime insights: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get customer behavior patterns
+   */
+  async getBehaviorPatterns(options = {}) {
+    const { timeRange = '7d', customerSegment = 'all' } = options;
+    
+    try {
+      // Generate mock behavior patterns
+      const patterns = {
+        timeBasedPatterns: {
+          hourlyDistribution: {
+            '09:00': { sessions: 142, conversions: 8, avgOrderValue: 67.50 },
+            '12:00': { sessions: 198, conversions: 15, avgOrderValue: 45.20 },
+            '15:00': { sessions: 167, conversions: 12, avgOrderValue: 78.90 },
+            '18:00': { sessions: 223, conversions: 18, avgOrderValue: 92.15 },
+            '21:00': { sessions: 189, conversions: 14, avgOrderValue: 56.75 }
+          },
+          dayOfWeekDistribution: {
+            'Monday': { sessions: 1240, conversions: 89, revenue: 5670.45 },
+            'Tuesday': { sessions: 1156, conversions: 78, revenue: 4980.20 },
+            'Wednesday': { sessions: 1189, conversions: 85, revenue: 6123.80 },
+            'Thursday': { sessions: 1298, conversions: 95, revenue: 7234.15 },
+            'Friday': { sessions: 1456, conversions: 112, revenue: 8901.25 },
+            'Saturday': { sessions: 1678, conversions: 134, revenue: 9876.50 },
+            'Sunday': { sessions: 1234, conversions: 98, revenue: 6543.75 }
+          }
+        },
+        categoryPatterns: {
+          mostViewed: [
+            { category: 'electronics', views: 2341, conversionRate: 0.076 },
+            { category: 'clothing', views: 1987, conversionRate: 0.089 },
+            { category: 'home_garden', views: 1654, conversionRate: 0.052 }
+          ],
+          highestConverting: [
+            { category: 'books', views: 789, conversionRate: 0.142 },
+            { category: 'sports', views: 1123, conversionRate: 0.098 },
+            { category: 'health', views: 965, conversionRate: 0.091 }
+          ]
+        },
+        segmentBehaviors: {
+          high_value: {
+            avgSessionDuration: 487, // seconds
+            pagesPerSession: 8.3,
+            conversionRate: 0.156,
+            avgOrderValue: 234.80,
+            topCategories: ['electronics', 'home_garden', 'premium']
+          },
+          frequent_buyer: {
+            avgSessionDuration: 342,
+            pagesPerSession: 6.1,
+            conversionRate: 0.089,
+            avgOrderValue: 89.45,
+            topCategories: ['clothing', 'health', 'books']
+          },
+          new_customer: {
+            avgSessionDuration: 289,
+            pagesPerSession: 5.7,
+            conversionRate: 0.034,
+            avgOrderValue: 45.20,
+            topCategories: ['electronics', 'clothing', 'sports']
+          }
+        },
+        devicePatterns: {
+          mobile: { 
+            sessions: 4567, 
+            conversionRate: 0.067, 
+            avgOrderValue: 78.90,
+            peakHours: ['12:00', '18:00', '21:00']
+          },
+          desktop: { 
+            sessions: 3421, 
+            conversionRate: 0.098, 
+            avgOrderValue: 127.45,
+            peakHours: ['09:00', '14:00', '16:00']
+          },
+          tablet: { 
+            sessions: 1234, 
+            conversionRate: 0.076, 
+            avgOrderValue: 95.60,
+            peakHours: ['10:00', '15:00', '20:00']
+          }
+        },
+        emergingTrends: [
+          {
+            trend: 'evening_mobile_shopping',
+            description: 'Increased mobile shopping activity between 18:00-22:00',
+            growth: 0.32,
+            confidence: 0.87
+          },
+          {
+            trend: 'weekend_premium_purchases',
+            description: 'Premium category purchases spike on weekends',
+            growth: 0.28,
+            confidence: 0.79
+          }
+        ]
+      };
+
+      return {
+        patterns,
+        timeRange,
+        customerSegment,
+        generatedAt: new Date().toISOString(),
+        dataPoints: 15420
+      };
+    } catch (error) {
+      throw new Error(`Failed to get behavior patterns: ${error.message}`);
+    }
+  }
 }
 
 // Create singleton instance

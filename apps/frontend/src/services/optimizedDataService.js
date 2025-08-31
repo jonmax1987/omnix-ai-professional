@@ -11,11 +11,11 @@ import { queryOptimizer, queryCache, DatabasePatterns, createOptimizedStore } fr
  */
 const SERVICE_CONFIG = {
   CACHE_TTL: {
-    DASHBOARD: 2 * 60 * 1000,    // 2 minutes
-    PRODUCTS: 5 * 60 * 1000,     // 5 minutes
-    ORDERS: 3 * 60 * 1000,       // 3 minutes
-    CUSTOMERS: 10 * 60 * 1000,   // 10 minutes
-    ANALYTICS: 1 * 60 * 1000     // 1 minute
+    DASHBOARD: 5 * 60 * 1000,    // 5 minutes (increased for better caching)
+    PRODUCTS: 15 * 60 * 1000,    // 15 minutes (products don't change frequently)
+    ORDERS: 10 * 60 * 1000,      // 10 minutes (increased from 3 minutes)
+    CUSTOMERS: 30 * 60 * 1000,   // 30 minutes (customer data is relatively stable)
+    ANALYTICS: 3 * 60 * 1000     // 3 minutes (increased from 1 minute)
   },
   BATCH_SIZES: {
     PRODUCTS: 50,
@@ -283,12 +283,31 @@ export class OptimizedDataService {
    */
   getPerformanceMetrics() {
     const cacheStats = queryCache.getStats();
+    const totalRequests = cacheStats.hitCount + cacheStats.missCount;
+    
+    // Don't report poor efficiency if we don't have enough data points
+    let efficiency;
+    if (totalRequests < 10) {
+      efficiency = 'initializing';
+    } else if (cacheStats.hitRate > 80) {
+      efficiency = 'excellent';
+    } else if (cacheStats.hitRate > 60) {
+      efficiency = 'good';
+    } else if (cacheStats.hitRate > 40) {
+      efficiency = 'fair';
+    } else {
+      efficiency = 'poor';
+    }
+    
     return {
       cache: {
         hitRate: cacheStats.hitRate,
         size: cacheStats.size,
         maxSize: cacheStats.maxSize,
-        efficiency: cacheStats.hitRate > 70 ? 'excellent' : cacheStats.hitRate > 50 ? 'good' : 'poor'
+        totalRequests,
+        hitCount: cacheStats.hitCount,
+        missCount: cacheStats.missCount,
+        efficiency
       },
       searchIndexes: this.searchIndexes.size,
       optimizedQueries: this.optimizedQueries.size,

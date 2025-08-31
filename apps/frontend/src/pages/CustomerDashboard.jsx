@@ -72,7 +72,7 @@ const SearchInput = styled.input`
   background: ${({ theme }) => theme.colors.background.elevated};
   border: 2px solid ${({ theme }) => theme.colors.border.default};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#0f172a'};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
 
   &:focus {
@@ -280,7 +280,7 @@ const InsightHeader = styled.div`
 `;
 
 const InsightTitle = styled.h3`
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#0f172a'};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   margin: 0;
@@ -299,7 +299,7 @@ const InsightIcon = styled.div`
 `;
 
 const InsightValue = styled.div`
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#0f172a'};
   font-size: ${({ theme }) => theme.typography.fontSize['2xl']};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
@@ -320,7 +320,7 @@ const RecommendationsSection = styled(motion.div)`
 `;
 
 const SectionTitle = styled.h2`
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#0f172a'};
   font-size: ${({ theme }) => theme.typography.fontSize.xl};
   font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
   margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
@@ -363,7 +363,7 @@ const ProductImage = styled.div`
 `;
 
 const ProductName = styled.h4`
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#0f172a'};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   margin: 0 0 ${({ theme }) => theme.spacing.xs} 0;
@@ -403,7 +403,7 @@ const SidebarCard = styled.div`
 `;
 
 const SidebarTitle = styled.h3`
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme?.colors?.text?.primary || '#0f172a'};
   font-size: ${({ theme }) => theme.typography.fontSize.md};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   margin: 0 0 ${({ theme }) => theme.spacing.md} 0;

@@ -110,9 +110,9 @@ const InputRow = styled.div`
 `;
 
 const ErrorMessage = styled(motion.div)`
-  background: ${props => props.theme.colors.status.error.background};
-  color: ${props => props.theme.colors.status.error.text};
-  border: 1px solid ${props => props.theme.colors.status.error.border};
+  background: ${props => props.theme?.colors?.status?.error?.background || '#fef2f2'};
+  color: ${props => props.theme?.colors?.status?.error?.text || '#b91c1c'};
+  border: 1px solid ${props => props.theme?.colors?.status?.error?.border || '#fecaca'};
   border-radius: ${props => props.theme.borderRadius.md};
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -127,9 +127,9 @@ const ErrorMessage = styled(motion.div)`
 `;
 
 const SuccessMessage = styled(motion.div)`
-  background: ${props => props.theme.colors.status.success.background};
-  color: ${props => props.theme.colors.status.success.text};
-  border: 1px solid ${props => props.theme.colors.status.success.border};
+  background: ${props => props.theme?.colors?.status?.success?.background || '#f0fdf4'};
+  color: ${props => props.theme?.colors?.status?.success?.text || '#15803d'};
+  border: 1px solid ${props => props.theme?.colors?.status?.success?.border || '#bbf7d0'};
   border-radius: ${props => props.theme.borderRadius.md};
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -187,9 +187,9 @@ const StrengthBar = styled.div`
   border-radius: 2px;
   transition: background-color 0.3s ease;
   
-  &.weak { background: ${props => props.theme.colors.status.error.text}; }
-  &.medium { background: ${props => props.theme.colors.status.warning.text}; }
-  &.strong { background: ${props => props.theme.colors.status.success.text}; }
+  &.weak { background: ${props => props.theme?.colors?.status?.error?.text || '#b91c1c'}; }
+  &.medium { background: ${props => props.theme?.colors?.status?.warning?.text || '#d97706'}; }
+  &.strong { background: ${props => props.theme?.colors?.status?.success?.text || '#15803d'}; }
 `;
 
 function Register() {

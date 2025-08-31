@@ -1,0 +1,563 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI - Comprehensive Monitoring and Alerting Stack'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+  
+  ProjectName:
+    Type: String
+    Default: omnix-ai
+    Description: Project name for resource naming
+  
+  AlertEmail:
+    Type: String
+    Default: alerts@omnix.ai
+    Description: Email address for alerts
+  
+  SlackWebhookUrl:
+    Type: String
+    Default: ''
+    Description: Slack webhook URL for notifications
+    NoEcho: true
+
+Resources:
+  # CloudWatch Dashboard
+  MonitoringDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-monitoring'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "Requests", "DistributionId", "${CloudFrontDistributionId}" ],
+                  [ ".", "BytesDownloaded", ".", "." ],
+                  [ ".", "BytesUploaded", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "CloudFront Traffic",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "4xxErrorRate", "DistributionId", "${CloudFrontDistributionId}" ],
+                  [ ".", "5xxErrorRate", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "CloudFront Error Rates",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "CacheHitRate", "DistributionId", "${CloudFrontDistributionId}" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "Cache Hit Rate",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/S3", "BucketRequests", "BucketName", "${S3BucketName}", "FilterId", "EntireBucket" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "S3 Requests",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 12,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "query": "SOURCE '/aws/cloudfront/${ProjectName}-${Environment}'\n| fields @timestamp, @message\n| filter @message like /ERROR/\n| sort @timestamp desc\n| limit 100",
+                "region": "us-east-1",
+                "title": "Recent Errors",
+                "view": "table"
+              }
+            }
+          ]
+        }
+
+  # Custom Metrics Namespace
+  CustomMetricsNamespace:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ProjectName}-${Environment}-metrics'
+      RetentionInDays: 7
+
+  # Application Performance Monitoring Lambda
+  APMFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-apm'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt APMLambdaRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+          CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistributionId
+          S3_BUCKET_NAME: !Ref S3BucketName
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime, timedelta
+          
+          cloudwatch = boto3.client('cloudwatch')
+          cloudfront = boto3.client('cloudfront')
+          s3 = boto3.client('s3')
+          
+          def lambda_handler(event, context):
+              try:
+                  # Get environment variables
+                  env = os.environ['ENVIRONMENT']
+                  project = os.environ['PROJECT_NAME']
+                  distribution_id = os.environ['CLOUDFRONT_DISTRIBUTION_ID']
+                  bucket_name = os.environ['S3_BUCKET_NAME']
+                  
+                  # Collect CloudFront metrics
+                  cf_metrics = collect_cloudfront_metrics(distribution_id)
+                  
+                  # Collect S3 metrics
+                  s3_metrics = collect_s3_metrics(bucket_name)
+                  
+                  # Publish custom metrics
+                  publish_custom_metrics(project, env, cf_metrics, s3_metrics)
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Metrics collected successfully',
+                          'timestamp': datetime.utcnow().isoformat(),
+                          'cloudfront': cf_metrics,
+                          's3': s3_metrics
+                      })
+                  }
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+          
+          def collect_cloudfront_metrics(distribution_id):
+              end_time = datetime.utcnow()
+              start_time = end_time - timedelta(minutes=5)
+              
+              try:
+                  response = cloudwatch.get_metric_statistics(
+                      Namespace='AWS/CloudFront',
+                      MetricName='Requests',
+                      Dimensions=[
+                          {'Name': 'DistributionId', 'Value': distribution_id}
+                      ],
+                      StartTime=start_time,
+                      EndTime=end_time,
+                      Period=300,
+                      Statistics=['Sum']
+                  )
+                  
+                  total_requests = sum([point['Sum'] for point in response['Datapoints']])
+                  return {'total_requests': total_requests}
+              except Exception as e:
+                  print(f"CloudFront metrics error: {str(e)}")
+                  return {'total_requests': 0}
+          
+          def collect_s3_metrics(bucket_name):
+              try:
+                  response = s3.head_bucket(Bucket=bucket_name)
+                  return {'bucket_accessible': True}
+              except Exception as e:
+                  print(f"S3 metrics error: {str(e)}")
+                  return {'bucket_accessible': False}
+          
+          def publish_custom_metrics(project, env, cf_metrics, s3_metrics):
+              namespace = f'{project}/{env}'
+              
+              # Publish CloudFront metrics
+              cloudwatch.put_metric_data(
+                  Namespace=namespace,
+                  MetricData=[
+                      {
+                          'MetricName': 'TotalRequests',
+                          'Value': cf_metrics['total_requests'],
+                          'Unit': 'Count',
+                          'Timestamp': datetime.utcnow()
+                      }
+                  ]
+              )
+              
+              # Publish S3 metrics
+              cloudwatch.put_metric_data(
+                  Namespace=namespace,
+                  MetricData=[
+                      {
+                          'MetricName': 'BucketHealth',
+                          'Value': 1 if s3_metrics['bucket_accessible'] else 0,
+                          'Unit': 'Count',
+                          'Timestamp': datetime.utcnow()
+                      }
+                  ]
+              )
+
+  # IAM Role for APM Lambda
+  APMLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-apm-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: APMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:PutMetricData
+                  - cloudfront:GetDistribution
+                  - s3:HeadBucket
+                  - s3:GetBucketLocation
+                Resource: '*'
+
+  # EventBridge Rule to trigger APM function
+  APMScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-apm-schedule'
+      Description: 'Trigger APM function every 5 minutes'
+      ScheduleExpression: 'rate(5 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt APMFunction.Arn
+          Id: APMTarget
+
+  # Permission for EventBridge to invoke Lambda
+  APMInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref APMFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt APMScheduleRule.Arn
+
+  # Comprehensive CloudWatch Alarms
+  HighErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-high-error-rate'
+      AlarmDescription: 'Application error rate is too high'
+      MetricName: 4xxErrorRate
+      Namespace: AWS/CloudFront
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DistributionId
+          Value: !Ref CloudFrontDistributionId
+      AlarmActions:
+        - !Ref CriticalAlertsQueue
+      OKActions:
+        - !Ref CriticalAlertsQueue
+
+  LowCacheHitRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-low-cache-hit-rate'
+      AlarmDescription: 'Cache hit rate is below optimal threshold'
+      MetricName: CacheHitRate
+      Namespace: AWS/CloudFront
+      Statistic: Average
+      Period: 900
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: DistributionId
+          Value: !Ref CloudFrontDistributionId
+      AlarmActions:
+        - !Ref WarningAlertsQueue
+
+  HighTrafficAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-high-traffic'
+      AlarmDescription: 'Traffic is unusually high'
+      MetricName: Requests
+      Namespace: AWS/CloudFront
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DistributionId
+          Value: !Ref CloudFrontDistributionId
+      AlarmActions:
+        - !Ref InfoAlertsQueue
+
+  # SNS Topics for different alert severities
+  CriticalAlertsQueue:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-critical-alerts'
+      DisplayName: 'Critical Alerts'
+
+  WarningAlertsQueue:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-warning-alerts'
+      DisplayName: 'Warning Alerts'
+
+  InfoAlertsQueue:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-info-alerts'
+      DisplayName: 'Info Alerts'
+
+  # Email Subscriptions
+  CriticalEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref CriticalAlertsQueue
+      Endpoint: !Ref AlertEmail
+
+  WarningEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref WarningAlertsQueue
+      Endpoint: !Ref AlertEmail
+
+  # Lambda for Slack notifications
+  SlackNotificationFunction:
+    Type: AWS::Lambda::Function
+    Condition: HasSlackWebhook
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-slack-notifications'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt SlackLambdaRole.Arn
+      Timeout: 10
+      Environment:
+        Variables:
+          SLACK_WEBHOOK_URL: !Ref SlackWebhookUrl
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+      Code:
+        ZipFile: |
+          import json
+          import urllib3
+          import os
+          
+          http = urllib3.PoolManager()
+          
+          def lambda_handler(event, context):
+              webhook_url = os.environ['SLACK_WEBHOOK_URL']
+              environment = os.environ['ENVIRONMENT']
+              project = os.environ['PROJECT_NAME']
+              
+              if not webhook_url:
+                  return {'statusCode': 200, 'body': 'No webhook configured'}
+              
+              for record in event['Records']:
+                  message = json.loads(record['Sns']['Message'])
+                  
+                  slack_message = {
+                      'text': f'🚨 OMNIX AI {environment.upper()} Alert',
+                      'attachments': [{
+                          'color': get_color(message.get('NewStateValue', 'ALARM')),
+                          'fields': [
+                              {
+                                  'title': 'Alarm Name',
+                                  'value': message.get('AlarmName', 'Unknown'),
+                                  'short': True
+                              },
+                              {
+                                  'title': 'State',
+                                  'value': message.get('NewStateValue', 'Unknown'),
+                                  'short': True
+                              },
+                              {
+                                  'title': 'Description',
+                                  'value': message.get('AlarmDescription', 'No description'),
+                                  'short': False
+                              },
+                              {
+                                  'title': 'Timestamp',
+                                  'value': message.get('StateChangeTime', 'Unknown'),
+                                  'short': True
+                              }
+                          ]
+                      }]
+                  }
+                  
+                  response = http.request(
+                      'POST',
+                      webhook_url,
+                      body=json.dumps(slack_message),
+                      headers={'Content-Type': 'application/json'}
+                  )
+              
+              return {'statusCode': 200, 'body': 'Notifications sent'}
+          
+          def get_color(state):
+              colors = {
+                  'ALARM': 'danger',
+                  'OK': 'good',
+                  'INSUFFICIENT_DATA': 'warning'
+              }
+              return colors.get(state, 'warning')
+
+  # IAM Role for Slack Lambda
+  SlackLambdaRole:
+    Type: AWS::IAM::Role
+    Condition: HasSlackWebhook
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-slack-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Slack SNS Subscriptions
+  CriticalSlackSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasSlackWebhook
+    Properties:
+      Protocol: lambda
+      TopicArn: !Ref CriticalAlertsQueue
+      Endpoint: !GetAtt SlackNotificationFunction.Arn
+
+  WarningSlackSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasSlackWebhook
+    Properties:
+      Protocol: lambda
+      TopicArn: !Ref WarningAlertsQueue
+      Endpoint: !GetAtt SlackNotificationFunction.Arn
+
+  # Lambda permissions for SNS
+  SlackLambdaCriticalPermission:
+    Type: AWS::Lambda::Permission
+    Condition: HasSlackWebhook
+    Properties:
+      FunctionName: !Ref SlackNotificationFunction
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref CriticalAlertsQueue
+
+  SlackLambdaWarningPermission:
+    Type: AWS::Lambda::Permission
+    Condition: HasSlackWebhook
+    Properties:
+      FunctionName: !Ref SlackNotificationFunction
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref WarningAlertsQueue
+
+Conditions:
+  HasSlackWebhook: !Not [!Equals [!Ref SlackWebhookUrl, '']]
+
+Parameters:
+  CloudFrontDistributionId:
+    Type: String
+    Description: CloudFront Distribution ID to monitor
+  
+  S3BucketName:
+    Type: String
+    Description: S3 Bucket name to monitor
+
+Outputs:
+  DashboardURL:
+    Description: 'CloudWatch Dashboard URL'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${MonitoringDashboard}'
+  
+  APMFunctionArn:
+    Description: 'APM Lambda Function ARN'
+    Value: !GetAtt APMFunction.Arn
+  
+  CriticalAlertsTopicArn:
+    Description: 'Critical Alerts SNS Topic ARN'
+    Value: !Ref CriticalAlertsQueue
+  
+  WarningAlertsTopicArn:
+    Description: 'Warning Alerts SNS Topic ARN'
+    Value: !Ref WarningAlertsQueue

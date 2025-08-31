@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { lightTheme, darkTheme } from './styles/theme';
 import GlobalStyles from './styles/globalStyles';
 import SafeThemeProvider from './components/providers/SafeThemeProvider';
@@ -8,6 +8,7 @@ import useUserStore from './store/userStore';
 import { useWebSocket } from './hooks/useWebSocket';
 import QueryProvider from './components/providers/QueryProvider';
 import { initializeApplication } from './utils/appInitializer.js';
+import Spinner from './components/atoms/Spinner';
 
 // Layout components
 import Header from './components/organisms/Header';
@@ -25,10 +26,6 @@ const NotificationDemo = import.meta.env.DEV ? lazy(() => import('./components/d
 const ProductDemo = import.meta.env.DEV ? lazy(() => import('./components/debug/ProductDemo')) : null;
 const AIInsightsDemo = import.meta.env.DEV ? lazy(() => import('./components/debug/AIInsightsDemo')) : null;
 const CDNPerformanceDebug = import.meta.env.DEV ? lazy(() => import('./components/debug/CDNPerformanceDebug')) : null;
-
-// Pages - Lazy loaded for code splitting
-import { lazy, Suspense } from 'react';
-import Spinner from './components/atoms/Spinner';
 
 // Immediate loads for critical paths
 import Login from './pages/Login';
@@ -112,7 +109,7 @@ const LazyWrapper = ({ children }) => (
 
 // Role-based Dashboard Router Component
 function DashboardRouter() {
-  const { user } = useUserStore();
+  const user = useUserStore((state) => state.user);
   
   // If customer role, show customer dashboard without sidebar/header
   if (user?.role === 'customer') {
@@ -132,7 +129,9 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const store = useStore();
-  const { preferences, initializeAuth, user } = useUserStore();
+  const preferences = useUserStore((state) => state.preferences);
+  const initializeAuth = useUserStore((state) => state.initializeAuth);
+  const user = useUserStore((state) => state.user);
   const { ui = {}, toggleSidebar, setSidebarMobileOpen, setCurrentPage, setIsMobile } = store || {};
   const [appInitialized, setAppInitialized] = useState(false);
   const [initError, setInitError] = useState(null);

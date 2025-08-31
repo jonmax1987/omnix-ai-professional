@@ -7,13 +7,13 @@ import Badge from '../atoms/Badge';
 
 const MetricsContainer = styled.div`
   width: 100%;
-  background: ${props => props.theme.colors.background.elevated};
-  border: 1px solid ${props => props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[3]};
-  padding: ${props => props.theme.spacing[6]};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    padding: ${props => props.theme.spacing[4]};
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
+    padding: ${props => props.theme?.spacing?.[4] || '1rem'};
   }
 `;
 

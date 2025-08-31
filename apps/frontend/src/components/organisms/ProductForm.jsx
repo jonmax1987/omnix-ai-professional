@@ -12,15 +12,15 @@ import inventoryService from '../../services/inventoryService';
 const FormContainer = styled(motion.form)`
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing[6]};
-  background: ${props => props.theme.colors.background.elevated};
-  border: 1px solid ${props => props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[3]};
-  padding: ${props => props.theme.spacing[8]};
+  gap: ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border: 1px solid ${props => props.theme?.colors?.border?.default || '#e2e8f0'};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  padding: ${props => props.theme?.spacing?.[8] || '2rem'};
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
-    padding: ${props => props.theme.spacing[6]};
-    gap: ${props => props.theme.spacing[4]};
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
+    padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
+    gap: ${props => props.theme?.spacing?.[4] || '1rem'};
   }
 `;
 
@@ -28,33 +28,33 @@ const FormHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: ${props => props.theme.spacing[4]};
-  border-bottom: 1px solid ${props => props.theme.colors.border.subtle};
+  padding-bottom: ${props => props.theme?.spacing?.[4] || '1rem'};
+  border-bottom: 1px solid ${props => props.theme?.colors?.border?.subtle || '#f1f5f9'};
 `;
 
 const FormTitle = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[3]};
+  gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
 `;
 
 const FormStatus = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const FormSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const SectionHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
-  margin-bottom: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  margin-bottom: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const SectionIcon = styled.div`
@@ -63,21 +63,21 @@ const SectionIcon = styled.div`
   justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: ${props => props.theme.spacing[1]};
-  background: ${props => props.theme.colors.primary[100]};
-  color: ${props => props.theme.colors.primary[600]};
+  border-radius: ${props => props.theme?.spacing?.[1] || '0.25rem'};
+  background: ${props => props.theme?.colors?.primary?.[100] || '#dbeafe'};
+  color: ${props => props.theme?.colors?.primary?.[600] || '#2563eb'};
 `;
 
 const FieldGrid = styled.div.withConfig({
   shouldForwardProp: (prop) => !['columns'].includes(prop),
 })`
   display: grid;
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
   
   ${props => props.columns === 2 && css`
     grid-template-columns: 1fr 1fr;
     
-    @media (max-width: ${props.theme.breakpoints.md}) {
+    @media (max-width: ${props.theme?.breakpoints?.md || '768px'}) {
       grid-template-columns: 1fr;
     }
   `}
@@ -85,11 +85,11 @@ const FieldGrid = styled.div.withConfig({
   ${props => props.columns === 3 && css`
     grid-template-columns: repeat(3, 1fr);
     
-    @media (max-width: ${props.theme.breakpoints.lg}) {
+    @media (max-width: ${props.theme?.breakpoints?.lg || '1024px'}) {
       grid-template-columns: 1fr 1fr;
     }
     
-    @media (max-width: ${props.theme.breakpoints.md}) {
+    @media (max-width: ${props.theme?.breakpoints?.md || '768px'}) {
       grid-template-columns: 1fr;
     }
   `}
@@ -98,12 +98,12 @@ const FieldGrid = styled.div.withConfig({
 const FieldGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   
   ${props => props.span && css`
     grid-column: span ${props.span};
     
-    @media (max-width: ${props.theme.breakpoints.md}) {
+    @media (max-width: ${props.theme?.breakpoints?.md || '768px'}) {
       grid-column: span 1;
     }
   `}
@@ -113,11 +113,11 @@ const FormActions = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: ${props => props.theme.spacing[4]};
-  padding-top: ${props => props.theme.spacing[4]};
-  border-top: 1px solid ${props => props.theme.colors.border.subtle};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
+  padding-top: ${props => props.theme?.spacing?.[4] || '1rem'};
+  border-top: 1px solid ${props => props.theme?.colors?.border?.subtle || '#f1f5f9'};
   
-  @media (max-width: ${props => props.theme.breakpoints.sm}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.sm || '640px'}) {
     flex-direction: column-reverse;
     align-items: stretch;
   }
@@ -125,18 +125,18 @@ const FormActions = styled.div`
 
 const ActionsLeft = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   
-  @media (max-width: ${props => props.theme.breakpoints.sm}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.sm || '640px'}) {
     justify-content: center;
   }
 `;
 
 const ActionsRight = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   
-  @media (max-width: ${props => props.theme.breakpoints.sm}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.sm || '640px'}) {
     justify-content: stretch;
     
     & > * {
@@ -146,28 +146,28 @@ const ActionsRight = styled.div`
 `;
 
 const ErrorSummary = styled(motion.div)`
-  padding: ${props => props.theme.spacing[4]};
-  background: ${props => props.theme.colors.red[50]};
-  border: 1px solid ${props => props.theme.colors.red[200]};
-  border-radius: ${props => props.theme.spacing[2]};
-  margin-bottom: ${props => props.theme.spacing[4]};
+  padding: ${props => props.theme?.spacing?.[4] || '1rem'};
+  background: ${props => props.theme?.colors?.red?.[50] || '#fef2f2'};
+  border: 1px solid ${props => props.theme?.colors?.red?.[200] || '#fecaca'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  margin-bottom: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const ErrorList = styled.ul`
-  margin: ${props => props.theme.spacing[2]} 0 0 ${props => props.theme.spacing[4]};
+  margin: ${props => props.theme?.spacing?.[2] || '0.5rem'} 0 0 ${props => props.theme?.spacing?.[4] || '1rem'};
   padding: 0;
   list-style: none;
   
   li {
     position: relative;
-    padding-left: ${props => props.theme.spacing[2]};
-    margin-bottom: ${props => props.theme.spacing[1]};
+    padding-left: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+    margin-bottom: ${props => props.theme?.spacing?.[1] || '0.25rem'};
     
     &::before {
       content: '•';
       position: absolute;
       left: 0;
-      color: ${props => props.theme.colors.red[600]};
+      color: ${props => props.theme?.colors?.red?.[600] || '#dc2626'};
     }
   }
 `;
@@ -183,15 +183,15 @@ const ValidationIcon = styled.div.withConfig({
 const ImageUploadSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const ImageUploadArea = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
   
-  @media (min-width: ${props => props.theme.breakpoints.md}) {
+  @media (min-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
     flex-direction: row;
   }
 `;
@@ -205,22 +205,22 @@ const DropZone = styled(motion.div).withConfig({
   align-items: center;
   justify-content: center;
   min-height: 240px;
-  padding: ${props => props.theme.spacing[6]};
-  border: 2px dashed ${props => props.isDragActive ? props.theme.colors.primary[400] : props.theme.colors.border.default};
-  border-radius: ${props => props.theme.spacing[3]};
-  background: ${props => props.isDragActive ? props.theme.colors.primary[50] : props.theme.colors.background.subtle};
+  padding: ${props => props.theme?.spacing?.[6] || '1.5rem'};
+  border: 2px dashed ${props => props.isDragActive ? (props.theme?.colors?.primary?.[400] || '#60a5fa') : (props.theme?.colors?.border?.default || '#e2e8f0')};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  background: ${props => props.isDragActive ? (props.theme?.colors?.primary?.[50] || '#eff6ff') : (props.theme?.colors?.background?.subtle || '#f8fafc')};
   cursor: pointer;
   transition: all 0.2s ease;
   flex: ${props => props.hasImages ? '1' : '1'};
   
   &:hover {
-    border-color: ${props => props.theme.colors.primary[400]};
-    background: ${props => props.theme.colors.primary[25]};
+    border-color: ${props => props.theme?.colors?.primary?.[400] || '#60a5fa'};
+    background: ${props => props.theme?.colors?.primary?.[25] || '#eff6ff'};
   }
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
     min-height: 180px;
-    padding: ${props => props.theme.spacing[4]};
+    padding: ${props => props.theme?.spacing?.[4] || '1rem'};
   }
 `;
 
@@ -230,10 +230,10 @@ const DropZoneIcon = styled.div`
   justify-content: center;
   width: 64px;
   height: 64px;
-  border-radius: ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.primary[100]};
-  color: ${props => props.theme.colors.primary[600]};
-  margin-bottom: ${props => props.theme.spacing[4]};
+  border-radius: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  background: ${props => props.theme?.colors?.primary?.[100] || '#dbeafe'};
+  color: ${props => props.theme?.colors?.primary?.[600] || '#2563eb'};
+  margin-bottom: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const DropZoneText = styled.div`
@@ -253,7 +253,7 @@ const ImagePreviewGrid = styled.div.withConfig({
   shouldForwardProp: (prop) => !['imageCount'].includes(prop)
 })`
   display: grid;
-  gap: ${props => props.theme.spacing[3]};
+  gap: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   flex: 1;
   max-height: 400px;
   overflow-y: auto;
@@ -265,7 +265,7 @@ const ImagePreviewGrid = styled.div.withConfig({
     return 'grid-template-columns: 1fr;';
   }}
   
-  @media (max-width: ${props => props.theme.breakpoints.md}) {
+  @media (max-width: ${props => props.theme?.breakpoints?.md || '768px'}) {
     grid-template-columns: 1fr;
     max-height: 300px;
   }
@@ -275,14 +275,14 @@ const ImagePreviewCard = styled(motion.div).withConfig({
   shouldForwardProp: (prop) => !['isPrimary'].includes(prop)
 })`
   position: relative;
-  border-radius: ${props => props.theme.spacing[2]};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   overflow: hidden;
-  background: ${props => props.theme.colors.background.elevated};
-  border: 2px solid ${props => props.isPrimary ? props.theme.colors.primary[400] : props.theme.colors.border.default};
+  background: ${props => props.theme?.colors?.background?.elevated || '#ffffff'};
+  border: 2px solid ${props => props.isPrimary ? (props.theme?.colors?.primary?.[400] || '#60a5fa') : (props.theme?.colors?.border?.default || '#e2e8f0')};
   aspect-ratio: 4/3;
   
   ${props => props.isPrimary && css`
-    box-shadow: 0 0 0 2px ${props.theme.colors.primary[100]};
+    box-shadow: 0 0 0 2px ${props.theme?.colors?.primary?.[100] || '#dbeafe'};
   `}
 `;
 
@@ -305,7 +305,7 @@ const ImageOverlay = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: ${props => props.theme.spacing[3]};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'};
   opacity: 0;
   transition: opacity 0.2s ease;
   
@@ -316,7 +316,7 @@ const ImageOverlay = styled.div`
 
 const ImageActions = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   align-self: flex-end;
 `;
 
@@ -327,7 +327,7 @@ const ImageActionButton = styled(Button).withConfig({
   width: 32px;
   height: 32px;
   padding: 0;
-  border-radius: ${props => props.theme.spacing[1]};
+  border-radius: ${props => props.theme?.spacing?.[1] || '0.25rem'};
   
   &:hover {
     transform: scale(1.05);
@@ -336,15 +336,15 @@ const ImageActionButton = styled(Button).withConfig({
 
 const PrimaryBadge = styled(Badge)`
   position: absolute;
-  top: ${props => props.theme.spacing[2]};
-  left: ${props => props.theme.spacing[2]};
+  top: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  left: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   z-index: 2;
 `;
 
 const ImageMetadata = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${props => props.theme.spacing[1]};
+  gap: ${props => props.theme?.spacing?.[1] || '0.25rem'};
   color: white;
 `;
 
@@ -360,68 +360,68 @@ const UploadProgress = styled(motion.div)`
 
 const ProgressBar = styled(motion.div)`
   height: 100%;
-  background: ${props => props.theme.colors.primary[500]};
+  background: ${props => props.theme?.colors?.primary?.[500] || '#3b82f6'};
   transform-origin: left;
 `;
 
 const UploadError = styled(motion.div)`
-  padding: ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.red[50]};
-  border: 1px solid ${props => props.theme.colors.red[200]};
-  border-radius: ${props => props.theme.spacing[2]};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  background: ${props => props.theme?.colors?.red?.[50] || '#fef2f2'};
+  border: 1px solid ${props => props.theme?.colors?.red?.[200] || '#fecaca'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const ImageSummary = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.background.subtle};
-  border-radius: ${props => props.theme.spacing[2]};
-  border: 1px solid ${props => props.theme.colors.border.subtle};
+  padding: ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  background: ${props => props.theme?.colors?.background?.subtle || '#f8fafc'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  border: 1px solid ${props => props.theme?.colors?.border?.subtle || '#f1f5f9'};
 `;
 
 const SummaryStats = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[4]};
+  gap: ${props => props.theme?.spacing?.[4] || '1rem'};
 `;
 
 const Stat = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[1]};
+  gap: ${props => props.theme?.spacing?.[1] || '0.25rem'};
 `;
 
 const BulkActions = styled.div`
   display: flex;
-  gap: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const SizeLimit = styled.div`
   display: flex;
   align-items: center;
-  gap: ${props => props.theme.spacing[2]};
-  padding: ${props => props.theme.spacing[2]} ${props => props.theme.spacing[3]};
-  background: ${props => props.theme.colors.primary[50]};
-  border: 1px solid ${props => props.theme.colors.primary[200]};
-  border-radius: ${props => props.theme.spacing[2]};
-  margin-top: ${props => props.theme.spacing[2]};
+  gap: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  padding: ${props => props.theme?.spacing?.[2] || '0.5rem'} ${props => props.theme?.spacing?.[3] || '0.75rem'};
+  background: ${props => props.theme?.colors?.primary?.[50] || '#eff6ff'};
+  border: 1px solid ${props => props.theme?.colors?.primary?.[200] || '#bfdbfe'};
+  border-radius: ${props => props.theme?.spacing?.[2] || '0.5rem'};
+  margin-top: ${props => props.theme?.spacing?.[2] || '0.5rem'};
 `;
 
 const getValidationColor = (status, theme) => {
   switch (status) {
     case 'valid':
-      return theme.colors.green[600];
+      return theme?.colors?.green?.[600] || '#16a34a';
     case 'invalid':
-      return theme.colors.red[600];
+      return theme?.colors?.red?.[600] || '#dc2626';
     case 'warning':
-      return theme.colors.yellow[600];
+      return theme?.colors?.yellow?.[600] || '#ca8a04';
     default:
-      return theme.colors.text.tertiary;
+      return theme?.colors?.text?.tertiary || '#9ca3af';
   }
 };
 

@@ -1,0 +1,654 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI - Disaster Recovery and Backup Strategy'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+  
+  ProjectName:
+    Type: String
+    Default: omnix-ai
+    Description: Project name for resource naming
+  
+  PrimaryRegion:
+    Type: String
+    Default: eu-central-1
+    Description: Primary AWS region
+  
+  BackupRegion:
+    Type: String
+    Default: eu-west-1
+    Description: Backup AWS region for disaster recovery
+  
+  BackupRetentionDays:
+    Type: Number
+    Default: 30
+    Description: Number of days to retain backups
+  
+  CrossRegionReplication:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Enable cross-region replication
+
+Resources:
+  # S3 Bucket for backups
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-${Environment}-backups'
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: BackupRetentionRule
+            Status: Enabled
+            ExpirationInDays: !Ref BackupRetentionDays
+            NoncurrentVersionExpirationInDays: 7
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+          - Id: IntelligentTieringRule
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 1
+                StorageClass: INTELLIGENT_TIERING
+              - TransitionInDays: 30
+                StorageClass: GLACIER
+              - TransitionInDays: 90
+                StorageClass: DEEP_ARCHIVE
+      NotificationConfiguration:
+        CloudWatchConfigurations:
+          - Event: s3:ObjectCreated:*
+            CloudWatchConfiguration:
+              LogGroupName: !Ref BackupLogGroup
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      ReplicationConfiguration:
+        Role: !GetAtt BackupReplicationRole.Arn
+        Rules:
+          - Id: BackupReplicationRule
+            Status: !If [EnableCrossRegionReplication, Enabled, Disabled]
+            Prefix: ''
+            Destination:
+              Bucket: !Sub 'arn:aws:s3:::${ProjectName}-${Environment}-backups-${BackupRegion}'
+              StorageClass: STANDARD_IA
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Purpose
+          Value: disaster-recovery
+
+  # Cross-region backup bucket
+  CrossRegionBackupBucket:
+    Type: AWS::S3::Bucket
+    Condition: EnableCrossRegionReplication
+    Properties:
+      BucketName: !Sub '${ProjectName}-${Environment}-backups-${BackupRegion}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Purpose
+          Value: cross-region-backup
+
+  # IAM Role for S3 replication
+  BackupReplicationRole:
+    Type: AWS::IAM::Role
+    Condition: EnableCrossRegionReplication
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-backup-replication-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ReplicationPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObjectVersionForReplication
+                  - s3:GetObjectVersionAcl
+                Resource: !Sub '${BackupBucket}/*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Ref BackupBucket
+              - Effect: Allow
+                Action:
+                  - s3:ReplicateObject
+                  - s3:ReplicateDelete
+                Resource: !Sub 'arn:aws:s3:::${ProjectName}-${Environment}-backups-${BackupRegion}/*'
+
+  # CloudWatch Log Group for backup monitoring
+  BackupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/s3/${ProjectName}-${Environment}-backups'
+      RetentionInDays: 14
+
+  # Lambda function for automated backups
+  BackupLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-backup-automation'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt BackupLambdaRole.Arn
+      Timeout: 900
+      MemorySize: 256
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+          BACKUP_BUCKET: !Ref BackupBucket
+          PRIMARY_REGION: !Ref PrimaryRegion
+          BACKUP_REGION: !Ref BackupRegion
+          RETENTION_DAYS: !Ref BackupRetentionDays
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime, timedelta
+          import logging
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          def lambda_handler(event, context):
+              try:
+                  environment = os.environ['ENVIRONMENT']
+                  project_name = os.environ['PROJECT_NAME']
+                  backup_bucket = os.environ['BACKUP_BUCKET']
+                  primary_region = os.environ['PRIMARY_REGION']
+                  retention_days = int(os.environ['RETENTION_DAYS'])
+                  
+                  logger.info(f"Starting backup process for {project_name} {environment}")
+                  
+                  # Initialize AWS clients
+                  s3 = boto3.client('s3', region_name=primary_region)
+                  cloudfront = boto3.client('cloudfront', region_name=primary_region)
+                  
+                  # Create backup timestamp
+                  backup_timestamp = datetime.utcnow().strftime('%Y%m%d-%H%M%S')
+                  backup_prefix = f"{environment}/{backup_timestamp}/"
+                  
+                  # Backup S3 content
+                  source_bucket = f"{project_name}-{environment}-frontend"
+                  backup_s3_content(s3, source_bucket, backup_bucket, backup_prefix)
+                  
+                  # Backup CloudFront configuration
+                  backup_cloudfront_config(cloudfront, backup_bucket, backup_prefix, project_name, environment)
+                  
+                  # Cleanup old backups
+                  cleanup_old_backups(s3, backup_bucket, retention_days)
+                  
+                  # Create backup manifest
+                  create_backup_manifest(s3, backup_bucket, backup_prefix, {
+                      'timestamp': backup_timestamp,
+                      'environment': environment,
+                      'project': project_name,
+                      'source_bucket': source_bucket,
+                      'backup_type': 'automated',
+                      'retention_days': retention_days
+                  })
+                  
+                  logger.info("Backup process completed successfully")
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Backup completed successfully',
+                          'backup_timestamp': backup_timestamp,
+                          'backup_location': f"s3://{backup_bucket}/{backup_prefix}"
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"Backup process failed: {str(e)}")
+                  raise
+          
+          def backup_s3_content(s3, source_bucket, backup_bucket, backup_prefix):
+              """Backup S3 bucket contents"""
+              logger.info(f"Backing up S3 content from {source_bucket}")
+              
+              paginator = s3.get_paginator('list_objects_v2')
+              pages = paginator.paginate(Bucket=source_bucket)
+              
+              for page in pages:
+                  if 'Contents' in page:
+                      for obj in page['Contents']:
+                          source_key = obj['Key']
+                          backup_key = f"{backup_prefix}s3-content/{source_key}"
+                          
+                          s3.copy_object(
+                              CopySource={'Bucket': source_bucket, 'Key': source_key},
+                              Bucket=backup_bucket,
+                              Key=backup_key,
+                              MetadataDirective='COPY'
+                          )
+              
+              logger.info("S3 content backup completed")
+          
+          def backup_cloudfront_config(cloudfront, backup_bucket, backup_prefix, project_name, environment):
+              """Backup CloudFront distribution configuration"""
+              logger.info("Backing up CloudFront configuration")
+              
+              try:
+                  # List distributions and find the one for this environment
+                  distributions = cloudfront.list_distributions()
+                  
+                  for dist in distributions['DistributionList']['Items']:
+                      if project_name in dist.get('Comment', '') and environment in dist.get('Comment', ''):
+                          dist_id = dist['Id']
+                          
+                          # Get detailed configuration
+                          config = cloudfront.get_distribution(Id=dist_id)
+                          
+                          # Store configuration as JSON
+                          config_key = f"{backup_prefix}cloudfront-config/distribution-{dist_id}.json"
+                          s3 = boto3.client('s3')
+                          s3.put_object(
+                              Bucket=backup_bucket,
+                              Key=config_key,
+                              Body=json.dumps(config['Distribution'], default=str, indent=2),
+                              ContentType='application/json'
+                          )
+                          
+                          logger.info(f"CloudFront config backed up for distribution {dist_id}")
+                          break
+              except Exception as e:
+                  logger.warning(f"CloudFront backup failed: {str(e)}")
+          
+          def cleanup_old_backups(s3, backup_bucket, retention_days):
+              """Remove backups older than retention period"""
+              logger.info(f"Cleaning up backups older than {retention_days} days")
+              
+              cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+              
+              paginator = s3.get_paginator('list_objects_v2')
+              pages = paginator.paginate(Bucket=backup_bucket)
+              
+              for page in pages:
+                  if 'Contents' in page:
+                      for obj in page['Contents']:
+                          if obj['LastModified'].replace(tzinfo=None) < cutoff_date:
+                              s3.delete_object(Bucket=backup_bucket, Key=obj['Key'])
+                              logger.info(f"Deleted old backup: {obj['Key']}")
+          
+          def create_backup_manifest(s3, backup_bucket, backup_prefix, metadata):
+              """Create backup manifest with metadata"""
+              manifest_key = f"{backup_prefix}backup-manifest.json"
+              
+              s3.put_object(
+                  Bucket=backup_bucket,
+                  Key=manifest_key,
+                  Body=json.dumps(metadata, indent=2),
+                  ContentType='application/json'
+              )
+              
+              logger.info(f"Backup manifest created: {manifest_key}")
+
+  # IAM Role for Backup Lambda
+  BackupLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-backup-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: BackupPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:ListBucket
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucketVersions
+                Resource:
+                  - !Sub 'arn:aws:s3:::${ProjectName}-${Environment}-frontend'
+                  - !Sub 'arn:aws:s3:::${ProjectName}-${Environment}-frontend/*'
+                  - !GetAtt BackupBucket.Arn
+                  - !Sub '${BackupBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - cloudfront:GetDistribution
+                  - cloudfront:ListDistributions
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  # EventBridge rule for scheduled backups
+  BackupScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-backup-schedule'
+      Description: 'Schedule automated backups'
+      ScheduleExpression: !Sub 
+        - 'cron(0 2 * * ? *)'  # Daily at 2 AM UTC
+        - Environment: !Ref Environment
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt BackupLambda.Arn
+          Id: BackupTarget
+          Input: !Sub |
+            {
+              "backup_type": "scheduled",
+              "environment": "${Environment}",
+              "timestamp": "$${aws.events.event-time}"
+            }
+
+  # Permission for EventBridge to invoke Lambda
+  BackupLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BackupLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt BackupScheduleRule.Arn
+
+  # Lambda function for disaster recovery
+  DisasterRecoveryLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-disaster-recovery'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt DisasterRecoveryLambdaRole.Arn
+      Timeout: 900
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+          BACKUP_BUCKET: !Ref BackupBucket
+          PRIMARY_REGION: !Ref PrimaryRegion
+          BACKUP_REGION: !Ref BackupRegion
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+          import logging
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          def lambda_handler(event, context):
+              try:
+                  environment = os.environ['ENVIRONMENT']
+                  project_name = os.environ['PROJECT_NAME']
+                  backup_bucket = os.environ['BACKUP_BUCKET']
+                  primary_region = os.environ['PRIMARY_REGION']
+                  backup_region = os.environ['BACKUP_REGION']
+                  
+                  recovery_type = event.get('recovery_type', 'full')
+                  backup_timestamp = event.get('backup_timestamp', 'latest')
+                  
+                  logger.info(f"Starting disaster recovery: {recovery_type}")
+                  
+                  # Initialize AWS clients
+                  s3 = boto3.client('s3', region_name=primary_region)
+                  cloudformation = boto3.client('cloudformation', region_name=primary_region)
+                  
+                  if recovery_type == 'full':
+                      # Full disaster recovery
+                      result = perform_full_recovery(s3, cloudformation, backup_bucket, 
+                                                   backup_timestamp, project_name, environment)
+                  elif recovery_type == 'data-only':
+                      # Data-only recovery
+                      result = perform_data_recovery(s3, backup_bucket, backup_timestamp, 
+                                                   project_name, environment)
+                  else:
+                      raise ValueError(f"Unknown recovery type: {recovery_type}")
+                  
+                  logger.info("Disaster recovery completed successfully")
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': 'Disaster recovery completed',
+                          'recovery_type': recovery_type,
+                          'timestamp': datetime.utcnow().isoformat(),
+                          'result': result
+                      })
+                  }
+                  
+              except Exception as e:
+                  logger.error(f"Disaster recovery failed: {str(e)}")
+                  raise
+          
+          def perform_full_recovery(s3, cloudformation, backup_bucket, backup_timestamp, project_name, environment):
+              """Perform full infrastructure and data recovery"""
+              logger.info("Performing full disaster recovery")
+              
+              # Find latest backup if not specified
+              if backup_timestamp == 'latest':
+                  backup_timestamp = find_latest_backup(s3, backup_bucket, environment)
+              
+              backup_prefix = f"{environment}/{backup_timestamp}/"
+              
+              # Restore S3 content
+              target_bucket = f"{project_name}-{environment}-frontend"
+              restore_s3_content(s3, backup_bucket, target_bucket, backup_prefix)
+              
+              # TODO: Restore CloudFront configuration if needed
+              # This would require more complex logic to recreate distributions
+              
+              return {
+                  'backup_timestamp': backup_timestamp,
+                  'restored_bucket': target_bucket,
+                  'status': 'completed'
+              }
+          
+          def perform_data_recovery(s3, backup_bucket, backup_timestamp, project_name, environment):
+              """Perform data-only recovery"""
+              logger.info("Performing data-only recovery")
+              
+              if backup_timestamp == 'latest':
+                  backup_timestamp = find_latest_backup(s3, backup_bucket, environment)
+              
+              backup_prefix = f"{environment}/{backup_timestamp}/"
+              target_bucket = f"{project_name}-{environment}-frontend"
+              
+              restore_s3_content(s3, backup_bucket, target_bucket, backup_prefix)
+              
+              return {
+                  'backup_timestamp': backup_timestamp,
+                  'restored_bucket': target_bucket,
+                  'status': 'completed'
+              }
+          
+          def find_latest_backup(s3, backup_bucket, environment):
+              """Find the most recent backup for the environment"""
+              logger.info(f"Finding latest backup for {environment}")
+              
+              paginator = s3.get_paginator('list_objects_v2')
+              pages = paginator.paginate(Bucket=backup_bucket, Prefix=f"{environment}/")
+              
+              latest_timestamp = None
+              for page in pages:
+                  if 'Contents' in page:
+                      for obj in page['Contents']:
+                          if 'backup-manifest.json' in obj['Key']:
+                              # Extract timestamp from path
+                              parts = obj['Key'].split('/')
+                              if len(parts) >= 2:
+                                  timestamp = parts[1]
+                                  if latest_timestamp is None or timestamp > latest_timestamp:
+                                      latest_timestamp = timestamp
+              
+              if latest_timestamp is None:
+                  raise ValueError(f"No backups found for environment {environment}")
+              
+              logger.info(f"Latest backup found: {latest_timestamp}")
+              return latest_timestamp
+          
+          def restore_s3_content(s3, backup_bucket, target_bucket, backup_prefix):
+              """Restore S3 content from backup"""
+              logger.info(f"Restoring S3 content to {target_bucket}")
+              
+              content_prefix = f"{backup_prefix}s3-content/"
+              
+              paginator = s3.get_paginator('list_objects_v2')
+              pages = paginator.paginate(Bucket=backup_bucket, Prefix=content_prefix)
+              
+              for page in pages:
+                  if 'Contents' in page:
+                      for obj in page['Contents']:
+                          backup_key = obj['Key']
+                          # Remove the backup prefix to get original key
+                          original_key = backup_key[len(content_prefix):]
+                          
+                          s3.copy_object(
+                              CopySource={'Bucket': backup_bucket, 'Key': backup_key},
+                              Bucket=target_bucket,
+                              Key=original_key,
+                              MetadataDirective='COPY'
+                          )
+              
+              logger.info("S3 content restoration completed")
+
+  # IAM Role for Disaster Recovery Lambda
+  DisasterRecoveryLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-dr-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DisasterRecoveryPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:ListBucket
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucketVersions
+                Resource:
+                  - !Sub 'arn:aws:s3:::${ProjectName}-${Environment}-frontend'
+                  - !Sub 'arn:aws:s3:::${ProjectName}-${Environment}-frontend/*'
+                  - !GetAtt BackupBucket.Arn
+                  - !Sub '${BackupBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                  - cloudformation:DeleteStack
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  # CloudWatch Alarms for backup monitoring
+  BackupFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-backup-failure'
+      AlarmDescription: 'Backup process failed'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref BackupLambda
+      AlarmActions:
+        - !Ref BackupAlertsTopic
+
+  # SNS Topic for backup alerts
+  BackupAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-backup-alerts'
+      DisplayName: 'Backup Alerts'
+
+  BackupAlertsEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref BackupAlertsTopic
+      Endpoint: alerts@omnix.ai
+
+Conditions:
+  EnableCrossRegionReplication: !Equals [!Ref CrossRegionReplication, 'true']
+
+Outputs:
+  BackupBucketName:
+    Description: 'Backup S3 Bucket Name'
+    Value: !Ref BackupBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BackupBucketName'
+
+  BackupLambdaArn:
+    Description: 'Backup Lambda Function ARN'
+    Value: !GetAtt BackupLambda.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BackupLambdaArn'
+
+  DisasterRecoveryLambdaArn:
+    Description: 'Disaster Recovery Lambda Function ARN'
+    Value: !GetAtt DisasterRecoveryLambda.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-DisasterRecoveryLambdaArn'
+
+  BackupScheduleRuleArn:
+    Description: 'Backup Schedule Rule ARN'
+    Value: !GetAtt BackupScheduleRule.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BackupScheduleRuleArn'

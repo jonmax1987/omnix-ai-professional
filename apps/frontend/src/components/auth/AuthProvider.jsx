@@ -19,18 +19,16 @@ const AuthProvider = ({
   onSessionExpired = null,
   ...props 
 }) => {
-  const {
-    isAuthenticated,
-    user,
-    token,
-    loading,
-    errors,
-    refreshSession,
-    logout,
-    getUserRole,
-    hasPermission,
-    canAccess
-  } = useUserStore();
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
+  const user = useUserStore((state) => state.user);
+  const token = useUserStore((state) => state.token);
+  const loading = useUserStore((state) => state.loading);
+  const errors = useUserStore((state) => state.errors);
+  const refreshSession = useUserStore((state) => state.refreshSession);
+  const logout = useUserStore((state) => state.logout);
+  const getUserRole = useUserStore((state) => state.getUserRole);
+  const hasPermission = useUserStore((state) => state.hasPermission);
+  const canAccess = useUserStore((state) => state.canAccess);
 
   const [authState, setAuthState] = useState({
     isLoading: loading.auth,

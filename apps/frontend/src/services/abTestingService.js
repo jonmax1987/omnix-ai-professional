@@ -167,6 +167,94 @@ class ABTestingService {
   }
 
   /**
+   * List all tests (for API compatibility)
+   */
+  async listAllTests(params = {}) {
+    try {
+      const tests = Array.from(this.activeTests.values()).map(test => ({
+        ...test,
+        results: this.testResults.get(test.id)
+      }));
+
+      // Apply filters if provided
+      let filteredTests = tests;
+      if (params.status) {
+        filteredTests = tests.filter(test => test.status === params.status);
+      }
+      if (params.category) {
+        filteredTests = filteredTests.filter(test => test.metadata?.category === params.category);
+      }
+
+      return {
+        data: filteredTests,
+        total: filteredTests.length,
+        page: params.page || 1,
+        limit: params.limit || 25
+      };
+    } catch (error) {
+      throw new Error(`Failed to list tests: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get available models for A/B testing (mock data)
+   */
+  async getAvailableModels() {
+    try {
+      // Mock available AI models for A/B testing
+      const models = [
+        {
+          id: 'claude-3-haiku',
+          name: 'Claude 3 Haiku',
+          provider: 'Anthropic',
+          type: 'text',
+          capabilities: ['chat', 'analysis', 'recommendations'],
+          cost: 0.25,
+          speed: 'fast',
+          accuracy: 'high'
+        },
+        {
+          id: 'claude-3-sonnet', 
+          name: 'Claude 3 Sonnet',
+          provider: 'Anthropic',
+          type: 'text',
+          capabilities: ['chat', 'analysis', 'recommendations', 'complex_reasoning'],
+          cost: 3.00,
+          speed: 'medium',
+          accuracy: 'very_high'
+        },
+        {
+          id: 'gpt-4o-mini',
+          name: 'GPT-4o Mini',
+          provider: 'OpenAI',
+          type: 'text',
+          capabilities: ['chat', 'analysis'],
+          cost: 0.15,
+          speed: 'fast',
+          accuracy: 'good'
+        },
+        {
+          id: 'gpt-4o',
+          name: 'GPT-4o',
+          provider: 'OpenAI', 
+          type: 'text',
+          capabilities: ['chat', 'analysis', 'recommendations', 'multimodal'],
+          cost: 5.00,
+          speed: 'medium',
+          accuracy: 'excellent'
+        }
+      ];
+
+      return {
+        data: models,
+        total: models.length
+      };
+    } catch (error) {
+      throw new Error(`Failed to get available models: ${error.message}`);
+    }
+  }
+
+  /**
    * Process queued updates
    */
   processUpdates() {
