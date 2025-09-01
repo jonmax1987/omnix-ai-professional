@@ -1,0 +1,10 @@
+{
+  "name": "omnix-ai-lambda-auth",
+  "version": "1.0.0",
+  "description": "OMNIX AI Lambda with Authentication",
+  "main": "lambda-auth.js",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

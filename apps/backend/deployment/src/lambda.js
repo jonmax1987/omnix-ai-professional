@@ -24,15 +24,19 @@ async function createServer() {
             app.enableCors({
                 origin: [
                     'http://localhost:3000',
+                    'http://localhost:3001',
                     'http://localhost:3002',
                     'http://localhost:5173',
+                    'http://localhost:5174',
+                    'http://localhost:5175',
+                    'https://d1vu6p9f5uc16.cloudfront.net',
                     'https://d19s05k3hjfuzv.cloudfront.net',
                     'https://omnix-ai.com',
                     'https://www.omnix-ai.com'
                 ],
                 credentials: true,
                 methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-                allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+                allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Client-Version', 'X-Client-Type', 'X-Request-Id'],
                 optionsSuccessStatus: 200,
             });
             console.log('⚡ Setting up rate limiting...');

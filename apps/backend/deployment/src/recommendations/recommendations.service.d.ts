@@ -4,7 +4,7 @@ export declare class RecommendationsService {
     constructor(mlService: MlService);
     private mockRecommendations;
     getRecommendations(query?: any): Promise<{
-        data: ({
+        data: {
             id: string;
             type: string;
             priority: string;
@@ -16,25 +16,11 @@ export declare class RecommendationsService {
             impact: string;
             action: string;
             estimatedSavings: number;
+            estimatedValue: number;
             daysUntilAction: number;
             confidence: number;
             createdAt: string;
-        } | {
-            id: string;
-            type: string;
-            priority: string;
-            productId: string;
-            productName: string;
-            productSku: string;
-            title: string;
-            description: string;
-            impact: string;
-            action: string;
-            daysUntilAction: number;
-            confidence: number;
-            createdAt: string;
-            estimatedSavings?: undefined;
-        })[];
+        }[];
         pagination: {
             page: number;
             limit: number;

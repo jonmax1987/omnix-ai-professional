@@ -1,7 +1,8 @@
 export declare enum UserRole {
     ADMIN = "admin",
     MANAGER = "manager",
-    ANALYST = "analyst"
+    ANALYST = "analyst",
+    CUSTOMER = "customer"
 }
 export declare class UserProfile {
     id: string;

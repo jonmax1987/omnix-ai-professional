@@ -25,11 +25,38 @@ let RecommendationsController = class RecommendationsController {
     async getRecommendations(query) {
         return await this.recommendationsService.getRecommendations(query);
     }
+    async getOrderRecommendations(query) {
+        return await this.recommendationsService.getRecommendations(query);
+    }
     async acceptRecommendation(recommendationId) {
         return await this.recommendationsService.acceptRecommendation(recommendationId);
     }
     async dismissRecommendation(recommendationId) {
         return await this.recommendationsService.dismissRecommendation(recommendationId);
+    }
+    async getRecommendationHistory(query) {
+        return {
+            data: [],
+            total: 0,
+            page: query.page || 1,
+            limit: query.limit || 10,
+            totalPages: 0
+        };
+    }
+    async getRecommendationSettings() {
+        return {
+            autoApply: false,
+            notificationEnabled: true,
+            minConfidence: 0.7,
+            maxRecommendationsPerDay: 10,
+            categories: ['reorder', 'optimize', 'discontinue', 'promotion']
+        };
+    }
+    async updateRecommendationSettings(settings) {
+        return {
+            ...settings,
+            updatedAt: new Date().toISOString()
+        };
     }
     async getCustomerRecommendations(customerId, context, limit) {
         return await this.recommendationsService.getCustomerRecommendations(customerId, context || 'homepage', limit ? parseInt(limit, 10) : 10);
@@ -65,6 +92,19 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RecommendationsController.prototype, "getRecommendations", null);
 __decorate([
+    (0, common_1.Get)('orders'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get order recommendations' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'type', required: false, enum: ['reorder', 'optimize', 'discontinue', 'promotion'] }),
+    (0, swagger_1.ApiQuery)({ name: 'priority', required: false, enum: ['high', 'medium', 'low'] }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns paginated list of order recommendations' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], RecommendationsController.prototype, "getOrderRecommendations", null);
+__decorate([
     (0, common_1.Post)(':recommendationId/accept'),
     (0, swagger_1.ApiOperation)({ summary: 'Accept a recommendation' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Recommendation accepted successfully' }),
@@ -82,6 +122,34 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RecommendationsController.prototype, "dismissRecommendation", null);
+__decorate([
+    (0, common_1.Get)('history'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get recommendation history' }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns recommendation history' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], RecommendationsController.prototype, "getRecommendationHistory", null);
+__decorate([
+    (0, common_1.Get)('settings'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get recommendation settings' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Returns recommendation settings' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], RecommendationsController.prototype, "getRecommendationSettings", null);
+__decorate([
+    (0, common_1.Patch)('settings'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update recommendation settings' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Settings updated successfully' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], RecommendationsController.prototype, "updateRecommendationSettings", null);
 __decorate([
     (0, common_1.Get)('customers/:customerId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

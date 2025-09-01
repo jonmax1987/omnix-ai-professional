@@ -3,7 +3,7 @@ export declare class RecommendationsController {
     private readonly recommendationsService;
     constructor(recommendationsService: RecommendationsService);
     getRecommendations(query: any): Promise<{
-        data: ({
+        data: {
             id: string;
             type: string;
             priority: string;
@@ -15,10 +15,28 @@ export declare class RecommendationsController {
             impact: string;
             action: string;
             estimatedSavings: number;
+            estimatedValue: number;
             daysUntilAction: number;
             confidence: number;
             createdAt: string;
-        } | {
+        }[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+            hasNext: boolean;
+            hasPrev: boolean;
+        };
+        meta: {
+            highPriority: number;
+            mediumPriority: number;
+            lowPriority: number;
+            totalSavings: number;
+        };
+    }>;
+    getOrderRecommendations(query: any): Promise<{
+        data: {
             id: string;
             type: string;
             priority: string;
@@ -29,11 +47,12 @@ export declare class RecommendationsController {
             description: string;
             impact: string;
             action: string;
+            estimatedSavings: number;
+            estimatedValue: number;
             daysUntilAction: number;
             confidence: number;
             createdAt: string;
-            estimatedSavings?: undefined;
-        })[];
+        }[];
         pagination: {
             page: number;
             limit: number;
@@ -58,6 +77,21 @@ export declare class RecommendationsController {
         message: string;
         recommendationId: string;
     }>;
+    getRecommendationHistory(query: any): Promise<{
+        data: any[];
+        total: number;
+        page: any;
+        limit: any;
+        totalPages: number;
+    }>;
+    getRecommendationSettings(): Promise<{
+        autoApply: boolean;
+        notificationEnabled: boolean;
+        minConfidence: number;
+        maxRecommendationsPerDay: number;
+        categories: string[];
+    }>;
+    updateRecommendationSettings(settings: any): Promise<any>;
     getCustomerRecommendations(customerId: string, context?: 'homepage' | 'product_page' | 'checkout' | 'email', limit?: string): Promise<import("../ml/ml.service").RecommendationResponse>;
     getSimilarProducts(productId: string, limit?: string): Promise<import("../ml/ml.service").RecommendationResponse>;
     getTrendingProducts(limit?: string): Promise<any[]>;

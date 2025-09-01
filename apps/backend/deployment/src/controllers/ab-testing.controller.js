@@ -319,7 +319,7 @@ __decorate([
 ], ABTestingController.prototype, "getAvailableModels", null);
 exports.ABTestingController = ABTestingController = __decorate([
     (0, swagger_1.ApiTags)('A/B Testing'),
-    (0, common_1.Controller)('v1/ab-tests'),
+    (0, common_1.Controller)('ab-tests'),
     __metadata("design:paramtypes", [enhanced_bedrock_service_1.EnhancedBedrockService,
         ab_testing_service_1.ABTestingService])
 ], ABTestingController);

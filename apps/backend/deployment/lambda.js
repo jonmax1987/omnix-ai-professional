@@ -29,12 +29,11 @@ async function createServer() {
                     'https://omnix-ai.com',
                     'https://www.omnix-ai.com',
                     'https://app.omnix-ai.com',
-                    'https://dh5a0lb9qett.cloudfront.net',
-                    '*'
+                    'https://dh5a0lb9qett.cloudfront.net'
                 ],
                 credentials: true,
                 methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-                allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+                allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Client-Type', 'X-Client-Version', 'X-Request-Id'],
             });
             console.log('⚡ Skipping rate limiting for development...');
             console.log('✅ Setting up validation pipes...');

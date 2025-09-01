@@ -1,0 +1,8 @@
+{
+  "httpMethod": "POST", 
+  "path": "/auth/login", 
+  "body": "{\"email\": \"admin@omnix.ai\", \"password\": \"admin123\"}", 
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

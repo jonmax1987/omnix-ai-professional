@@ -351,7 +351,17 @@ let ABTestingService = class ABTestingService {
         return Math.ceil(text.length / 4);
     }
     async listABTests() {
-        return await this.dynamoDBService.scan(this.testsTable);
+        try {
+            return await this.dynamoDBService.scan(this.testsTable);
+        }
+        catch (error) {
+            if (error.name === 'ResourceNotFoundException') {
+                console.log(`⚠️ A/B tests table does not exist yet. Returning empty list.`);
+                return [];
+            }
+            console.error('❌ Failed to list A/B tests:', error);
+            throw error;
+        }
     }
     async deactivateABTest(testId) {
         await this.dynamoDBService.update(this.testsTable, { testId }, { active: false });

@@ -67,6 +67,26 @@ let UsersService = class UsersService {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             },
+            {
+                id: 'customer-001',
+                email: 'customer@omnix.ai',
+                passwordHash: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+                name: 'Sarah Johnson',
+                role: auth_dto_1.UserRole.CUSTOMER,
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            },
+            {
+                id: 'customer-002',
+                email: 'john.customer@omnix.ai',
+                passwordHash: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+                name: 'John Smith',
+                role: auth_dto_1.UserRole.CUSTOMER,
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            },
         ];
     }
     async findOne(email) {
