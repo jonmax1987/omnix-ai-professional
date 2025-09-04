@@ -14,6 +14,7 @@ import { WebSocketModule } from './websocket/websocket.module';
 import { CustomersModule } from './customers/customers.module';
 import { StreamingModule } from './streaming/streaming.module';
 import { AIInsightsModule } from './ai/ai-insights.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -32,6 +33,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     CustomersModule,
     StreamingModule,
     AIInsightsModule,
+    AnalyticsModule,
   ],
   providers: [
     {

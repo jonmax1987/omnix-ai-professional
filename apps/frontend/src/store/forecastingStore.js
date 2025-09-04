@@ -136,70 +136,10 @@ const useForecastingStore = create()(
               state.forecastError = error.message || 'Failed to fetch forecasts';
             });
             
-            // Fallback to mock data in development
-            if (process.env.NODE_ENV === 'development') {
-              console.log('Using mock demand forecasts for development');
-              const mockForecasts = [
-                {
-                  id: 'forecast-1',
-                  productId: 'mock-1',
-                  productName: 'Sample Coffee Beans',
-                  category: 'food',
-                  timeHorizon: '30d',
-                  accuracy: 87,
-                  model: 'ARIMA',
-                  lastUpdated: new Date().toISOString(),
-                  predictions: Array.from({ length: 30 }, (_, i) => {
-                    const baseDate = new Date();
-                    baseDate.setDate(baseDate.getDate() + i);
-                    const baseDemand = 25 + Math.sin(i * 0.2) * 10 + Math.random() * 5;
-                    return {
-                      period: baseDate.toISOString().split('T')[0],
-                      predictedDemand: Math.round(baseDemand),
-                      confidenceInterval: {
-                        lower: Math.round(baseDemand * 0.85),
-                        upper: Math.round(baseDemand * 1.15)
-                      }
-                    };
-                  }),
-                  seasonality: {
-                    detected: true,
-                    pattern: 'weekly',
-                    strength: 0.4
-                  },
-                  trend: 'increasing'
-                },
-                {
-                  id: 'forecast-2',
-                  productId: 'mock-2',
-                  productName: 'Premium Electronics',
-                  category: 'electronics',
-                  timeHorizon: '30d',
-                  accuracy: 92,
-                  model: 'Neural Network',
-                  lastUpdated: new Date().toISOString(),
-                  predictions: Array.from({ length: 30 }, (_, i) => {
-                    const baseDate = new Date();
-                    baseDate.setDate(baseDate.getDate() + i);
-                    const baseDemand = 15 + Math.sin(i * 0.15) * 8 + Math.random() * 3;
-                    return {
-                      period: baseDate.toISOString().split('T')[0],
-                      predictedDemand: Math.round(baseDemand),
-                      confidenceInterval: {
-                        lower: Math.round(baseDemand * 0.9),
-                        upper: Math.round(baseDemand * 1.1)
-                      }
-                    };
-                  }),
-                  seasonality: {
-                    detected: false,
-                    pattern: 'none',
-                    strength: 0.1
-                  },
-                  trend: 'stable'
-                }
-              ];
-              get().setDemandForecasts(mockForecasts);
+            // Log error and set empty state
+            if (import.meta.env.DEV) {
+              console.warn('⚠️ No forecasting data received from API. Please check database connection.');
+              get().setDemandForecasts([]);
             }
           } finally {
             set((state) => {
@@ -253,32 +193,10 @@ const useForecastingStore = create()(
               state.trendError = error.message || 'Failed to fetch trends';
             });
             
-            // Fallback to mock data in development
-            if (process.env.NODE_ENV === 'development') {
-              console.log('Using mock trend analysis for development');
-              const mockTrendData = {
-                timeRange: '30d',
-                overallTrend: 'increasing',
-                seasonality: {
-                  detected: true,
-                  pattern: 'weekly',
-                  strength: 0.45
-                },
-                correlations: [
-                  { factor: 'Weather', correlation: 0.72 },
-                  { factor: 'Marketing Campaigns', correlation: 0.85 },
-                  { factor: 'Competitor Pricing', correlation: -0.34 },
-                  { factor: 'Stock Levels', correlation: 0.91 }
-                ],
-                insights: [
-                  'Strong weekly seasonality with peaks on weekends',
-                  'Marketing campaigns show highest correlation with demand',
-                  'Weather patterns significantly impact food & beverage sales',
-                  'Stock availability directly affects sales performance',
-                  'Holiday periods require 40-50% additional inventory'
-                ]
-              };
-              get().setTrendAnalysis(mockTrendData);
+            // Log error and set empty state
+            if (import.meta.env.DEV) {
+              console.warn('⚠️ No trend analysis data received from API. Please check database connection.');
+              get().setTrendAnalysis(null);
             }
           } finally {
             set((state) => {
@@ -404,11 +322,11 @@ const useForecastingStore = create()(
           const forecasts = get().demandForecasts;
           if (forecasts.length === 0) return [];
           
-          // Mock accuracy trend data - in production this would come from historical data
-          return Array.from({ length: 30 }, (_, i) => ({
-            date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            accuracy: 85 + Math.sin(i * 0.1) * 10 + Math.random() * 5
-          }));
+          // Calculate accuracy trend from actual forecast data
+          return forecasts.map(forecast => ({
+            date: forecast.lastUpdated?.split('T')[0] || new Date().toISOString().split('T')[0],
+            accuracy: forecast.accuracy || 0
+          })).slice(0, 30);
         }
       }))
     ),

@@ -37,6 +37,7 @@ async function createServer() {
           'http://localhost:5174',
           'http://localhost:5175',
           'https://d1vu6p9f5uc16.cloudfront.net', // Current CloudFront production frontend
+          'https://dtdnwq4annvk2.cloudfront.net', // Staging CloudFront URL
           'https://d19s05k3hjfuzv.cloudfront.net', // Legacy CloudFront
           'https://omnix-ai.com',
           'https://www.omnix-ai.com'
@@ -149,12 +150,14 @@ export const handler = async (
       'http://localhost:3000',
       'http://localhost:3002',
       'http://localhost:5173', // Vite dev server
+      'https://d1vu6p9f5uc16.cloudfront.net', // Production CloudFront URL
+      'https://dtdnwq4annvk2.cloudfront.net', // Staging CloudFront URL
       'https://d19s05k3hjfuzv.cloudfront.net',
       'https://omnix-ai.com',
       'https://www.omnix-ai.com'
     ];
     
-    const corsOrigin = allowedOrigins.includes(origin) ? origin : 'https://d19s05k3hjfuzv.cloudfront.net';
+    const corsOrigin = allowedOrigins.includes(origin) ? origin : 'https://d1vu6p9f5uc16.cloudfront.net';
     
     const corsHeaders = {
       'Access-Control-Allow-Origin': corsOrigin,

@@ -10,6 +10,13 @@ import { immer } from 'zustand/middleware/immer';
 import customerBehaviorAnalytics from '../services/customerBehaviorAnalytics';
 import segmentMigrationService from '../services/segmentMigrationService';
 import consumptionPatternService from '../services/consumptionPatternService';
+import { sanitizeCustomerId, sanitizeSessionId, sanitizeBehaviorData, sanitizeConsumptionData, createSanitizedError, securelog } from '../utils/piiSanitizer';
+import { BehaviorAnalyticsWorker, optimizedRequestIdleCallback, createDebouncer, BatchProcessor } from '../utils/webWorkerManager';
+
+// Initialize performance optimization components
+let behaviorWorker = null;
+let behaviorProcessor = null;
+let debouncedInsights = null;
 
 const useCustomerBehaviorStore = create()(
   devtools(
@@ -83,13 +90,44 @@ const useCustomerBehaviorStore = create()(
         error: null,
         lastUpdate: null,
 
+        // Performance monitoring
+        performance: {
+          processingTimes: [],
+          workerStats: null,
+          memoryUsage: 0,
+          lastCleanup: null,
+          avgProcessingTime: 0
+        },
+
+        // Cleanup intervals
+        cleanupIntervals: new Set(),
+
         // Actions
         
         /**
-         * Track real-time customer behavior event
+         * Track real-time customer behavior event (Performance Optimized)
          */
-        trackBehavior: (behaviorData) =>
-          set((state) => {
+        trackBehavior: async (behaviorData) => {
+          const startTime = performance.now();
+          
+          try {
+            // Initialize worker if needed
+            if (!behaviorWorker) {
+              behaviorWorker = new BehaviorAnalyticsWorker();
+              await behaviorWorker.initialize();
+            }
+
+            // Initialize batch processor if needed
+            if (!behaviorProcessor) {
+              behaviorProcessor = new BatchProcessor(
+                async (behaviors) => {
+                  await get().processBehaviorBatch(behaviors);
+                },
+                5, // Batch size
+                50  // Delay ms
+              );
+            }
+
             const behavior = {
               id: behaviorData.id || `behavior-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               customerId: behaviorData.customerId,
@@ -97,7 +135,7 @@ const useCustomerBehaviorStore = create()(
               timestamp: behaviorData.timestamp || new Date().toISOString(),
               
               // Behavior details
-              type: behaviorData.type, // 'page_view', 'product_view', 'purchase', 'cart_add', 'search', etc.
+              type: behaviorData.type,
               action: behaviorData.action,
               category: behaviorData.category,
               value: behaviorData.value || 0,
@@ -124,36 +162,49 @@ const useCustomerBehaviorStore = create()(
               metadata: behaviorData.metadata || {}
             };
 
-            // Add to behaviors array
-            state.behaviors.unshift(behavior);
-            
-            // Limit array size
-            if (state.behaviors.length > state.maxBehaviors) {
-              state.behaviors = state.behaviors.slice(0, state.maxBehaviors);
-            }
+            // Immediate state update (lightweight)
+            set((state) => {
+              // Add to behaviors array
+              state.behaviors.unshift(behavior);
+              
+              // Limit array size efficiently
+              if (state.behaviors.length > state.maxBehaviors) {
+                state.behaviors.length = state.maxBehaviors;
+              }
 
-            // Update customer journey
-            get().updateCustomerJourney(behavior);
-            
-            // Update analytics
-            get().updateAnalytics(behavior);
-            
-            // Detect patterns
-            get().detectPatterns(behavior);
-            
-            // Update behavior scores
-            get().updateBehaviorScores(behavior);
-            
-            // Check for alerts
-            get().checkBehaviorAlerts(behavior);
-            
-            // Track consumption patterns for purchase events
-            if (behavior.is_purchase || behavior.type === 'purchase') {
-              get().trackConsumptionPattern(behavior);
-            }
-            
-            state.lastUpdate = new Date().toISOString();
-          }),
+              // Quick journey update
+              get().updateCustomerJourneyOptimized(behavior);
+              
+              state.lastUpdate = new Date().toISOString();
+            });
+
+            // Defer heavy computations to Web Worker
+            optimizedRequestIdleCallback(async () => {
+              try {
+                const allBehaviors = get().behaviors;
+                const processingResult = await behaviorWorker.processBehavior(behavior, allBehaviors);
+                
+                // Apply worker results to state
+                set((state) => {
+                  get().applyWorkerResults(processingResult, behavior);
+                });
+                
+              } catch (workerError) {
+                console.error('Worker processing failed, falling back to sync:', workerError);
+                // Fallback to synchronous processing
+                get().processHeavyComputationsSync(behavior);
+              }
+            });
+
+            // Track performance
+            const processingTime = performance.now() - startTime;
+            get().updatePerformanceMetrics(processingTime);
+
+          } catch (error) {
+            console.error('Error in trackBehavior:', error);
+            get().setError(error);
+          }
+        },
 
         /**
          * Update customer journey tracking
@@ -427,7 +478,8 @@ const useCustomerBehaviorStore = create()(
          */
         trackConsumptionPattern: (behavior) =>
           set((state) => {
-            const consumptionData = {
+            // Sanitize consumption data before processing to prevent PII exposure
+            const rawConsumptionData = {
               customerId: behavior.customerId,
               productId: behavior.product?.id || 'unknown',
               category: behavior.product?.category || 'general',
@@ -440,6 +492,9 @@ const useCustomerBehaviorStore = create()(
                 location: behavior.location
               }
             };
+            
+            // Apply PII sanitization for internal processing
+            const consumptionData = sanitizeConsumptionData(rawConsumptionData);
 
             // Track pattern using consumption service
             const patternUpdate = consumptionPatternService.trackConsumption(consumptionData);
@@ -482,11 +537,11 @@ const useCustomerBehaviorStore = create()(
                 }
               }
               
-              // Add insights to pattern insights
+              // Add insights to pattern insights with PII protection
               if (patternUpdate.insights && patternUpdate.insights.length > 0) {
                 state.patternInsights.push(...patternUpdate.insights.map(insight => ({
                   ...insight,
-                  customerId: behavior.customerId,
+                  customerId: sanitizeCustomerId(behavior.customerId), // Sanitize customer ID in insights
                   timestamp: patternUpdate.timestamp,
                   id: `insight-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
                 })));
@@ -759,13 +814,293 @@ const useCustomerBehaviorStore = create()(
           }),
 
         /**
-         * Set error state
+         * Set error state with PII sanitization
          */
         setError: (error) =>
           set((state) => {
-            state.error = error;
+            // Sanitize error before storing to prevent PII exposure in state
+            const sanitizedError = createSanitizedError(error, {
+              context: 'CustomerBehaviorStore',
+              timestamp: new Date().toISOString()
+            });
+            
+            state.error = sanitizedError;
             state.loading = false;
-          })
+            
+            // Use secure logging for error tracking
+            securelog('error', 'CustomerBehaviorStore error occurred', sanitizedError);
+          }),
+
+        /**
+         * Optimized customer journey update (lightweight)
+         */
+        updateCustomerJourneyOptimized: (behavior) =>
+          set((state) => {
+            const { customerId, sessionId } = behavior;
+            const journeyKey = `${customerId}-${sessionId}`;
+            
+            let journey = state.customerJourneys.get(journeyKey);
+            
+            if (!journey) {
+              journey = {
+                customerId,
+                sessionId,
+                startTime: behavior.timestamp,
+                endTime: behavior.timestamp,
+                events: [],
+                totalValue: 0,
+                pageViews: 0,
+                duration: 0,
+                isActive: true,
+                conversionEvents: [],
+                touchpoints: []
+              };
+              
+              state.activeJourneys.add(journeyKey);
+            }
+            
+            // Optimized updates
+            journey.events.push(behavior);
+            journey.endTime = behavior.timestamp;
+            journey.totalValue += behavior.value || 0;
+            
+            if (behavior.type === 'page_view') {
+              journey.pageViews += 1;
+            }
+            
+            state.customerJourneys.set(journeyKey, journey);
+          }),
+
+        /**
+         * Apply Web Worker results to state
+         */
+        applyWorkerResults: (results, behavior) =>
+          set((state) => {
+            try {
+              // Apply analytics updates
+              if (results.analytics) {
+                const analytics = results.analytics;
+                state.analytics.totalEvents += analytics.totalEvents || 0;
+                
+                if (analytics.uniqueCustomer) {
+                  state.analytics.uniqueCustomers.add(analytics.uniqueCustomer);
+                }
+                
+                if (analytics.deviceUpdate) {
+                  Object.entries(analytics.deviceUpdate).forEach(([device, count]) => {
+                    const currentCount = state.analytics.deviceBreakdown.get(device) || 0;
+                    state.analytics.deviceBreakdown.set(device, currentCount + count);
+                  });
+                }
+              }
+
+              // Apply pattern updates
+              if (results.patterns) {
+                const patterns = results.patterns;
+                
+                if (patterns.purchasePattern) {
+                  state.patterns.purchasePatterns.set(
+                    patterns.purchasePattern.customerId, 
+                    patterns.purchasePattern
+                  );
+                }
+                
+                if (patterns.timePattern) {
+                  const current = state.patterns.timeBasedPatterns.get(patterns.timePattern.timeSlot) || 0;
+                  state.patterns.timeBasedPatterns.set(
+                    patterns.timePattern.timeSlot, 
+                    current + patterns.timePattern.count
+                  );
+                }
+              }
+
+              // Apply score updates
+              if (results.scores) {
+                const scores = results.scores;
+                let score = state.behaviorScores.get(scores.customerId) || {
+                  engagementScore: 50,
+                  purchaseScore: 0,
+                  loyaltyScore: 0,
+                  activityScore: 0,
+                  lastUpdate: scores.timestamp
+                };
+                
+                score.engagementScore = Math.min(100, score.engagementScore + scores.engagementIncrease);
+                score.purchaseScore = Math.min(100, score.purchaseScore + scores.purchaseIncrease);
+                score.lastUpdate = scores.timestamp;
+                
+                state.behaviorScores.set(scores.customerId, score);
+              }
+
+              // Apply alerts
+              if (results.alerts && results.alerts.length > 0) {
+                results.alerts.forEach(alert => {
+                  state.behaviorAlerts.push({
+                    ...alert,
+                    id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`
+                  });
+                });
+                
+                // Keep only last 100 alerts
+                if (state.behaviorAlerts.length > 100) {
+                  state.behaviorAlerts = state.behaviorAlerts.slice(-100);
+                }
+              }
+
+            } catch (error) {
+              console.error('Error applying worker results:', error);
+            }
+          }),
+
+        /**
+         * Fallback synchronous processing for heavy computations
+         */
+        processHeavyComputationsSync: (behavior) =>
+          set((state) => {
+            // Simplified synchronous versions of heavy computations
+            get().updateAnalytics(behavior);
+            get().updateBehaviorScores(behavior);
+            
+            if (behavior.is_purchase || behavior.type === 'purchase') {
+              get().trackConsumptionPattern(behavior);
+            }
+          }),
+
+        /**
+         * Process behavior batch for batch processor
+         */
+        processBehaviorBatch: async (behaviors) => {
+          try {
+            if (!behaviorWorker) {
+              behaviorWorker = new BehaviorAnalyticsWorker();
+              await behaviorWorker.initialize();
+            }
+            
+            const results = await behaviorWorker.batchProcessBehaviors(behaviors);
+            
+            set((state) => {
+              results.forEach((result, index) => {
+                get().applyWorkerResults(result, behaviors[index]);
+              });
+            });
+            
+          } catch (error) {
+            console.error('Batch processing failed:', error);
+            // Fallback to individual processing
+            behaviors.forEach(behavior => {
+              get().processHeavyComputationsSync(behavior);
+            });
+          }
+        },
+
+        /**
+         * Update performance metrics
+         */
+        updatePerformanceMetrics: (processingTime) =>
+          set((state) => {
+            state.performance.processingTimes.push(processingTime);
+            
+            // Keep only last 100 measurements
+            if (state.performance.processingTimes.length > 100) {
+              state.performance.processingTimes = state.performance.processingTimes.slice(-100);
+            }
+            
+            // Calculate average
+            state.performance.avgProcessingTime = 
+              state.performance.processingTimes.reduce((sum, time) => sum + time, 0) / 
+              state.performance.processingTimes.length;
+              
+            // Update memory usage estimation
+            if (typeof performance !== 'undefined' && performance.memory) {
+              state.performance.memoryUsage = performance.memory.usedJSHeapSize;
+            }
+          }),
+
+        /**
+         * Get performance metrics
+         */
+        getPerformanceMetrics: () => {
+          const state = get();
+          return {
+            ...state.performance,
+            workerStats: behaviorWorker ? behaviorWorker.getStats() : null,
+            queueSize: behaviorProcessor ? behaviorProcessor.getQueueSize() : 0,
+            behaviorsCount: state.behaviors.length,
+            activeJourneys: state.activeJourneys.size,
+            memoryPressure: state.performance.memoryUsage > 50 * 1024 * 1024 // 50MB threshold
+          };
+        },
+
+        /**
+         * Setup automatic cleanup intervals
+         */
+        setupCleanupIntervals: () => {
+          const state = get();
+          
+          // Clear existing intervals
+          state.cleanupIntervals.forEach(intervalId => clearInterval(intervalId));
+          state.cleanupIntervals.clear();
+          
+          // Setup memory cleanup interval (every 5 minutes)
+          const memoryCleanupInterval = setInterval(() => {
+            get().performMemoryCleanup();
+          }, 5 * 60 * 1000);
+          
+          // Setup data cleanup interval (every hour)  
+          const dataCleanupInterval = setInterval(() => {
+            get().clearOldData(7); // Keep 7 days of data
+          }, 60 * 60 * 1000);
+          
+          set((state) => {
+            state.cleanupIntervals.add(memoryCleanupInterval);
+            state.cleanupIntervals.add(dataCleanupInterval);
+          });
+        },
+
+        /**
+         * Perform memory cleanup
+         */
+        performMemoryCleanup: () =>
+          set((state) => {
+            // Clear old processing times
+            if (state.performance.processingTimes.length > 50) {
+              state.performance.processingTimes = state.performance.processingTimes.slice(-50);
+            }
+            
+            // Clear old alerts
+            if (state.behaviorAlerts.length > 50) {
+              state.behaviorAlerts = state.behaviorAlerts.slice(-50);
+            }
+            
+            // Clear old insights
+            if (state.patternInsights.length > 50) {
+              state.patternInsights = state.patternInsights.slice(-50);
+            }
+            
+            state.performance.lastCleanup = new Date().toISOString();
+          }),
+
+        /**
+         * Terminate worker and cleanup resources
+         */
+        cleanup: () => {
+          if (behaviorWorker) {
+            behaviorWorker.terminate();
+            behaviorWorker = null;
+          }
+          
+          if (behaviorProcessor) {
+            behaviorProcessor.clear();
+            behaviorProcessor = null;
+          }
+          
+          const state = get();
+          state.cleanupIntervals.forEach(intervalId => clearInterval(intervalId));
+          
+          set((state) => {
+            state.cleanupIntervals.clear();
+          });
+        }
       })),
       {
         name: 'omnix-customer-behavior-store'

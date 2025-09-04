@@ -48,41 +48,41 @@ describe('UsersService', () => {
     });
   });
 
-  describe('login', () => {
-    it('should return JWT token and user info', async () => {
+  describe('toUserProfile', () => {
+    it('should return user profile without password hash', async () => {
       const user = {
         id: '1',
         email: 'manager@omnix.ai',
         role: 'manager',
-        name: 'Test Manager'
+        name: 'Test Manager',
+        passwordHash: 'hashed-password',
+        isActive: true,
+        createdAt: '2023-01-01',
+        updatedAt: '2023-01-01'
       };
 
-      const result = await service.login(user);
+      const result = service.toUserProfile(user as any);
       
       expect(result).toBeDefined();
-      expect(result.access_token).toBe('mock-jwt-token');
-      expect(result.user).toEqual(user);
-      expect(jwtService.sign).toHaveBeenCalledWith({
-        email: user.email,
-        sub: user.id,
-        role: user.role
-      });
+      expect((result as any).passwordHash).toBeUndefined();
+      expect(result.id).toBe(user.id);
+      expect(result.email).toBe(user.email);
     });
   });
 
-  describe('getUserProfile', () => {
-    it('should return user profile by ID', async () => {
+  describe('findById', () => {
+    it('should return user by ID', async () => {
       const userId = '1';
-      const result = await service.getUserProfile(userId);
+      const result = await service.findById(userId);
       
       expect(result).toBeDefined();
       expect(result.id).toBe(userId);
       expect(result.email).toBe('admin@omnix.ai');
     });
 
-    it('should return null for non-existent user', async () => {
-      const result = await service.getUserProfile('non-existent');
-      expect(result).toBeNull();
+    it('should return undefined for non-existent user', async () => {
+      const result = await service.findById('non-existent');
+      expect(result).toBeUndefined();
     });
   });
 });

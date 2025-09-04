@@ -25,6 +25,7 @@ async function bootstrap() {
       'http://localhost:5174', 
       'http://localhost:5175',
       'https://d1vu6p9f5uc16.cloudfront.net', // Current CloudFront production frontend
+      'https://dtdnwq4annvk2.cloudfront.net', // Staging CloudFront URL
       'https://d19s05k3hjfuzv.cloudfront.net', // Legacy CloudFront
       'https://omnix-ai.com',
       'https://www.omnix-ai.com'

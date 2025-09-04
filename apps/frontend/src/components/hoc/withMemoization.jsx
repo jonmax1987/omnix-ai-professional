@@ -3,7 +3,7 @@
  * Higher-order components for automatic memoization and performance optimization
  */
 
-import React, { memo, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { memo, useMemo, useCallback, useRef, useEffect, useState, Profiler } from 'react';
 import { isEqual, pick, throttle, debounce } from 'lodash-es';
 import { 
   useDeepMemo, 
@@ -169,8 +169,8 @@ export function withThrottledProps(Component, options = {}) {
   } = options;
 
   const EnhancedComponent = (props) => {
-    const [throttledProps, setThrottledProps] = React.useState({});
-    const [debouncedProps, setDebouncedProps] = React.useState({});
+    const [throttledProps, setThrottledProps] = useState({});
+    const [debouncedProps, setDebouncedProps] = useState({});
 
     // Create throttled setters
     const throttledSetters = useMemo(() => {
@@ -238,8 +238,8 @@ export function withLazyProps(Component, options = {}) {
   } = options;
 
   const EnhancedComponent = (props) => {
-    const [computedProps, setComputedProps] = React.useState({});
-    const [isComputing, setIsComputing] = React.useState(false);
+    const [computedProps, setComputedProps] = useState({});
+    const [isComputing, setIsComputing] = useState(false);
 
     useEffect(() => {
       const computeLazyProps = async () => {
@@ -287,7 +287,7 @@ export function withBatchedUpdates(Component, options = {}) {
   } = options;
 
   const EnhancedComponent = (props) => {
-    const [batchedProps, setBatchedProps] = React.useState(props);
+    const [batchedProps, setBatchedProps] = useState(props);
     const updateQueueRef = useRef([]);
     const timeoutRef = useRef();
 
@@ -383,7 +383,7 @@ export function withProfiling(Component, options = {}) {
     });
 
     return (
-      <React.Profiler
+      <Profiler
         id={name}
         onRender={(id, phase, actualDuration, baseDuration, startTime, commitTime) => {
           if (process.env.NODE_ENV === 'development') {
@@ -392,7 +392,7 @@ export function withProfiling(Component, options = {}) {
         }}
       >
         <Component {...props} />
-      </React.Profiler>
+      </Profiler>
     );
   };
 

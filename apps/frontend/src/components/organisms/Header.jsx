@@ -376,6 +376,9 @@ const Header = ({
                 placeholder={searchPlaceholder}
                 onSearch={onSearch}
                 maxWidth="100%"
+                debounceMs={300}
+                showClearButton
+                showSearchIcon
               />
             </SearchContainer>
           )}

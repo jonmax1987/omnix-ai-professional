@@ -15,12 +15,9 @@ export default defineConfig(({ command, mode }) => ({
       targets: ['defaults', 'not IE 11']
     }),
     
-    // PWA configuration with enhanced service worker
+    // PWA configuration with auto-generated service worker
     VitePWA({
       registerType: 'autoUpdate',
-      strategies: 'injectManifest',
-      srcDir: 'public',
-      filename: 'sw.js',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,eot}'],
         maximumFileSizeToCacheInBytes: 10000000, // 10MB limit for better performance
@@ -50,7 +47,7 @@ export default defineConfig(({ command, mode }) => ({
             }
           },
           {
-            urlPattern: /^https:\/\/api\./,
+            urlPattern: /^https:\/\/.*\.(?:execute-api\..*\.amazonaws\.com|api\.)/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'omnix-api-v2',
@@ -123,86 +120,8 @@ export default defineConfig(({ command, mode }) => ({
     },
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Core React ecosystem
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'vendor-react';
-          }
-          if (id.includes('node_modules/react-router')) {
-            return 'vendor-router';
-          }
-          
-          // UI and Animation
-          if (id.includes('node_modules/styled-components')) {
-            return 'vendor-styled';
-          }
-          if (id.includes('node_modules/framer-motion')) {
-            return 'vendor-animation';
-          }
-          
-          // State Management
-          if (id.includes('node_modules/zustand') || id.includes('node_modules/immer')) {
-            return 'vendor-state';
-          }
-          
-          // Chart libraries
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3')) {
-            return 'vendor-charts';
-          }
-          
-          // Data fetching
-          if (id.includes('node_modules/@tanstack/react-query') || id.includes('node_modules/axios')) {
-            return 'vendor-data';
-          }
-          
-          // Icons and assets
-          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/@lucide')) {
-            return 'vendor-icons';
-          }
-          
-          // Utilities
-          if (id.includes('node_modules/html2canvas') || id.includes('node_modules/jspdf') || 
-              id.includes('node_modules/date-fns') || id.includes('node_modules/lodash')) {
-            return 'vendor-utils';
-          }
-          
-          // Large vendors get their own chunks
-          if (id.includes('node_modules/@aws-sdk')) {
-            return 'vendor-aws';
-          }
-          if (id.includes('node_modules/aws-amplify')) {
-            return 'vendor-amplify';
-          }
-          
-          // Page-specific chunks for better caching
-          if (id.includes('src/pages/Dashboard')) {
-            return 'page-dashboard';
-          }
-          if (id.includes('src/pages/Analytics') || id.includes('src/pages/ABTesting')) {
-            return 'page-analytics';
-          }
-          if (id.includes('src/pages/Products') || id.includes('src/pages/Orders')) {
-            return 'page-management';
-          }
-          if (id.includes('src/pages/Customer')) {
-            return 'page-customer';
-          }
-          
-          // Debug components in development
-          if (mode === 'development' && id.includes('src/components/debug')) {
-            return 'debug';
-          }
-          
-          // Group organism components
-          if (id.includes('src/components/organisms')) {
-            return 'components-organisms';
-          }
-          
-          // All other node_modules go into vendor-misc
-          if (id.includes('node_modules')) {
-            return 'vendor-misc';
-          }
-        },
+        // Let Vite handle automatic chunking - it knows dependency relationships better
+        manualChunks: undefined,
         // CDN-friendly asset naming
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name.split('.');
@@ -219,9 +138,35 @@ export default defineConfig(({ command, mode }) => ({
         entryFileNames: 'assets/js/[name]-[hash].js'
       }
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500, // Increased due to consolidating React ecosystem
     // CDN optimization
-    assetsDir: 'assets'
+    assetsDir: 'assets',
+    // Ensure proper module resolution to prevent React.AsyncMode issues
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    }
+  },
+  
+  // Resolve configuration to prevent React version conflicts
+  resolve: {
+    alias: {
+      // Ensure consistent React version across all dependencies
+      'react': 'react',
+      'react-dom': 'react-dom',
+      'react-is': 'react-is', // Force single react-is version
+    },
+    dedupe: ['react', 'react-dom', 'react-is'], // Dedupe React ecosystem
+  },
+  
+  // Simplified optimizeDeps - let Vite handle dependency optimization automatically
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-is'
+    ],
+    force: false // Let Vite decide when to rebuild optimized deps
   },
   
   // Development server optimization
@@ -229,29 +174,60 @@ export default defineConfig(({ command, mode }) => ({
     hmr: {
       overlay: false
     },
-    // Proxy API requests to avoid CORS issues in development
+    // Proxy API requests to avoid CORS issues in development  
     proxy: {
-      '/v1': {
+      '/system': {
         target: 'https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/v1/, ''),
         headers: {
           'Origin': 'http://localhost:5173',
           'User-Agent': 'OMNIX-AI-Frontend/1.0'
-        },
-        configure: (proxy, options) => {
-          proxy.on('error', (err, req, res) => {
-            console.log('🚨 Proxy error:', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log('📤 Proxy request:', req.method, req.url, '->', proxyReq.path);
-            // Ensure proper headers for CORS
-            proxyReq.setHeader('Origin', 'http://localhost:5173');
-          });
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log('📡 Proxy response:', proxyRes.statusCode, req.url);
-          });
+        }
+      },
+      '/dashboard': {
+        target: 'https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod',
+        changeOrigin: true,
+        secure: true,
+        headers: {
+          'Origin': 'http://localhost:5173',
+          'User-Agent': 'OMNIX-AI-Frontend/1.0'
+        }
+      },
+      '/products': {
+        target: 'https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod',
+        changeOrigin: true,
+        secure: true,
+        headers: {
+          'Origin': 'http://localhost:5173',
+          'User-Agent': 'OMNIX-AI-Frontend/1.0'
+        }
+      },
+      '/auth': {
+        target: 'https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod',
+        changeOrigin: true,
+        secure: true,
+        headers: {
+          'Origin': 'http://localhost:5173',
+          'User-Agent': 'OMNIX-AI-Frontend/1.0'
+        }
+      },
+      '/orders': {
+        target: 'https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod',
+        changeOrigin: true,
+        secure: true,
+        headers: {
+          'Origin': 'http://localhost:5173',
+          'User-Agent': 'OMNIX-AI-Frontend/1.0'
+        }
+      },
+      '/alerts': {
+        target: 'https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod',
+        changeOrigin: true,
+        secure: true,
+        headers: {
+          'Origin': 'http://localhost:5173',
+          'User-Agent': 'OMNIX-AI-Frontend/1.0'
         }
       }
     }

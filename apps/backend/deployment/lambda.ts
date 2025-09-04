@@ -34,6 +34,7 @@ async function createServer() {
           'http://localhost:5173', // Dev frontend port
           'http://omnix-ai-frontend-animations-1754933694.s3-website.eu-central-1.amazonaws.com', // S3 frontend
           'https://d1vu6p9f5uc16.cloudfront.net', // Production CloudFront URL
+          'https://dtdnwq4annvk2.cloudfront.net', // Staging CloudFront URL
           'https://omnix-ai.com',
           'https://www.omnix-ai.com',
           'https://app.omnix-ai.com',

@@ -108,29 +108,11 @@ const useAlertsStore = create()(
               state.error = error.message || 'Failed to fetch alerts';
             });
             
-            // Fallback to mock data in development when API is unavailable
-            if (process.env.NODE_ENV === 'development') {
-              console.log('Using mock alerts data for development');
-              const mockAlerts = [
-                {
-                  id: 'mock-alert-1',
-                  type: 'low-stock',
-                  productId: 'mock-1',
-                  productName: 'Sample Coffee Beans',
-                  severity: 'warning',
-                  message: 'Low stock alert - only 15 units remaining',
-                  details: 'Consider reordering soon to avoid stockout',
-                  actionRequired: true,
-                  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                  dismissedAt: null,
-                  dismissedBy: null,
-                  title: 'Low Stock Warning',
-                  acknowledged: false,
-                  status: 'active'
-                }
-              ];
-              get().setAlerts(mockAlerts);
+            // Log warning in development but don't use mock data - always use real database
+            if (import.meta.env.DEV) {
+              console.warn('⚠️ No alerts data received from API. Please check database connection.');
+              // Set empty array instead of mock data to ensure UI reflects real state
+              get().setAlerts([]);
             }
           } finally {
             set((state) => {

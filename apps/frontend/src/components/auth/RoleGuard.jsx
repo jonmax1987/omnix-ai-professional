@@ -1,6 +1,6 @@
 // RoleGuard Component
 // Enhanced role-based access control with fallback UI
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import useUserStore from '../../store/userStore';
@@ -103,7 +103,7 @@ const RoleGuard = ({
   }
 
   // Handle access denied
-  React.useEffect(() => {
+  useEffect(() => {
     if (onAccessDenied) {
       onAccessDenied({
         userRole,

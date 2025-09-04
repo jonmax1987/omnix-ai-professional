@@ -129,35 +129,10 @@ const useProductsStore = create()(
               state.error = error.message || 'Failed to fetch products';
             });
             
-            // Fallback to mock data in development when API is unavailable
-            if (process.env.NODE_ENV === 'development') {
-              console.log('Using mock products data for development');
-              const mockProducts = {
-                products: [
-                  {
-                    id: 'mock-1',
-                    name: 'Sample Coffee Beans',
-                    sku: 'COFFEE-001',
-                    category: 'food',
-                    quantity: 150,
-                    minThreshold: 20,
-                    price: 24.99,
-                    cost: 18.50,
-                    supplier: 'Global Coffee Co.',
-                    barcode: '1234567890123',
-                    unit: 'kg',
-                    expirationDate: '2024-12-31',
-                    location: 'Warehouse A',
-                    description: 'Premium arabica coffee beans',
-                    tags: ['premium', 'organic'],
-                    status: 'active',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                  }
-                ],
-                pagination: { page: 1, limit: 25, total: 1, pages: 1, hasNext: false, hasPrev: false }
-              };
-              get().setProducts(mockProducts);
+            // Log error and set empty state in development
+            if (import.meta.env.DEV) {
+              console.warn('⚠️ No products data received from API. Please check database connection.');
+              get().setProducts({ products: [], pagination: { total: 0 } });
             }
           } finally {
             set((state) => {

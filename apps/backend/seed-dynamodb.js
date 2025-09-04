@@ -927,8 +927,9 @@ const sampleProducts = [
   }
 ];
 
-// Sample user data
+// Sample user data with diverse customer profiles
 const sampleUsers = [
+  // System users
   {
     id: '1',
     email: 'admin@omnix.ai',
@@ -959,6 +960,274 @@ const sampleUsers = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
+
+  // Customer profiles for AI analytics
+  {
+    id: 'customer-001',
+    email: 'sarah.johnson@email.com',
+    password: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG', // password: customer123
+    name: 'Sarah Johnson',
+    role: 'customer',
+    profile: {
+      firstName: 'Sarah',
+      lastName: 'Johnson',
+      age: 32,
+      phone: '+1-555-0123',
+      address: {
+        street: '123 Main St',
+        city: 'Berlin',
+        state: 'Berlin',
+        zipCode: '10115',
+        country: 'Germany'
+      },
+      demographics: {
+        householdSize: 3,
+        hasChildren: true,
+        income: 'middle',
+        education: 'university'
+      },
+      preferences: {
+        dietaryRestrictions: ['vegetarian'],
+        favoriteCategories: ['Organic', 'Dairy', 'Produce'],
+        budgetRange: { min: 80, max: 150 },
+        brandPreferences: ['Organic Valley', 'Local Farms'],
+        shoppingFrequency: 'weekly',
+        preferredTimes: ['Saturday Morning', 'Wednesday Evening'],
+        notifications: true,
+        newsletter: true
+      }
+    },
+    createdAt: new Date('2024-01-15').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'customer-002',
+    email: 'michael.chen@email.com',
+    password: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+    name: 'Michael Chen',
+    role: 'customer',
+    profile: {
+      firstName: 'Michael',
+      lastName: 'Chen',
+      age: 28,
+      phone: '+1-555-0124',
+      address: {
+        street: '456 Oak Ave',
+        city: 'Munich',
+        state: 'Bavaria',
+        zipCode: '80331',
+        country: 'Germany'
+      },
+      demographics: {
+        householdSize: 2,
+        hasChildren: false,
+        income: 'high',
+        education: 'university'
+      },
+      preferences: {
+        dietaryRestrictions: [],
+        favoriteCategories: ['Meat & Seafood', 'Beverages', 'Snacks'],
+        budgetRange: { min: 100, max: 250 },
+        brandPreferences: ['Premium Coffee Co.', 'Premium Meats Ltd.'],
+        shoppingFrequency: 'bi-weekly',
+        preferredTimes: ['Sunday Afternoon', 'Tuesday Evening'],
+        notifications: true,
+        newsletter: false
+      }
+    },
+    createdAt: new Date('2024-02-03').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'customer-003',
+    email: 'emma.mueller@email.com',
+    password: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+    name: 'Emma Mueller',
+    role: 'customer',
+    profile: {
+      firstName: 'Emma',
+      lastName: 'Mueller',
+      age: 45,
+      phone: '+49-30-12345678',
+      address: {
+        street: '789 Pine Rd',
+        city: 'Hamburg',
+        state: 'Hamburg',
+        zipCode: '20095',
+        country: 'Germany'
+      },
+      demographics: {
+        householdSize: 4,
+        hasChildren: true,
+        income: 'middle',
+        education: 'high school'
+      },
+      preferences: {
+        dietaryRestrictions: ['gluten-free'],
+        favoriteCategories: ['Health & Wellness', 'Personal Care', 'Cleaning'],
+        budgetRange: { min: 120, max: 200 },
+        brandPreferences: ['Health Plus Co.', 'Beauty Essentials'],
+        shoppingFrequency: 'weekly',
+        preferredTimes: ['Friday Evening', 'Monday Morning'],
+        notifications: true,
+        newsletter: true
+      }
+    },
+    createdAt: new Date('2024-01-22').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'customer-004',
+    email: 'david.rodriguez@email.com',
+    password: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+    name: 'David Rodriguez',
+    role: 'customer',
+    profile: {
+      firstName: 'David',
+      lastName: 'Rodriguez',
+      age: 38,
+      phone: '+34-91-1234567',
+      address: {
+        street: '321 Elm St',
+        city: 'Frankfurt',
+        state: 'Hesse',
+        zipCode: '60311',
+        country: 'Germany'
+      },
+      demographics: {
+        householdSize: 1,
+        hasChildren: false,
+        income: 'low',
+        education: 'vocational'
+      },
+      preferences: {
+        dietaryRestrictions: [],
+        favoriteCategories: ['Frozen Foods', 'Household', 'Cleaning'],
+        budgetRange: { min: 30, max: 80 },
+        brandPreferences: ['Generic Brands', 'Paper Products Inc.'],
+        shoppingFrequency: 'weekly',
+        preferredTimes: ['Thursday Evening', 'Sunday Morning'],
+        notifications: false,
+        newsletter: false
+      }
+    },
+    createdAt: new Date('2024-03-10').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'customer-005',
+    email: 'lisa.anderson@email.com',
+    password: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+    name: 'Lisa Anderson',
+    role: 'customer',
+    profile: {
+      firstName: 'Lisa',
+      lastName: 'Anderson',
+      age: 52,
+      phone: '+1-555-0156',
+      address: {
+        street: '654 Maple Dr',
+        city: 'Cologne',
+        state: 'North Rhine-Westphalia',
+        zipCode: '50667',
+        country: 'Germany'
+      },
+      demographics: {
+        householdSize: 2,
+        hasChildren: false,
+        income: 'high',
+        education: 'university'
+      },
+      preferences: {
+        dietaryRestrictions: ['low-sodium', 'diabetic'],
+        favoriteCategories: ['Health & Wellness', 'Produce', 'Dairy'],
+        budgetRange: { min: 90, max: 180 },
+        brandPreferences: ['Health Plus Co.', 'Fresh Produce Co.'],
+        shoppingFrequency: 'bi-weekly',
+        preferredTimes: ['Tuesday Morning', 'Saturday Afternoon'],
+        notifications: true,
+        newsletter: true
+      }
+    },
+    createdAt: new Date('2024-02-18').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'customer-006',
+    email: 'alex.kim@email.com',
+    password: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+    name: 'Alex Kim',
+    role: 'customer',
+    profile: {
+      firstName: 'Alex',
+      lastName: 'Kim',
+      age: 26,
+      phone: '+82-10-1234-5678',
+      address: {
+        street: '987 Cedar Ln',
+        city: 'Stuttgart',
+        state: 'Baden-Württemberg',
+        zipCode: '70173',
+        country: 'Germany'
+      },
+      demographics: {
+        householdSize: 1,
+        hasChildren: false,
+        income: 'middle',
+        education: 'university'
+      },
+      preferences: {
+        dietaryRestrictions: ['vegan'],
+        favoriteCategories: ['Produce', 'Beverages', 'Snacks'],
+        budgetRange: { min: 40, max: 100 },
+        brandPreferences: ['Healthy Snacks Co.', 'Fresh Produce Co.'],
+        shoppingFrequency: 'weekly',
+        preferredTimes: ['Sunday Evening', 'Wednesday Morning'],
+        notifications: true,
+        newsletter: true
+      }
+    },
+    createdAt: new Date('2024-03-25').toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'customer-007',
+    email: 'maria.santos@email.com',
+    password: '$2b$12$DVN8hsgG4Xm3p2t3ZsEo9upSsiFyzoRj.hVv71TeAbTw2fFTJGouG',
+    name: 'Maria Santos',
+    role: 'customer',
+    profile: {
+      firstName: 'Maria',
+      lastName: 'Santos',
+      age: 35,
+      phone: '+55-11-98765-4321',
+      address: {
+        street: '147 Birch St',
+        city: 'Düsseldorf',
+        state: 'North Rhine-Westphalia',
+        zipCode: '40213',
+        country: 'Germany'
+      },
+      demographics: {
+        householdSize: 5,
+        hasChildren: true,
+        income: 'middle',
+        education: 'high school'
+      },
+      preferences: {
+        dietaryRestrictions: [],
+        favoriteCategories: ['Bakery', 'Frozen Foods', 'Pet Care'],
+        budgetRange: { min: 150, max: 300 },
+        brandPreferences: ['Local Bakery', 'Pet Nutrition Co.'],
+        shoppingFrequency: 'weekly',
+        preferredTimes: ['Saturday Morning', 'Thursday Evening'],
+        notifications: true,
+        newsletter: false
+      }
+    },
+    createdAt: new Date('2024-01-08').toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
 ];
 
 async function seedTable(tableName, items) {

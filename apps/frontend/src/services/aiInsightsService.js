@@ -85,10 +85,17 @@ class AIInsightsService {
         }
       });
 
-      this.setCache(cacheKey, response.data);
-      return response.data;
+      // httpClient already returns response.data, so response IS the data
+      this.setCache(cacheKey, response);
+      return response;
     } catch (error) {
       console.error('Failed to fetch consumption predictions:', error);
+      
+      // If there's a response with data, it might still be usable
+      if (error.response?.data) {
+        return error.response.data;
+      }
+      
       return { 
         predictions: this.getFallbackConsumptionPredictions(params), 
         error: error.message,

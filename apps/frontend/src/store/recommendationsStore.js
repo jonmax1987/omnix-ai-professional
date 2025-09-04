@@ -141,62 +141,10 @@ const useRecommendationsStore = create()(
               state.error = error.message || 'Failed to fetch recommendations';
             });
             
-            // Fallback to mock data in development when API is unavailable
-            if (process.env.NODE_ENV === 'development') {
-              console.log('Using mock recommendations data for development');
-              const mockRecommendations = [
-                {
-                  id: 'mock-rec-1',
-                  type: 'reorder',
-                  priority: 'high',
-                  title: 'Immediate Reorder Required',
-                  description: 'Stock level critically low. Immediate action needed to prevent stockout.',
-                  impact: 'Prevent lost sales and customer dissatisfaction',
-                  confidence: 95,
-                  products: ['Sample Coffee Beans'],
-                  action: 'Reorder 50 units immediately',
-                  estimatedValue: 925,
-                  urgency: 'high',
-                  productId: 'mock-1',
-                  currentStock: 5,
-                  recommendedQuantity: 50,
-                  supplier: 'Global Coffee Co.',
-                  leadTime: 3,
-                  createdAt: new Date().toISOString(),
-                  status: 'pending'
-                },
-                {
-                  id: 'mock-rec-2',
-                  type: 'pricing',
-                  priority: 'medium',
-                  title: 'Price Optimization Opportunity',
-                  description: 'Market analysis suggests price adjustment could increase profits.',
-                  impact: 'Increase profit margin by 12-15%',
-                  confidence: 78,
-                  products: ['Premium Electronics'],
-                  action: 'Increase price by 8%',
-                  estimatedValue: 3200,
-                  urgency: 'medium',
-                  createdAt: new Date(Date.now() - 86400000).toISOString(),
-                  status: 'pending'
-                },
-                {
-                  id: 'mock-rec-3',
-                  type: 'inventory',
-                  priority: 'low',
-                  title: 'Seasonal Preparation',
-                  description: 'Historical data suggests increased demand in coming weeks.',
-                  impact: 'Prepare for 25% demand increase',
-                  confidence: 65,
-                  products: ['Winter Clothing', 'Heating Equipment'],
-                  action: 'Stock up 25% above normal levels',
-                  estimatedValue: 8500,
-                  urgency: 'low',
-                  createdAt: new Date(Date.now() - 172800000).toISOString(),
-                  status: 'pending'
-                }
-              ];
-              get().setRecommendations(mockRecommendations);
+            // Log error and set empty state
+            if (import.meta.env.DEV) {
+              console.warn('⚠️ No recommendations data received from API. Please check database connection.');
+              get().setRecommendations([]);
             }
           } finally {
             set((state) => {

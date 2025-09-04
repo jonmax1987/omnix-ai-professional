@@ -16,6 +16,7 @@ import Sidebar from './components/organisms/Sidebar';
 import ErrorBoundary from './components/organisms/ErrorBoundary';
 import OfflineIndicator from './components/atoms/OfflineIndicator';
 import PageTransition from './components/molecules/PageTransition';
+import CacheUpdateNotification from './components/molecules/CacheUpdateNotification';
 
 // Debug components (development only) - Lazy loaded
 const ApiDebug = import.meta.env.DEV ? lazy(() => import('./components/debug/ApiDebug')) : null;
@@ -274,13 +275,26 @@ function AppContent() {
   };
 
   const handleUserMenuAction = (action) => {
-    console.warn('User menu action:', action);
-    if (action === 'profile' || action === 'settings') {
-      navigate('/settings');
-    } else if (action === 'logout') {
-      // Logout user and redirect to login
-      useUserStore.getState().logout();
-      navigate('/login', { replace: true });
+    console.log('User menu action:', action);
+    switch (action) {
+      case 'profile':
+        navigate('/settings'); // For now, navigate to settings until profile page is built
+        break;
+      case 'settings':
+        navigate('/settings');
+        break;
+      case 'help':
+        // Open help documentation or support page
+        console.log('Opening help & support');
+        // window.open('/help', '_blank');
+        break;
+      case 'logout':
+        useUserStore.getState().logout();
+        navigate('/login', { replace: true });
+        break;
+      default:
+        console.log('Unknown user menu action:', action);
+        break;
     }
   };
 
@@ -293,15 +307,54 @@ function AppContent() {
   };
 
   const handleNotificationClick = (notification) => {
-    console.warn('Notification clicked:', notification);
+    console.log('Notification clicked:', notification);
+    
+    // Handle different notification types
+    switch (notification.type || notification.category) {
+      case 'Low Stock Alert':
+      case 'inventory':
+        navigate('/products');
+        break;
+      case 'New Order':
+      case 'order':
+        navigate('/orders');
+        break;
+      case 'System Update':
+      case 'system':
+        // Show system info or navigate to settings
+        console.log('System notification clicked');
+        break;
+      default:
+        console.log('General notification clicked');
+        break;
+    }
   };
 
   const handleNotificationClear = () => {
-    console.warn('Clear all notifications');
+    console.log('Clearing all notifications');
+    // In a real implementation, this would call an API to mark notifications as read
+    // notificationService.markAllAsRead();
   };
 
-  const handleSearch = (query) => {
-    console.warn('Search query:', query);
+  const handleSearch = async (query) => {
+    if (!query || query.length < 2) return;
+    
+    console.log('Search query:', query);
+    
+    try {
+      // Simulate search delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // In a real implementation, this would:
+      // 1. Call search API
+      // 2. Navigate to search results page
+      // 3. Update search history
+      
+      // For now, navigate to products page with search query
+      navigate(`/products?search=${encodeURIComponent(query)}`);
+    } catch (error) {
+      console.error('Search failed:', error);
+    }
   };
 
   // Note: Login page check removed as it was unused
@@ -432,6 +485,10 @@ function AppContent() {
             </ProtectedRoute>
           } />
         </Routes>
+        
+        {/* Cache update notification for users with old cached bundles */}
+        <CacheUpdateNotification />
+        
       {/* </ErrorBoundary> */}
           </StyleSheetManager>
       </SafeThemeProvider>

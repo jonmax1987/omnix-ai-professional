@@ -24,7 +24,7 @@ export class ApiError extends Error {
  */
 const HTTP_CONFIG = {
   // Unified API base URL that works across all environments
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/v1', // Use env var in production, proxy in dev
+  baseURL: import.meta.env.VITE_API_BASE_URL || '', // Use env var in production, direct routes in dev
   timeout: 30000,
   maxRetries: 3,
   retryDelay: 1000,

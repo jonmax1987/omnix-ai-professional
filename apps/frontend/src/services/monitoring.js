@@ -116,7 +116,55 @@ function sendToAnalytics({ name, value, id, delta }) {
     });
   }
 
+  // Send to CloudWatch via API
+  sendToCloudWatch({
+    metricName: name,
+    value: value,
+    unit: getMetricUnit(name),
+    dimensions: {
+      Environment: import.meta.env.VITE_ENVIRONMENT || 'development',
+      Page: window.location.pathname
+    }
+  });
+
   console.log(`${name}: ${value}`, { id, delta });
+}
+
+function getMetricUnit(metricName) {
+  switch (metricName) {
+    case 'CLS':
+      return 'None';
+    case 'LCP':
+    case 'FCP':
+    case 'FID':
+    case 'INP':
+    case 'TTFB':
+      return 'Milliseconds';
+    default:
+      return 'None';
+  }
+}
+
+async function sendToCloudWatch(metric) {
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://api.omnix-ai.com';
+    
+    await fetch(`${apiUrl}/monitoring/web-vitals`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        ...metric
+      })
+    });
+  } catch (error) {
+    // Don't log monitoring failures in production
+    if (import.meta.env.DEV) {
+      console.warn('Failed to send metric to CloudWatch:', error);
+    }
+  }
 }
 
 function measureCustomMetrics() {

@@ -1,3 +1,8 @@
+// Import React shim first to prevent AsyncMode errors
+import './utils/react-shim.js'
+// Initialize cache buster to handle old bundle issues
+import './utils/cache-buster.js'
+import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { HelmetProvider } from 'react-helmet-async'
 import App from './App.jsx'

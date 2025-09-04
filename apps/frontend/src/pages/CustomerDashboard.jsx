@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import useWebSocketStore from '../store/websocketStore';
 import useCustomerBehaviorStore from '../store/customerBehaviorStore';
 import aiInsightsService from '../services/aiInsightsService';
 import useUserStore from '../store/userStore';
 import { webSocketManager } from '../services/websocket';
+import WeeklyPurchasePredictions from '../components/organisms/WeeklyPurchasePredictions';
 import {
   User,
   ShoppingBag,
@@ -34,6 +36,31 @@ const DashboardContainer = styled.div`
   background: linear-gradient(135deg, 
     ${({ theme }) => theme.colors.primary[100]}05 0%, 
     ${({ theme }) => theme.colors.secondary[100]}05 100%);
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const ErrorBanner = styled.div`
+  background: ${({ theme }) => theme.colors.error.main};
+  color: white;
+  padding: ${({ theme }) => theme.spacing.md};
+  text-align: center;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+  animation: slideDown 0.3s ease-out;
+
+  @keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
 `;
 
 const Header = styled.div`
@@ -51,6 +78,12 @@ const HeaderContent = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing.md};
+    align-items: stretch;
+  }
 `;
 
 const Logo = styled.div`
@@ -64,6 +97,17 @@ const SearchBar = styled.div`
   max-width: 400px;
   margin: 0 ${({ theme }) => theme.spacing.xl};
   position: relative;
+
+  @media (max-width: 768px) {
+    margin: 0 ${({ theme }) => theme.spacing.md};
+    max-width: none;
+  }
+
+  @media (max-width: 480px) {
+    margin: ${({ theme }) => theme.spacing.sm} 0;
+    order: 3;
+    width: 100%;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -113,11 +157,34 @@ const IconButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  min-height: 44px; /* Minimum touch target size for accessibility */
+  min-width: 44px;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary.main};
     color: ${({ theme }) => theme.colors.primary.main};
     transform: translateY(-1px);
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary.main};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Mobile enhancements */
+  @media (max-width: 768px) {
+    width: 44px;
+    height: 44px;
+    
+    &:active {
+      transform: scale(0.95);
+    }
   }
 `;
 
@@ -146,9 +213,57 @@ const UserProfile = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
 
   &:hover {
     background: ${({ theme }) => theme.colors.background.hover};
+  }
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => theme.colors.primary.main};
+    outline-offset: 2px;
+  }
+`;
+
+const UserMenuDropdown = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1000;
+  background: ${({ theme }) => theme.colors.background.elevated};
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  box-shadow: ${({ theme }) => theme.shadows.lg || '0 10px 25px rgba(0, 0, 0, 0.1)'};
+  padding: ${({ theme }) => theme.spacing.sm} 0;
+  min-width: 200px;
+  overflow: hidden;
+`;
+
+const UserMenuItem = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.primary};
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.secondary};
+  }
+
+  &:focus {
+    outline: none;
+    background: ${({ theme }) => theme.colors.background.secondary};
+  }
+
+  &.destructive {
+    color: ${({ theme }) => theme.colors.error.main};
   }
 `;
 
@@ -236,6 +351,13 @@ const QuickActions = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};
   flex-wrap: wrap;
+
+  /* Mobile enhancements */
+  @media (max-width: 768px) {
+    flex-direction: column;
+    width: 100%;
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `;
 
 const QuickActionButton = styled.button`
@@ -251,10 +373,35 @@ const QuickActionButton = styled.button`
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 44px;
+  min-width: 120px;
 
   &:hover {
     background: rgba(255, 255, 255, 0.3);
     transform: translateY(-1px);
+  }
+
+  &:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+    font-size: ${({ theme }) => theme.typography.fontSize.md};
+    flex: 1;
+    justify-content: center;
   }
 `;
 
@@ -462,6 +609,7 @@ const ViewAllButton = styled.button`
 `;
 
 const CustomerDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useUserStore();
   const {
     isConnected: wsConnected
@@ -478,6 +626,15 @@ const CustomerDashboard = () => {
   const [consumptionPredictions, setConsumptionPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [realTimeUpdates, setRealTimeUpdates] = useState(0);
+  
+  // UI state management
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [error, setError] = useState(null);
 
   // Load personalized AI data on component mount
   useEffect(() => {
@@ -502,30 +659,174 @@ const CustomerDashboard = () => {
     
     setLoading(true);
     try {
-      const [recommendations, insights, predictions] = await Promise.all([
+      const [recommendations, insights, predictions] = await Promise.allSettled([
         aiInsightsService.getPersonalizationRecommendations(user.id, {
           currentBehavior: { timestamp: Date.now() },
           preferences: { includeHealthy: true, includeEco: true },
           maxRecommendations: 8
+        }).catch(err => {
+          console.warn('Failed to load recommendations:', err);
+          return { recommendations: [] };
         }),
         aiInsightsService.getRealtimeInsights({
           customerId: user.id,
           types: ['savings', 'behavior', 'health', 'efficiency'],
           limit: 10
+        }).catch(err => {
+          console.warn('Failed to load insights:', err);
+          return { insights: [] };
         }),
         aiInsightsService.getConsumptionPredictions({
           customerId: user.id,
           timeHorizon: '30d'
+        }).catch(err => {
+          console.warn('Failed to load predictions:', err);
+          return { predictions: [] };
         })
       ]);
       
-      setAiRecommendations(recommendations.recommendations || []);
-      setPersonalizedInsights(insights.insights || []);
-      setConsumptionPredictions(predictions.predictions || []);
+      // Extract successful results from Promise.allSettled
+      const recommendationsResult = recommendations.status === 'fulfilled' ? recommendations.value : { recommendations: [] };
+      const insightsResult = insights.status === 'fulfilled' ? insights.value : { insights: [] };
+      const predictionsResult = predictions.status === 'fulfilled' ? predictions.value : { predictions: [] };
+      
+      setAiRecommendations(recommendationsResult?.recommendations || recommendationsResult || []);
+      setPersonalizedInsights(insightsResult?.insights || insightsResult || []);
+      setConsumptionPredictions(predictionsResult?.predictions || predictionsResult || []);
     } catch (error) {
       console.error('Failed to load personalized data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Header button handlers
+  const handleNotificationClick = () => {
+    setShowNotifications(!showNotifications);
+    setShowUserMenu(false);
+  };
+
+  const handleShoppingBagClick = async () => {
+    try {
+      setActionLoading('shopping_bag');
+      setError(null);
+      
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('Opening shopping bag/cart - navigating to orders');
+      navigate('/orders');
+    } catch (error) {
+      setError('Failed to open shopping bag');
+      console.error('Shopping bag error:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUserProfileClick = () => {
+    setShowUserMenu(!showUserMenu);
+    setShowNotifications(false);
+    setError(null);
+  };
+
+  const handleUserMenuAction = async (action) => {
+    try {
+      setActionLoading(action);
+      setShowUserMenu(false);
+      setError(null);
+      
+      // Simulate loading delay for actions
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      switch (action) {
+        case 'profile':
+          console.log('Navigating to profile (settings)');
+          navigate('/settings');
+          break;
+        case 'settings':
+          console.log('Navigating to settings');
+          navigate('/settings');
+          break;
+        case 'orders':
+          console.log('Navigating to orders');
+          navigate('/orders');
+          break;
+        case 'logout':
+          console.log('Logging out user');
+          useUserStore.getState().logout();
+          navigate('/login', { replace: true });
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      setError(`Failed to ${action}`);
+      console.error('User menu action error:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      // Simulate API call - replace with actual search service
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock search results - replace with actual API call
+      const mockResults = [
+        { id: 1, name: 'Organic Bananas', price: '$3.99', category: 'Fruits' },
+        { id: 2, name: 'Almond Milk', price: '$4.49', category: 'Dairy' },
+        { id: 3, name: 'Greek Yogurt', price: '$5.99', category: 'Dairy' }
+      ].filter(item => 
+        item.name.toLowerCase().includes(query.toLowerCase()) ||
+        item.category.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      setSearchResults(mockResults);
+    } catch (error) {
+      console.error('Search failed:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleQuickAction = async (action) => {
+    try {
+      setActionLoading(action);
+      setError(null);
+      
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      switch (action) {
+        case 'start_shopping':
+          console.log('Starting shopping - navigating to products');
+          navigate('/products');
+          break;
+        case 'view_insights':
+          console.log('Viewing insights - navigating to analytics');
+          navigate('/analytics');
+          break;
+        case 'preferences':
+          console.log('Opening preferences - navigating to settings');
+          navigate('/settings');
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      setError(`Failed to ${action.replace('_', ' ')}`);
+      console.error('Quick action error:', error);
+    } finally {
+      setActionLoading(null);
     }
   };
   
@@ -603,8 +904,38 @@ const CustomerDashboard = () => {
     { icon: Package, text: 'Delivery completed successfully', time: '1 week ago' }
   ].slice(0, 5);
 
+  // Auto-hide error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserMenu && !event.target.closest('[data-user-menu]')) {
+        setShowUserMenu(false);
+      }
+      if (showNotifications && !event.target.closest('[data-notifications]')) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu, showNotifications]);
+
   return (
     <DashboardContainer>
+      {error && (
+        <ErrorBanner onClick={() => setError(null)}>
+          {error} - Click to dismiss
+        </ErrorBanner>
+      )}
       <Header>
         <HeaderContent>
           <Logo>OMNIX</Logo>
@@ -613,25 +944,121 @@ const CustomerDashboard = () => {
             <SearchIcon>
               <Search size={18} />
             </SearchIcon>
-            <SearchInput placeholder="Search products, brands, or categories..." />
+            <SearchInput 
+              placeholder="Search products, brands, or categories..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                handleSearch(e.target.value);
+              }}
+              aria-label="Search products, brands, or categories"
+              role="searchbox"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {searchLoading && (
+              <div style={{ 
+                position: 'absolute', 
+                right: '12px', 
+                top: '50%', 
+                transform: 'translateY(-50%)',
+                color: '#6B7280'
+              }}>
+                Loading...
+              </div>
+            )}
           </SearchBar>
 
           <HeaderActions>
-            <IconButton>
+            <IconButton 
+              onClick={handleNotificationClick} 
+              aria-label="Notifications"
+              disabled={actionLoading}
+            >
               <Bell size={18} />
               <NotificationBadge>3</NotificationBadge>
             </IconButton>
             
-            <IconButton>
-              <ShoppingBag size={18} />
+            <IconButton 
+              onClick={handleShoppingBagClick} 
+              aria-label="Shopping Cart"
+              disabled={actionLoading === 'shopping_bag'}
+              style={{
+                opacity: actionLoading === 'shopping_bag' ? 0.6 : 1,
+                cursor: actionLoading === 'shopping_bag' ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {actionLoading === 'shopping_bag' ? (
+                <div style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ 
+                    width: 12, 
+                    height: 12, 
+                    border: '2px solid transparent',
+                    borderTop: '2px solid currentColor',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                </div>
+              ) : (
+                <ShoppingBag size={18} />
+              )}
               <NotificationBadge>5</NotificationBadge>
             </IconButton>
 
-            <UserProfile>
+            <UserProfile 
+              onClick={handleUserProfileClick} 
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleUserProfileClick();
+                }
+              }}
+              role="button" 
+              tabIndex={0}
+              aria-label={`User menu for ${userName}`}
+              aria-expanded={showUserMenu}
+              data-user-menu
+              style={{
+                opacity: actionLoading ? 0.8 : 1,
+                cursor: actionLoading ? 'not-allowed' : 'pointer'
+              }}
+            >
               <Avatar>
                 <User size={16} />
               </Avatar>
               <span style={{ fontSize: '14px', fontWeight: '500' }}>{userName}</span>
+              
+              {/* User Menu Dropdown */}
+              <AnimatePresence>
+                {showUserMenu && (
+                  <UserMenuDropdown
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                  <UserMenuItem onClick={() => handleUserMenuAction('profile')}>
+                    <User size={16} />
+                    My Profile
+                  </UserMenuItem>
+                  <UserMenuItem onClick={() => handleUserMenuAction('orders')}>
+                    <ShoppingBag size={16} />
+                    My Orders
+                  </UserMenuItem>
+                  <UserMenuItem onClick={() => handleUserMenuAction('settings')}>
+                    <Settings size={16} />
+                    Settings
+                  </UserMenuItem>
+                  <UserMenuItem 
+                    onClick={() => handleUserMenuAction('logout')}
+                    className="destructive"
+                  >
+                    <User size={16} />
+                    Sign Out
+                  </UserMenuItem>
+                  </UserMenuDropdown>
+                )}
+              </AnimatePresence>
             </UserProfile>
           </HeaderActions>
         </HeaderContent>
@@ -653,21 +1080,77 @@ const CustomerDashboard = () => {
                 {wsConnected && <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}> • Live AI Updates Active</span>}
               </WelcomeSubtitle>
               <QuickActions>
-                <QuickActionButton>
-                  <ShoppingBag size={16} />
+                <QuickActionButton 
+                  onClick={() => handleQuickAction('start_shopping')}
+                  disabled={actionLoading === 'start_shopping'}
+                  style={{
+                    opacity: actionLoading === 'start_shopping' ? 0.6 : 1,
+                    cursor: actionLoading === 'start_shopping' ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {actionLoading === 'start_shopping' ? (
+                    <div style={{ 
+                      width: 16, 
+                      height: 16, 
+                      border: '2px solid transparent',
+                      borderTop: '2px solid currentColor',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  ) : (
+                    <ShoppingBag size={16} />
+                  )}
                   Start Shopping
                 </QuickActionButton>
-                <QuickActionButton>
-                  <BarChart3 size={16} />
+                <QuickActionButton 
+                  onClick={() => handleQuickAction('view_insights')}
+                  disabled={actionLoading === 'view_insights'}
+                  style={{
+                    opacity: actionLoading === 'view_insights' ? 0.6 : 1,
+                    cursor: actionLoading === 'view_insights' ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {actionLoading === 'view_insights' ? (
+                    <div style={{ 
+                      width: 16, 
+                      height: 16, 
+                      border: '2px solid transparent',
+                      borderTop: '2px solid currentColor',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  ) : (
+                    <BarChart3 size={16} />
+                  )}
                   View Insights
                 </QuickActionButton>
-                <QuickActionButton>
-                  <Settings size={16} />
+                <QuickActionButton 
+                  onClick={() => handleQuickAction('preferences')}
+                  disabled={actionLoading === 'preferences'}
+                  style={{
+                    opacity: actionLoading === 'preferences' ? 0.6 : 1,
+                    cursor: actionLoading === 'preferences' ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {actionLoading === 'preferences' ? (
+                    <div style={{ 
+                      width: 16, 
+                      height: 16, 
+                      border: '2px solid transparent',
+                      borderTop: '2px solid currentColor',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  ) : (
+                    <Settings size={16} />
+                  )}
                   Preferences
                 </QuickActionButton>
               </QuickActions>
             </WelcomeContent>
           </WelcomeCard>
+
+          <WeeklyPurchasePredictions />
 
           <InsightsGrid>
             {insights.map((insight, index) => {

@@ -882,4 +882,5 @@ class ConsumptionPatternService {
 // Create singleton instance
 const consumptionPatternService = new ConsumptionPatternService();
 
+export { consumptionPatternService };
 export default consumptionPatternService;

@@ -6,9 +6,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2563eb" />
     <meta name="description" content="Smart inventory management system with AI-powered demand forecasting" />
+    
+    <!-- Cache-busting headers -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="cache-version" content="2025-09-04-v2">
+    
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icon-192.svg" />
     <title>OMNIX AI - Smart Management System</title>
+    
+    <!-- Early cache-busting script -->
+    <script>
+      // Immediate cache detection and cleanup
+      (function() {
+        const CACHE_VERSION = '2025-09-04-v2';
+        const EXPECTED_BUNDLES = {
+          'vendor-react': '42i2rhYk',
+          'vendor-misc': 'CETaRKqc'
+        };
+        
+        // Check if we have outdated cached data
+        const cachedVersion = localStorage.getItem('omnix-cache-version');
+        if (cachedVersion !== CACHE_VERSION) {
+          console.log('[Early CacheBuster] Version mismatch detected, clearing storage');
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+            localStorage.setItem('omnix-cache-version', CACHE_VERSION);
+          } catch (e) {
+            console.warn('[Early CacheBuster] Could not clear storage:', e);
+          }
+        }
+        
+        // Protect against AsyncMode errors from old bundles
+        window.addEventListener('error', function(event) {
+          if (event.message && (event.message.includes('AsyncMode') || 
+                               event.message.includes('Cannot set properties of undefined'))) {
+            console.warn('[Early CacheBuster] AsyncMode error detected, reloading...');
+            window.location.reload(true);
+            return;
+          }
+        });
+        
+        // Mark page load time for cache validation
+        window.__OMNIX_LOAD_TIME__ = Date.now();
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

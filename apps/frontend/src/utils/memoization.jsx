@@ -3,7 +3,7 @@
  * Advanced memoization utilities for optimizing React components and computations
  */
 
-import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect, useState, memo, forwardRef as reactForwardRef } from 'react';
 import { isEqual } from 'lodash-es';
 
 /**
@@ -429,8 +429,8 @@ export function createMemoizedComponent(Component, options = {}) {
     forwardRef = false
   } = options;
 
-  const MemoizedComponent = React.memo(
-    forwardRef ? React.forwardRef(Component) : Component,
+  const MemoizedComponent = memo(
+    forwardRef ? reactForwardRef(Component) : Component,
     compareProps
   );
   
@@ -443,7 +443,7 @@ export function createMemoizedComponent(Component, options = {}) {
  * Performance monitoring wrapper for memoization
  */
 export function withMemoizationMetrics(Component, name = Component.name) {
-  return React.memo((props) => {
+  return memo((props) => {
     const renderCountRef = useRef(0);
     const renderTimeRef = useRef(0);
     

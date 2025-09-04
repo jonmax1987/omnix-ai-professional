@@ -3,6 +3,8 @@
  * Advanced image processing and optimization utilities
  */
 
+import { useState, useEffect } from 'react';
+
 // Image format support detection
 export const ImageFormats = {
   WEBP: 'webp',
@@ -351,11 +353,11 @@ export function getBestImageFormat() {
 
 // React hook for image optimization
 export function useImageOptimization(src, options = {}) {
-  const [optimizedSrc, setOptimizedSrc] = React.useState(src);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const [optimizedSrc, setOptimizedSrc] = useState(src);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!src) return;
 
     setIsLoading(true);

@@ -3,7 +3,7 @@
  * Higher-order component for automatic image optimization
  */
 
-import React, { useMemo, forwardRef } from 'react';
+import React, { useMemo, forwardRef, createContext, useState, useCallback, useContext } from 'react';
 import { imageOptimizer } from '../../utils/imageOptimization';
 import { useLazyImage } from '../../hooks/useLazyLoading';
 
@@ -281,19 +281,19 @@ OptimizedImage.displayName = 'OptimizedImage';
 /**
  * Context provider for global image optimization settings
  */
-export const ImageOptimizationContext = React.createContext({
+export const ImageOptimizationContext = createContext({
   globalSettings: {},
   updateGlobalSettings: () => {}
 });
 
 export const ImageOptimizationProvider = ({ children, settings = {} }) => {
-  const [globalSettings, setGlobalSettings] = React.useState(settings);
+  const [globalSettings, setGlobalSettings] = useState(settings);
 
-  const updateGlobalSettings = React.useCallback((newSettings) => {
+  const updateGlobalSettings = useCallback((newSettings) => {
     setGlobalSettings(prev => ({ ...prev, ...newSettings }));
   }, []);
 
-  const contextValue = React.useMemo(() => ({
+  const contextValue = useMemo(() => ({
     globalSettings,
     updateGlobalSettings
   }), [globalSettings, updateGlobalSettings]);
@@ -309,7 +309,7 @@ export const ImageOptimizationProvider = ({ children, settings = {} }) => {
  * Hook to use global image optimization settings
  */
 export function useGlobalImageOptimization() {
-  const context = React.useContext(ImageOptimizationContext);
+  const context = useContext(ImageOptimizationContext);
   if (!context) {
     throw new Error('useGlobalImageOptimization must be used within ImageOptimizationProvider');
   }

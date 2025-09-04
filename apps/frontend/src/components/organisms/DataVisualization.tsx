@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback, CSSProperties } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
@@ -76,7 +76,7 @@ export interface VisualizationProps {
   onDataPointClick?: (point: DataPoint, datasetIndex: number) => void;
   onChartReady?: (chart: ChartJS) => void;
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
   showLegend?: boolean;
   showGrid?: boolean;
   darkMode?: boolean;

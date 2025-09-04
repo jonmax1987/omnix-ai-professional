@@ -378,7 +378,7 @@ class PerformanceMonitoringService {
           'x-api-key': 'omnix-api-key-development-2024'
         },
         body: JSON.stringify({
-          metric,
+          metrics: metric,
           url: window.location.href,
           userAgent: navigator.userAgent,
           timestamp: metric.timestamp

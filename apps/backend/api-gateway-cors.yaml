@@ -42,7 +42,7 @@ Resources:
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Client-Version,X-Client-Type,X-Request-Id'"
               method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
-              method.response.header.Access-Control-Allow-Origin: "'https://d1vu6p9f5uc16.cloudfront.net'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
               method.response.header.Access-Control-Allow-Credentials: "'true'"
       MethodResponses:
         - StatusCode: 200
@@ -67,7 +67,7 @@ Resources:
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Client-Version,X-Client-Type,X-Request-Id'"
               method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
-              method.response.header.Access-Control-Allow-Origin: "'https://d1vu6p9f5uc16.cloudfront.net'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
               method.response.header.Access-Control-Allow-Credentials: "'true'"
             ResponseTemplates:
               application/json: ''
@@ -111,7 +111,7 @@ Resources:
             ResponseParameters:
               method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Client-Version,X-Client-Type,X-Request-Id'"
               method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
-              method.response.header.Access-Control-Allow-Origin: "'https://d1vu6p9f5uc16.cloudfront.net'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
               method.response.header.Access-Control-Allow-Credentials: "'true'"
             ResponseTemplates:
               application/json: ''

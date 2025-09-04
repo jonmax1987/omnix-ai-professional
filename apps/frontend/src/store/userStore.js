@@ -304,17 +304,24 @@ const useUserStore = create()(
           
           // Initialize authentication state
           initializeAuth: () => {
+            // The rehydration callback already handles auth state restoration
+            // This method is mainly for manual initialization if needed
             const state = get();
             
-            // Check if we have a valid session
-            if (state.token && state.refreshToken && state.tokenExpiry && Date.now() < state.tokenExpiry) {
+            if (state.token && state.tokenExpiry && Date.now() >= state.tokenExpiry && state.refreshToken) {
+              // Token expired but we have refresh token, attempt refresh
               set((draft) => {
-                draft.isAuthenticated = true;
-                draft.loading.auth = false;
+                draft.loading.auth = true;
+              });
+              
+              get().refreshSession().finally(() => {
+                set((draft) => {
+                  draft.loading.auth = false;
+                });
               });
             } else {
+              // Auth state already handled by rehydration or is valid
               set((draft) => {
-                draft.isAuthenticated = false;
                 draft.loading.auth = false;
               });
             }
@@ -679,7 +686,25 @@ const useUserStore = create()(
           profile: state.profile,
           preferences: state.preferences,
           permissions: state.permissions
-        })
+        }),
+        onRehydrateStorage: () => (state) => {
+          if (state) {
+            // After rehydration, check if we have valid auth data
+            if (state.token && state.tokenExpiry && Date.now() < state.tokenExpiry) {
+              // Valid session exists
+              state.isAuthenticated = true;
+              state.loading = { ...state.loading, auth: false };
+            } else {
+              // Invalid or expired session
+              state.isAuthenticated = false;
+              state.token = null;
+              state.refreshToken = null;
+              state.tokenExpiry = null;
+              state.user = null;
+              state.loading = { ...state.loading, auth: false };
+            }
+          }
+        }
       }
     ),
     { name: 'user-store' }

@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode, createContext, useContext } from 'react';
+import React, { Component, ErrorInfo, ReactNode, createContext, useContext, useState, FC, ComponentType } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -496,8 +496,8 @@ export const useErrorContext = () => {
 };
 
 // Error provider for app-level error management
-export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [errors, setErrors] = React.useState<ErrorDetails[]>([]);
+export const ErrorProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const [errors, setErrors] = useState<ErrorDetails[]>([]);
   
   const clearErrors = () => setErrors([]);
   
@@ -512,9 +512,9 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
 // HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
+  Component: ComponentType<P>,
   errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>
-): React.ComponentType<P> {
+): ComponentType<P> {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary {...errorBoundaryProps}>
       <Component {...props} />

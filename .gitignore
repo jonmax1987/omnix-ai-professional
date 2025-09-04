@@ -185,6 +185,15 @@ dist/
 .stylelintcache
 
 # ================================
+# Agent System & Orchestrator
+# ================================
+orchestrator/
+.claude/
+*ORCHESTRAT*.md
+*AGENT*.md
+*MULTI_AGENT*.md
+
+# ================================
 # Optional Files
 # ================================
 # Keep important documentation

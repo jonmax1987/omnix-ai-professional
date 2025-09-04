@@ -62,14 +62,11 @@ describe('RecommendationsService', () => {
 
   describe('trackRecommendationFeedback', () => {
     it('should record recommendation feedback', async () => {
-      const feedback = {
-        recommendationId: 'rec-456',
-        customerId: 'customer-123',
-        feedback: 'helpful',
-        rating: 5
-      };
+      const customerId = 'customer-123';
+      const productId = 'product-456';
+      const action = 'click';
 
-      await service.trackRecommendationFeedback(feedback);
+      await service.trackRecommendationFeedback(customerId, productId, action);
       
       // Verify feedback was recorded
       expect(true).toBe(true);

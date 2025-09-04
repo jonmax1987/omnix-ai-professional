@@ -199,11 +199,16 @@ function Login() {
       });
 
       if (data && data.data) {
+        // Calculate token expiry (assuming 1 hour default if not provided)
+        const expiresIn = data.data.expiresIn || 3600; // 1 hour default
+        const tokenExpiry = Date.now() + (expiresIn * 1000);
+
         // Update user store with real backend data
         useUserStore.setState({
           isAuthenticated: true,
           token: data.data.accessToken,
           refreshToken: data.data.refreshToken,
+          tokenExpiry: tokenExpiry,
           user: data.data.user,
           profile: {
             ...useUserStore.getState().profile,

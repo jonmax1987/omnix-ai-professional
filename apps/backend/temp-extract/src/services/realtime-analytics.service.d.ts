@@ -1,0 +1,31 @@
+import { PurchaseEvent, CustomerSegmentUpdateEvent, ConsumptionPredictionEvent, RealtimeInsight } from '../interfaces/streaming-analytics.interface';
+import { CustomerSegmentationService } from './customer-segmentation.service';
+import { EnhancedBedrockService } from './enhanced-bedrock.service';
+import { CacheService } from './cache.service';
+import { WebSocketService } from '../websocket/websocket.service';
+export declare class RealtimeAnalyticsService {
+    private customerSegmentationService;
+    private enhancedBedrockService;
+    private cacheService;
+    private websocketService;
+    private readonly logger;
+    private processingBuffer;
+    private readonly bufferFlushInterval;
+    private readonly maxBufferSize;
+    constructor(customerSegmentationService: CustomerSegmentationService, enhancedBedrockService: EnhancedBedrockService, cacheService: CacheService, websocketService: WebSocketService);
+    processPurchaseEvent(event: PurchaseEvent): Promise<RealtimeInsight[]>;
+    processSegmentUpdateEvent(event: CustomerSegmentUpdateEvent): Promise<RealtimeInsight[]>;
+    processConsumptionPredictionEvent(event: ConsumptionPredictionEvent): Promise<RealtimeInsight[]>;
+    private generateConsumptionInsight;
+    private detectBehaviorAnomaly;
+    private checkSegmentReassignment;
+    private updateSegmentBasedRecommendations;
+    private sendRealtimeNotification;
+    private addToBuffer;
+    private flushProcessingBuffers;
+    private flushCustomerBuffer;
+    private processBatchInsights;
+    private calculateDaysSinceLastPurchase;
+    private isHighValueSegmentChange;
+    private getSegmentChangePriority;
+}
