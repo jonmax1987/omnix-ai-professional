@@ -196,6 +196,7 @@ function generateOrderHistory() {
         const orderId = uuidv4();
         const orderItems = [];
         let totalAmount = 0;
+        const month = currentDate.getMonth() + 1;
         
         // Generate shopping basket based on persona
         Object.entries(productCatalog).forEach(([productId, product]) => {
@@ -235,7 +236,6 @@ function generateOrderHistory() {
           }
           
           // Seasonal adjustments
-          const month = currentDate.getMonth() + 1;
           if (persona.seasonalBehavior === 'high') {
             if (product.category === 'Frozen Foods' && [6, 7, 8].includes(month)) purchaseProbability *= 1.5; // Summer ice cream
             if (product.category === 'Health & Wellness' && [10, 11, 12, 1, 2].includes(month)) purchaseProbability *= 1.4; // Flu season
