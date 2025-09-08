@@ -1,0 +1,839 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI - Comprehensive Monitoring & Alerting System'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+
+  ProjectName:
+    Type: String
+    Default: omnix-ai
+    Description: Project name for resource naming
+
+  AlertEmail:
+    Type: String
+    Default: alerts@omnix.ai
+    Description: Email address for alerts
+
+  SlackWebhookUrl:
+    Type: String
+    NoEcho: true
+    Description: Slack webhook URL for alerts (optional)
+
+  CloudFrontDistributionId:
+    Type: String
+    Description: CloudFront Distribution ID to monitor
+
+  S3BucketName:
+    Type: String
+    Description: S3 bucket name to monitor
+
+  ApiGatewayId:
+    Type: String
+    Description: API Gateway ID to monitor
+
+  HealthCheckUrl:
+    Type: String
+    Description: Health check endpoint URL
+    Default: https://omnix-ai-staging.vercel.app/health
+
+Resources:
+  # SNS Topics for Different Alert Types
+  CriticalAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-critical-alerts'
+      DisplayName: !Sub '${ProjectName} ${Environment} Critical Alerts'
+
+  WarningAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-warning-alerts'
+      DisplayName: !Sub '${ProjectName} ${Environment} Warning Alerts'
+
+  BusinessAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-business-alerts'
+      DisplayName: !Sub '${ProjectName} ${Environment} Business Alerts'
+
+  # Email Subscriptions
+  CriticalEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CriticalAlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  WarningEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref WarningAlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  BusinessEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref BusinessAlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  # Health Check System
+  HealthCheckFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-health-check'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt HealthCheckRole.Arn
+      Timeout: 30
+      Environment:
+        Variables:
+          HEALTH_CHECK_URL: !Ref HealthCheckUrl
+          API_GATEWAY_ID: !Ref ApiGatewayId
+          CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistributionId
+          S3_BUCKET_NAME: !Ref S3BucketName
+          CRITICAL_TOPIC_ARN: !Ref CriticalAlertTopic
+          WARNING_TOPIC_ARN: !Ref WarningAlertTopic
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import urllib3
+          import os
+          from datetime import datetime, timedelta
+
+          http = urllib3.PoolManager()
+          cloudwatch = boto3.client('cloudwatch')
+          sns = boto3.client('sns')
+
+          def lambda_handler(event, context):
+              try:
+                  results = {
+                      'timestamp': datetime.now().isoformat(),
+                      'status': 'healthy',
+                      'checks': {}
+                  }
+                  
+                  # 1. API Health Check
+                  api_status = check_api_health()
+                  results['checks']['api'] = api_status
+                  
+                  # 2. Database Connectivity (via API)
+                  db_status = check_database_health()
+                  results['checks']['database'] = db_status
+                  
+                  # 3. CloudFront Status
+                  cf_status = check_cloudfront_health()
+                  results['checks']['cloudfront'] = cf_status
+                  
+                  # 4. S3 Bucket Accessibility
+                  s3_status = check_s3_health()
+                  results['checks']['s3'] = s3_status
+                  
+                  # 5. SSL Certificate Check
+                  ssl_status = check_ssl_certificate()
+                  results['checks']['ssl'] = ssl_status
+                  
+                  # Determine overall health
+                  failed_checks = [k for k, v in results['checks'].items() if not v['healthy']]
+                  
+                  if failed_checks:
+                      results['status'] = 'degraded' if len(failed_checks) == 1 else 'unhealthy'
+                      
+                      # Send alerts for critical failures
+                      if any(results['checks'][check]['critical'] for check in failed_checks):
+                          send_alert('critical', f"Critical health check failures: {', '.join(failed_checks)}", results)
+                      else:
+                          send_alert('warning', f"Health check warnings: {', '.join(failed_checks)}", results)
+                  
+                  # Publish health metrics
+                  publish_health_metrics(results)
+                  
+                  return {
+                      'statusCode': 200 if results['status'] == 'healthy' else 503,
+                      'body': json.dumps(results, indent=2)
+                  }
+                  
+              except Exception as e:
+                  error_result = {
+                      'timestamp': datetime.now().isoformat(),
+                      'status': 'error',
+                      'error': str(e)
+                  }
+                  
+                  send_alert('critical', f"Health check system failure: {str(e)}", error_result)
+                  
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps(error_result)
+                  }
+
+          def check_api_health():
+              try:
+                  url = os.environ['HEALTH_CHECK_URL']
+                  resp = http.request('GET', url, timeout=10)
+                  
+                  return {
+                      'healthy': resp.status == 200,
+                      'critical': True,
+                      'response_time': 0,  # Could measure this
+                      'status_code': resp.status
+                  }
+              except Exception as e:
+                  return {
+                      'healthy': False,
+                      'critical': True,
+                      'error': str(e)
+                  }
+
+          def check_database_health():
+              try:
+                  # Check database via API endpoint
+                  api_id = os.environ['API_GATEWAY_ID']
+                  url = f"https://{api_id}.execute-api.eu-central-1.amazonaws.com/prod/health/db"
+                  
+                  resp = http.request('GET', url, timeout=10)
+                  
+                  return {
+                      'healthy': resp.status == 200,
+                      'critical': True,
+                      'response_time': 0,
+                      'status_code': resp.status
+                  }
+              except Exception as e:
+                  return {
+                      'healthy': False,
+                      'critical': True,
+                      'error': str(e)
+                  }
+
+          def check_cloudfront_health():
+              try:
+                  cloudwatch_client = boto3.client('cloudwatch', region_name='us-east-1')
+                  
+                  # Check 4xx error rate in last 5 minutes
+                  end_time = datetime.now()
+                  start_time = end_time - timedelta(minutes=5)
+                  
+                  response = cloudwatch_client.get_metric_statistics(
+                      Namespace='AWS/CloudFront',
+                      MetricName='4xxErrorRate',
+                      Dimensions=[
+                          {
+                              'Name': 'DistributionId',
+                              'Value': os.environ['CLOUDFRONT_DISTRIBUTION_ID']
+                          }
+                      ],
+                      StartTime=start_time,
+                      EndTime=end_time,
+                      Period=300,
+                      Statistics=['Average']
+                  )
+                  
+                  error_rate = 0
+                  if response['Datapoints']:
+                      error_rate = max(dp['Average'] for dp in response['Datapoints'])
+                  
+                  return {
+                      'healthy': error_rate < 10,  # Less than 10% error rate
+                      'critical': False,
+                      'error_rate': error_rate
+                  }
+              except Exception as e:
+                  return {
+                      'healthy': False,
+                      'critical': False,
+                      'error': str(e)
+                  }
+
+          def check_s3_health():
+              try:
+                  s3 = boto3.client('s3')
+                  bucket_name = os.environ['S3_BUCKET_NAME']
+                  
+                  # Try to list objects (with limit)
+                  s3.list_objects_v2(Bucket=bucket_name, MaxKeys=1)
+                  
+                  return {
+                      'healthy': True,
+                      'critical': False
+                  }
+              except Exception as e:
+                  return {
+                      'healthy': False,
+                      'critical': False,
+                      'error': str(e)
+                  }
+
+          def check_ssl_certificate():
+              try:
+                  import ssl
+                  from urllib.parse import urlparse
+                  
+                  url = os.environ['HEALTH_CHECK_URL']
+                  hostname = urlparse(url).hostname
+                  
+                  context = ssl.create_default_context()
+                  with context.wrap_socket(socket.socket(), server_hostname=hostname) as s:
+                      s.connect((hostname, 443))
+                      cert = s.getpeercert()
+                      
+                      # Check expiration
+                      not_after = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
+                      days_until_expiry = (not_after - datetime.now()).days
+                      
+                      return {
+                          'healthy': days_until_expiry > 30,  # Warning if less than 30 days
+                          'critical': days_until_expiry < 7,   # Critical if less than 7 days
+                          'days_until_expiry': days_until_expiry,
+                          'expires_at': cert['notAfter']
+                      }
+                      
+              except Exception as e:
+                  return {
+                      'healthy': False,
+                      'critical': False,
+                      'error': str(e)
+                  }
+
+          def send_alert(severity, message, details):
+              try:
+                  topic_arn = os.environ[f'{severity.upper()}_TOPIC_ARN']
+                  
+                  sns.publish(
+                      TopicArn=topic_arn,
+                      Subject=f'OMNIX AI {severity.upper()}: {message}',
+                      Message=json.dumps(details, indent=2)
+                  )
+              except Exception as e:
+                  print(f"Failed to send alert: {e}")
+
+          def publish_health_metrics(results):
+              try:
+                  namespace = 'OMNIX/HealthCheck'
+                  
+                  # Overall health status
+                  health_value = 1 if results['status'] == 'healthy' else 0
+                  
+                  cloudwatch.put_metric_data(
+                      Namespace=namespace,
+                      MetricData=[
+                          {
+                              'MetricName': 'SystemHealth',
+                              'Value': health_value,
+                              'Unit': 'Count',
+                              'Timestamp': datetime.now()
+                          }
+                      ]
+                  )
+                  
+                  # Individual check results
+                  for check_name, check_result in results['checks'].items():
+                      cloudwatch.put_metric_data(
+                          Namespace=namespace,
+                          MetricData=[
+                              {
+                                  'MetricName': 'ComponentHealth',
+                                  'Value': 1 if check_result['healthy'] else 0,
+                                  'Unit': 'Count',
+                                  'Dimensions': [
+                                      {
+                                          'Name': 'Component',
+                                          'Value': check_name
+                                      }
+                                  ],
+                                  'Timestamp': datetime.now()
+                              }
+                          ]
+                      )
+                      
+              except Exception as e:
+                  print(f"Failed to publish health metrics: {e}")
+
+  # IAM Role for Health Check Lambda
+  HealthCheckRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-health-check-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: HealthCheckPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                  - cloudwatch:GetMetricStatistics
+                  - sns:Publish
+                  - s3:ListBucket
+                  - s3:GetObject
+                Resource: '*'
+
+  # EventBridge Rule for Health Checks (every 5 minutes)
+  HealthCheckSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-health-check-schedule'
+      Description: 'Schedule for health checks'
+      ScheduleExpression: 'rate(5 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt HealthCheckFunction.Arn
+          Id: 'HealthCheckTarget'
+
+  # Lambda Permission for EventBridge
+  HealthCheckPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref HealthCheckFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HealthCheckSchedule.Arn
+
+  # Performance Monitoring Lambda
+  PerformanceMonitorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-performance-monitor'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt PerformanceMonitorRole.Arn
+      Timeout: 60
+      Environment:
+        Variables:
+          API_GATEWAY_ID: !Ref ApiGatewayId
+          CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistributionId
+          WARNING_TOPIC_ARN: !Ref WarningAlertTopic
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime, timedelta
+
+          cloudwatch = boto3.client('cloudwatch')
+          sns = boto3.client('sns')
+
+          def lambda_handler(event, context):
+              try:
+                  # Check API Gateway performance
+                  check_api_performance()
+                  
+                  # Check CloudFront performance
+                  check_cloudfront_performance()
+                  
+                  # Check Core Web Vitals (from custom metrics)
+                  check_web_vitals()
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({'status': 'Performance monitoring completed'})
+                  }
+                  
+              except Exception as e:
+                  print(f"Performance monitoring error: {e}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+          def check_api_performance():
+              try:
+                  end_time = datetime.now()
+                  start_time = end_time - timedelta(minutes=15)
+                  
+                  # Get API Gateway latency
+                  response = cloudwatch.get_metric_statistics(
+                      Namespace='AWS/ApiGateway',
+                      MetricName='Latency',
+                      Dimensions=[
+                          {
+                              'Name': 'ApiName',
+                              'Value': os.environ['API_GATEWAY_ID']
+                          }
+                      ],
+                      StartTime=start_time,
+                      EndTime=end_time,
+                      Period=300,
+                      Statistics=['Average', 'Maximum']
+                  )
+                  
+                  if response['Datapoints']:
+                      avg_latency = sum(dp['Average'] for dp in response['Datapoints']) / len(response['Datapoints'])
+                      max_latency = max(dp['Maximum'] for dp in response['Datapoints'])
+                      
+                      # Alert if average latency > 500ms or max > 1000ms
+                      if avg_latency > 500 or max_latency > 1000:
+                          send_performance_alert('API latency high', {
+                              'average_latency': avg_latency,
+                              'max_latency': max_latency
+                          })
+                      
+                      # Publish SLA compliance metric
+                      sla_compliance = 100 if avg_latency <= 500 else 0
+                      cloudwatch.put_metric_data(
+                          Namespace='OMNIX/Performance',
+                          MetricData=[
+                              {
+                                  'MetricName': 'API_SLA_Compliance',
+                                  'Value': sla_compliance,
+                                  'Unit': 'Percent',
+                                  'Timestamp': datetime.now()
+                              }
+                          ]
+                      )
+                      
+              except Exception as e:
+                  print(f"API performance check error: {e}")
+
+          def check_cloudfront_performance():
+              try:
+                  end_time = datetime.now()
+                  start_time = end_time - timedelta(minutes=15)
+                  
+                  # Get CloudFront cache hit rate
+                  response = cloudwatch.get_metric_statistics(
+                      Namespace='AWS/CloudFront',
+                      MetricName='CacheHitRate',
+                      Dimensions=[
+                          {
+                              'Name': 'DistributionId',
+                              'Value': os.environ['CLOUDFRONT_DISTRIBUTION_ID']
+                          }
+                      ],
+                      StartTime=start_time,
+                      EndTime=end_time,
+                      Period=300,
+                      Statistics=['Average'],
+                      Unit='Percent'
+                  )
+                  
+                  if response['Datapoints']:
+                      cache_hit_rate = sum(dp['Average'] for dp in response['Datapoints']) / len(response['Datapoints'])
+                      
+                      # Alert if cache hit rate < 70%
+                      if cache_hit_rate < 70:
+                          send_performance_alert('CloudFront cache hit rate low', {
+                              'cache_hit_rate': cache_hit_rate
+                          })
+                      
+              except Exception as e:
+                  print(f"CloudFront performance check error: {e}")
+
+          def check_web_vitals():
+              try:
+                  end_time = datetime.now()
+                  start_time = end_time - timedelta(minutes=30)
+                  
+                  vitals_metrics = ['LCP', 'FID', 'CLS', 'INP']
+                  thresholds = {
+                      'LCP': 2500,   # 2.5 seconds
+                      'FID': 100,    # 100ms
+                      'CLS': 0.1,    # 0.1
+                      'INP': 200     # 200ms
+                  }
+                  
+                  for metric in vitals_metrics:
+                      try:
+                          response = cloudwatch.get_metric_statistics(
+                              Namespace='OMNIX/WebVitals',
+                              MetricName=metric,
+                              StartTime=start_time,
+                              EndTime=end_time,
+                              Period=900,
+                              Statistics=['Average']
+                          )
+                          
+                          if response['Datapoints']:
+                              avg_value = sum(dp['Average'] for dp in response['Datapoints']) / len(response['Datapoints'])
+                              
+                              # Check against thresholds
+                              threshold = thresholds.get(metric)
+                              if threshold and avg_value > threshold:
+                                  send_performance_alert(f'Core Web Vital {metric} threshold exceeded', {
+                                      'metric': metric,
+                                      'value': avg_value,
+                                      'threshold': threshold
+                                  })
+                              
+                      except Exception as e:
+                          print(f"Error checking {metric}: {e}")
+                      
+              except Exception as e:
+                  print(f"Web vitals check error: {e}")
+
+          def send_performance_alert(message, details):
+              try:
+                  sns.publish(
+                      TopicArn=os.environ['WARNING_TOPIC_ARN'],
+                      Subject=f'OMNIX AI Performance Alert: {message}',
+                      Message=json.dumps(details, indent=2)
+                  )
+              except Exception as e:
+                  print(f"Failed to send performance alert: {e}")
+
+  # IAM Role for Performance Monitor
+  PerformanceMonitorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-performance-monitor-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: PerformanceMonitorPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:PutMetricData
+                  - sns:Publish
+                Resource: '*'
+
+  # Performance Monitor Schedule (every 10 minutes)
+  PerformanceMonitorSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-performance-monitor-schedule'
+      Description: 'Schedule for performance monitoring'
+      ScheduleExpression: 'rate(10 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt PerformanceMonitorFunction.Arn
+          Id: 'PerformanceMonitorTarget'
+
+  # Lambda Permission for Performance Monitor
+  PerformanceMonitorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PerformanceMonitorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt PerformanceMonitorSchedule.Arn
+
+  # System Health Alarm
+  SystemHealthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-system-health'
+      AlarmDescription: 'System health check failure'
+      MetricName: SystemHealth
+      Namespace: OMNIX/HealthCheck
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref CriticalAlertTopic
+      TreatMissingData: breaching
+
+  # API SLA Compliance Alarm
+  APISLAAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-api-sla-compliance'
+      AlarmDescription: 'API SLA compliance below target'
+      MetricName: API_SLA_Compliance
+      Namespace: OMNIX/Performance
+      Statistic: Average
+      Period: 900
+      EvaluationPeriods: 2
+      Threshold: 95
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref WarningAlertTopic
+      TreatMissingData: breaching
+
+  # Comprehensive Dashboard
+  ComprehensiveDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-comprehensive'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/HealthCheck", "SystemHealth", { "label": "Overall System Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "api", { "label": "API Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "database", { "label": "Database Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "cloudfront", { "label": "CloudFront Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "s3", { "label": "S3 Health" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "System Health Status",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/ApiGateway", "Latency", "ApiName", "${ApiGatewayId}" ],
+                  [ ".", "Count", ".", "." ],
+                  [ ".", "4XXError", ".", "." ],
+                  [ ".", "5XXError", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "API Gateway Performance",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "Requests", "DistributionId", "${CloudFrontDistributionId}" ],
+                  [ ".", "BytesDownloaded", ".", "." ],
+                  [ ".", "CacheHitRate", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "CloudFront Performance",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 12,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/AI", "BedrockAnalysisLatency", "Service", "BedrockAnalysis" ],
+                  [ ".", "BedrockAnalysisCount", ".", "." ],
+                  [ ".", "BedrockAnalysisErrors", ".", "." ],
+                  [ ".", "AIRecommendationAccuracy", ".", "." ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "AI Service Performance",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Performance", "API_SLA_Compliance" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "SLA Compliance",
+                "period": 900,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/WebVitals", "LCP" ],
+                  [ ".", "FID" ],
+                  [ ".", "CLS" ],
+                  [ ".", "INP" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Core Web Vitals",
+                "period": 900,
+                "stat": "Average"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  ComprehensiveDashboardURL:
+    Description: 'Comprehensive CloudWatch Dashboard URL'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-${Environment}-comprehensive'
+    Export:
+      Name: !Sub '${AWS::StackName}-ComprehensiveDashboardURL'
+
+  CriticalAlertTopicArn:
+    Description: 'Critical Alerts SNS Topic ARN'
+    Value: !Ref CriticalAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-CriticalAlertTopicArn'
+
+  WarningAlertTopicArn:
+    Description: 'Warning Alerts SNS Topic ARN'
+    Value: !Ref WarningAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-WarningAlertTopicArn'
+
+  BusinessAlertTopicArn:
+    Description: 'Business Alerts SNS Topic ARN'
+    Value: !Ref BusinessAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-BusinessAlertTopicArn'
+
+  HealthCheckFunctionArn:
+    Description: 'Health Check Lambda Function ARN'
+    Value: !GetAtt HealthCheckFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-HealthCheckFunctionArn'

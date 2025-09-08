@@ -1,0 +1,661 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI - Comprehensive Alerting & Escalation System'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+
+  ProjectName:
+    Type: String
+    Default: omnix-ai
+    Description: Project name for resource naming
+
+  PrimaryEmail:
+    Type: String
+    Default: alerts@omnix.ai
+    Description: Primary email for alerts
+
+  EscalationEmail:
+    Type: String
+    Default: emergency@omnix.ai
+    Description: Escalation email for critical issues
+
+  SlackWebhookUrl:
+    Type: String
+    NoEcho: true
+    Description: Slack webhook URL for alerts
+
+  PagerDutyIntegrationKey:
+    Type: String
+    NoEcho: true
+    Description: PagerDuty integration key (optional)
+
+Resources:
+  # SNS Topics for Different Alert Severities
+  CriticalAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-critical-alerts'
+      DisplayName: !Sub '${ProjectName} ${Environment} Critical Alerts'
+
+  WarningAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-warning-alerts'
+      DisplayName: !Sub '${ProjectName} ${Environment} Warning Alerts'
+
+  BusinessAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-business-alerts'
+      DisplayName: !Sub '${ProjectName} ${Environment} Business Alerts'
+
+  InfoAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${ProjectName}-${Environment}-info-alerts'
+      DisplayName: !Sub '${ProjectName} ${Environment} Info Alerts'
+
+  # Email Subscriptions
+  CriticalEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CriticalAlertTopic
+      Protocol: email
+      Endpoint: !Ref PrimaryEmail
+
+  EscalationEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CriticalAlertTopic
+      Protocol: email
+      Endpoint: !Ref EscalationEmail
+
+  WarningEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref WarningAlertTopic
+      Protocol: email
+      Endpoint: !Ref PrimaryEmail
+
+  BusinessEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref BusinessAlertTopic
+      Protocol: email
+      Endpoint: !Ref PrimaryEmail
+
+  # Alert Management Lambda Function
+  AlertManagerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-alert-manager'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt AlertManagerRole.Arn
+      Timeout: 60
+      Environment:
+        Variables:
+          SLACK_WEBHOOK_URL: !Ref SlackWebhookUrl
+          PAGERDUTY_INTEGRATION_KEY: !Ref PagerDutyIntegrationKey
+          CRITICAL_TOPIC_ARN: !Ref CriticalAlertTopic
+          WARNING_TOPIC_ARN: !Ref WarningAlertTopic
+          BUSINESS_TOPIC_ARN: !Ref BusinessAlertTopic
+          INFO_TOPIC_ARN: !Ref InfoAlertTopic
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import urllib3
+          import os
+          from datetime import datetime
+          from urllib.parse import urlencode
+
+          sns = boto3.client('sns')
+          dynamodb = boto3.resource('dynamodb')
+          http = urllib3.PoolManager()
+
+          # Alert severity levels
+          SEVERITY_LEVELS = {
+              'critical': 1,
+              'warning': 2,
+              'business': 3,
+              'info': 4
+          }
+
+          # Escalation timeouts (in minutes)
+          ESCALATION_TIMEOUTS = {
+              'critical': 15,  # 15 minutes
+              'warning': 60,   # 1 hour
+              'business': 240, # 4 hours
+              'info': 1440     # 24 hours
+          }
+
+          def lambda_handler(event, context):
+              try:
+                  # Parse SNS event
+                  if 'Records' in event:
+                      for record in event['Records']:
+                          if record['EventSource'] == 'aws:sns':
+                              process_alert(record['Sns'])
+                  else:
+                      # Direct invocation
+                      process_alert(event)
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({'status': 'Alert processed successfully'})
+                  }
+                  
+              except Exception as e:
+                  print(f"Alert processing error: {e}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+          def process_alert(alert_data):
+              try:
+                  # Extract alert information
+                  subject = alert_data.get('Subject', 'Unknown Alert')
+                  message = alert_data.get('Message', '')
+                  
+                  # Determine severity from subject or topic
+                  severity = determine_severity(subject, alert_data.get('TopicArn', ''))
+                  
+                  # Create alert record
+                  alert_id = create_alert_record(subject, message, severity)
+                  
+                  # Send to appropriate channels
+                  send_slack_notification(alert_id, subject, message, severity)
+                  
+                  # Send to PagerDuty if critical
+                  if severity == 'critical':
+                      send_pagerduty_alert(alert_id, subject, message)
+                  
+                  # Schedule escalation check
+                  schedule_escalation_check(alert_id, severity)
+                  
+              except Exception as e:
+                  print(f"Error processing alert: {e}")
+
+          def determine_severity(subject, topic_arn):
+              subject_lower = subject.lower()
+              
+              if 'critical' in subject_lower or 'down' in subject_lower or 'failed' in subject_lower:
+                  return 'critical'
+              elif 'warning' in subject_lower or 'high' in subject_lower:
+                  return 'warning'
+              elif 'business' in subject_lower or 'revenue' in subject_lower:
+                  return 'business'
+              elif 'critical' in topic_arn:
+                  return 'critical'
+              elif 'warning' in topic_arn:
+                  return 'warning'
+              elif 'business' in topic_arn:
+                  return 'business'
+              else:
+                  return 'info'
+
+          def create_alert_record(subject, message, severity):
+              try:
+                  table_name = f"{os.environ['PROJECT_NAME']}-{os.environ['ENVIRONMENT']}-alerts"
+                  table = dynamodb.Table(table_name)
+                  
+                  alert_id = f"alert-{int(datetime.now().timestamp())}"
+                  
+                  item = {
+                      'alert_id': alert_id,
+                      'timestamp': datetime.now().isoformat(),
+                      'subject': subject,
+                      'message': message,
+                      'severity': severity,
+                      'status': 'open',
+                      'escalated': False,
+                      'acknowledged': False,
+                      'resolved': False,
+                      'ttl': int(datetime.now().timestamp()) + (30 * 24 * 60 * 60)  # 30 days TTL
+                  }
+                  
+                  table.put_item(Item=item)
+                  return alert_id
+                  
+              except Exception as e:
+                  print(f"Error creating alert record: {e}")
+                  return f"error-{int(datetime.now().timestamp())}"
+
+          def send_slack_notification(alert_id, subject, message, severity):
+              try:
+                  if not os.environ.get('SLACK_WEBHOOK_URL'):
+                      return
+                  
+                  # Color coding for Slack
+                  colors = {
+                      'critical': '#ff0000',  # Red
+                      'warning': '#ffaa00',   # Orange
+                      'business': '#0066cc',  # Blue
+                      'info': '#00cc66'       # Green
+                  }
+                  
+                  # Emoji for severity
+                  emojis = {
+                      'critical': ':rotating_light:',
+                      'warning': ':warning:',
+                      'business': ':chart_with_upwards_trend:',
+                      'info': ':information_source:'
+                  }
+                  
+                  payload = {
+                      'attachments': [
+                          {
+                              'color': colors.get(severity, '#cccccc'),
+                              'title': f"{emojis.get(severity, '')} OMNIX AI Alert - {severity.upper()}",
+                              'text': subject,
+                              'fields': [
+                                  {
+                                      'title': 'Alert ID',
+                                      'value': alert_id,
+                                      'short': True
+                                  },
+                                  {
+                                      'title': 'Environment',
+                                      'value': os.environ['ENVIRONMENT'],
+                                      'short': True
+                                  },
+                                  {
+                                      'title': 'Timestamp',
+                                      'value': datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC'),
+                                      'short': True
+                                  },
+                                  {
+                                      'title': 'Severity',
+                                      'value': severity.upper(),
+                                      'short': True
+                                  }
+                              ],
+                              'footer': 'OMNIX AI Monitoring',
+                              'ts': int(datetime.now().timestamp())
+                          }
+                      ]
+                  }
+                  
+                  if len(message) > 0 and len(message) < 1000:
+                      payload['attachments'][0]['fields'].append({
+                          'title': 'Details',
+                          'value': message[:500] + '...' if len(message) > 500 else message,
+                          'short': False
+                      })
+                  
+                  response = http.request(
+                      'POST',
+                      os.environ['SLACK_WEBHOOK_URL'],
+                      body=json.dumps(payload),
+                      headers={'Content-Type': 'application/json'}
+                  )
+                  
+                  print(f"Slack notification sent: {response.status}")
+                  
+              except Exception as e:
+                  print(f"Error sending Slack notification: {e}")
+
+          def send_pagerduty_alert(alert_id, subject, message):
+              try:
+                  if not os.environ.get('PAGERDUTY_INTEGRATION_KEY'):
+                      return
+                  
+                  payload = {
+                      'routing_key': os.environ['PAGERDUTY_INTEGRATION_KEY'],
+                      'event_action': 'trigger',
+                      'dedup_key': alert_id,
+                      'payload': {
+                          'summary': subject,
+                          'source': 'OMNIX AI Monitoring',
+                          'severity': 'critical',
+                          'component': os.environ['ENVIRONMENT'],
+                          'group': 'infrastructure',
+                          'class': 'alert',
+                          'custom_details': {
+                              'alert_id': alert_id,
+                              'environment': os.environ['ENVIRONMENT'],
+                              'message': message[:500] if message else 'No additional details'
+                          }
+                      }
+                  }
+                  
+                  response = http.request(
+                      'POST',
+                      'https://events.pagerduty.com/v2/enqueue',
+                      body=json.dumps(payload),
+                      headers={'Content-Type': 'application/json'}
+                  )
+                  
+                  print(f"PagerDuty alert sent: {response.status}")
+                  
+              except Exception as e:
+                  print(f"Error sending PagerDuty alert: {e}")
+
+          def schedule_escalation_check(alert_id, severity):
+              try:
+                  # This would schedule a future Lambda invocation to check for escalation
+                  # For now, we'll log the escalation schedule
+                  timeout_minutes = ESCALATION_TIMEOUTS.get(severity, 60)
+                  print(f"Scheduled escalation check for {alert_id} in {timeout_minutes} minutes")
+                  
+              except Exception as e:
+                  print(f"Error scheduling escalation: {e}")
+
+  # IAM Role for Alert Manager
+  AlertManagerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-alert-manager-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: AlertManagerPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - sns:Publish
+                  - events:PutEvents
+                Resource: '*'
+
+  # SNS Subscriptions to Alert Manager
+  CriticalAlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref CriticalAlertTopic
+      Protocol: lambda
+      Endpoint: !GetAtt AlertManagerFunction.Arn
+
+  WarningAlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref WarningAlertTopic
+      Protocol: lambda
+      Endpoint: !GetAtt AlertManagerFunction.Arn
+
+  BusinessAlertSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref BusinessAlertTopic
+      Protocol: lambda
+      Endpoint: !GetAtt AlertManagerFunction.Arn
+
+  # Lambda Permissions for SNS
+  CriticalAlertLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AlertManagerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref CriticalAlertTopic
+
+  WarningAlertLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AlertManagerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref WarningAlertTopic
+
+  BusinessAlertLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AlertManagerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref BusinessAlertTopic
+
+  # DynamoDB Table for Alert Tracking
+  AlertsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-${Environment}-alerts'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: alert_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: alert_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: timestamp-index
+          KeySchema:
+            - AttributeName: timestamp
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # Escalation Monitor Function
+  EscalationMonitorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-escalation-monitor'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt EscalationMonitorRole.Arn
+      Timeout: 300
+      Environment:
+        Variables:
+          ALERTS_TABLE: !Ref AlertsTable
+          CRITICAL_TOPIC_ARN: !Ref CriticalAlertTopic
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime, timedelta
+          from decimal import Decimal
+
+          dynamodb = boto3.resource('dynamodb')
+          sns = boto3.client('sns')
+
+          def lambda_handler(event, context):
+              try:
+                  table = dynamodb.Table(os.environ['ALERTS_TABLE'])
+                  
+                  # Get unresolved alerts
+                  response = table.scan(
+                      FilterExpression='#status = :status AND resolved = :resolved',
+                      ExpressionAttributeNames={'#status': 'status'},
+                      ExpressionAttributeValues={':status': 'open', ':resolved': False}
+                  )
+                  
+                  escalated_count = 0
+                  
+                  for item in response['Items']:
+                      if should_escalate(item):
+                          escalate_alert(item)
+                          escalated_count += 1
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'message': f'Processed {len(response["Items"])} alerts, escalated {escalated_count}'
+                      })
+                  }
+                  
+              except Exception as e:
+                  print(f"Escalation monitoring error: {e}")
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps({'error': str(e)})
+                  }
+
+          def should_escalate(alert):
+              try:
+                  alert_time = datetime.fromisoformat(alert['timestamp'].replace('Z', '+00:00'))
+                  current_time = datetime.now()
+                  
+                  # Check if alert is older than escalation timeout
+                  severity = alert.get('severity', 'info')
+                  timeout_minutes = {
+                      'critical': 15,
+                      'warning': 60,
+                      'business': 240,
+                      'info': 1440
+                  }.get(severity, 60)
+                  
+                  time_diff = current_time - alert_time.replace(tzinfo=None)
+                  
+                  return (time_diff.total_seconds() / 60 > timeout_minutes and 
+                          not alert.get('escalated', False) and 
+                          not alert.get('acknowledged', False))
+                  
+              except Exception as e:
+                  print(f"Error checking escalation for alert {alert.get('alert_id', 'unknown')}: {e}")
+                  return False
+
+          def escalate_alert(alert):
+              try:
+                  table = dynamodb.Table(os.environ['ALERTS_TABLE'])
+                  
+                  # Mark as escalated
+                  table.update_item(
+                      Key={'alert_id': alert['alert_id']},
+                      UpdateExpression='SET escalated = :escalated, escalation_time = :time',
+                      ExpressionAttributeValues={
+                          ':escalated': True,
+                          ':time': datetime.now().isoformat()
+                      }
+                  )
+                  
+                  # Send escalation notification
+                  subject = f"ESCALATED: {alert.get('subject', 'Unknown Alert')}"
+                  message = f"""
+          Alert has been escalated due to lack of acknowledgment.
+          
+          Original Alert ID: {alert['alert_id']}
+          Severity: {alert.get('severity', 'unknown')}
+          Original Time: {alert['timestamp']}
+          Subject: {alert.get('subject', 'N/A')}
+          
+          Please acknowledge and resolve this alert immediately.
+          """
+                  
+                  sns.publish(
+                      TopicArn=os.environ['CRITICAL_TOPIC_ARN'],
+                      Subject=subject,
+                      Message=message
+                  )
+                  
+                  print(f"Escalated alert {alert['alert_id']}")
+                  
+              except Exception as e:
+                  print(f"Error escalating alert {alert.get('alert_id', 'unknown')}: {e}")
+
+  # IAM Role for Escalation Monitor
+  EscalationMonitorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-escalation-monitor-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: EscalationMonitorPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:Scan
+                  - dynamodb:UpdateItem
+                  - sns:Publish
+                Resource: '*'
+
+  # Escalation Monitor Schedule (every 10 minutes)
+  EscalationMonitorSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-escalation-monitor-schedule'
+      Description: 'Schedule for escalation monitoring'
+      ScheduleExpression: 'rate(10 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt EscalationMonitorFunction.Arn
+          Id: 'EscalationMonitorTarget'
+
+  # Lambda Permission for Escalation Monitor
+  EscalationMonitorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref EscalationMonitorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt EscalationMonitorSchedule.Arn
+
+Outputs:
+  CriticalAlertTopicArn:
+    Description: 'Critical Alerts SNS Topic ARN'
+    Value: !Ref CriticalAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-CriticalAlertTopicArn'
+
+  WarningAlertTopicArn:
+    Description: 'Warning Alerts SNS Topic ARN'
+    Value: !Ref WarningAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-WarningAlertTopicArn'
+
+  BusinessAlertTopicArn:
+    Description: 'Business Alerts SNS Topic ARN'
+    Value: !Ref BusinessAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-BusinessAlertTopicArn'
+
+  InfoAlertTopicArn:
+    Description: 'Info Alerts SNS Topic ARN'
+    Value: !Ref InfoAlertTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-InfoAlertTopicArn'
+
+  AlertManagerFunctionArn:
+    Description: 'Alert Manager Lambda Function ARN'
+    Value: !GetAtt AlertManagerFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AlertManagerFunctionArn'
+
+  AlertsTableName:
+    Description: 'Alerts DynamoDB Table Name'
+    Value: !Ref AlertsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-AlertsTableName'

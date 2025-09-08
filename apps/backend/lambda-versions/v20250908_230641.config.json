@@ -1,0 +1,47 @@
+{
+    "FunctionName": "omnix-ai-backend-staging",
+    "FunctionArn": "arn:aws:lambda:eu-central-1:631844602411:function:omnix-ai-backend-staging",
+    "Runtime": "nodejs18.x",
+    "Role": "arn:aws:iam::631844602411:role/omnix-ai-lambda-execution-role-dev",
+    "Handler": "lambda-staging-simple.handler",
+    "CodeSize": 9419,
+    "Description": "OMNIX AI Staging Backend API",
+    "Timeout": 60,
+    "MemorySize": 1024,
+    "LastModified": "2025-09-08T20:06:05.000+0000",
+    "CodeSha256": "pl8WkJTZmykio1tUI1Pfu2hMnLR8PkIcHvbJXQklE1M=",
+    "Version": "$LATEST",
+    "Environment": {
+        "Variables": {
+            "API_KEY": "omnix-api-key-staging-2024",
+            "NODE_ENV": "staging",
+            "CORS_ORIGINS": "https://dtdnwq4annvk2.cloudfront.net",
+            "ENABLE_MOCK_DATA": "false",
+            "LOG_LEVEL": "info"
+        }
+    },
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "ec03ceee-3751-4a3f-8548-79cbfe9fa381",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:eu-central-1::runtime:383248ddd42b9c40948071c40a8f726625554b9d343cee049792b82a21330b2c"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/omnix-ai-backend-staging"
+    }
+}

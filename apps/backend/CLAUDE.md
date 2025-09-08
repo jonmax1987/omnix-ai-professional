@@ -73,4 +73,31 @@ Claude manages AI customer analytics development with professional workflow prac
 
 ---
 
+## 🚨 CRITICAL STAGING ENVIRONMENT PROTECTION (2025-09-08)
+
+**STAGING IS FULLY OPERATIONAL - DO NOT BREAK IT!**
+
+### Critical Files - DO NOT MODIFY WITHOUT READING PROTECTION DOC:
+- **Lambda**: `/apps/backend/lambda-staging-simple.js` (NOT lambda.js!)
+- **Handler**: `lambda-staging-simple.handler` (NEVER CHANGE)
+- **Performance**: `/apps/frontend/src/services/performance.ts` (KEEP RATE LIMITING)
+
+### Critical Fixes That MUST Be Preserved:
+1. **Analytics Rate Limiting**: Was sending 100s calls/sec → Now 1 call/30 sec
+2. **Dashboard Refresh**: Was 5 seconds → Now 60 seconds
+3. **All 14 API Endpoints**: Working including AI insights
+4. **Dual Authentication**: Manager & Customer accounts both working
+
+### Before ANY Staging Deployment:
+1. **READ**: `/STAGING_ENVIRONMENT_PROTECTION.md`
+2. **BACKUP**: Current Lambda before changes
+3. **TEST**: All endpoints after deployment
+4. **NEVER**: Replace lambda-staging-simple.js with another file
+
+### Staging Credentials:
+- **Manager**: `staging@omnix.ai` / `staging123`
+- **Customer**: `customer@staging.omnix.ai` / `customer123`
+
+---
+
 Always maintain context and respond accordingly.

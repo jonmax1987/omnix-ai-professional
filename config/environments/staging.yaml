@@ -1,0 +1,75 @@
+# OMNIX AI - Staging Environment Configuration
+# This file contains staging-specific overrides
+
+environment: staging
+stage: staging
+
+# Frontend Configuration
+frontend:
+  s3_bucket: omnix-ai-staging-frontend-minimal
+  cloudfront_distribution_id: E1HN3Y5MSQJFFC
+  cloudfront_domain: dtdnwq4annvk2.cloudfront.net
+  build_command: "npm run build:staging"
+  build_env:
+    VITE_API_BASE_URL: "https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/staging/v1"
+    VITE_WEBSOCKET_URL: "wss://5oo31khrrj.execute-api.eu-central-1.amazonaws.com/staging"
+    VITE_ENVIRONMENT: "staging"
+    VITE_DEBUG_MODE: "false"
+    VITE_API_KEY: "omnix-api-key-staging-2024"
+    
+# Backend Configuration
+backend:
+  lambda_function_name: omnix-ai-backend-staging
+  api_gateway_id: 4j4yb4b844
+  api_gateway_stage: staging
+  lambda_config:
+    memory_size: 1024
+    timeout: 60
+    environment_variables:
+      NODE_ENV: "staging"
+      LOG_LEVEL: "info"
+      CORS_ORIGINS: "https://dtdnwq4annvk2.cloudfront.net"
+      
+# Database Configuration
+database:
+  dynamodb:
+    tables_prefix: "omnix-ai-staging-"
+    tables:
+      - omnix-ai-staging-users
+      - omnix-ai-staging-products
+      - omnix-ai-staging-orders
+      - omnix-ai-staging-inventory
+      - omnix-ai-staging-sessions
+    capacity:
+      read_units: 5
+      write_units: 5
+      
+# Deployment Configuration
+deployment:
+  strategy: "blue-green"
+  health_check_grace_period: 30
+  rollback_on_failure: true
+  
+# Monitoring
+monitoring:
+  cloudwatch:
+    enabled: true
+    log_retention_days: 7
+    metrics_enabled: true
+  alarms:
+    error_rate_threshold: 5  # percent
+    latency_threshold: 2000  # ms
+    
+# Testing
+testing:
+  smoke_tests: true
+  integration_tests: true
+  load_tests: false
+  
+# Notifications
+notifications:
+  slack:
+    enabled: true
+    channel: "#staging-deployments"
+  email:
+    enabled: false

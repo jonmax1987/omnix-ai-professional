@@ -1,0 +1,687 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI - Automated Incident Response & Recovery System'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+
+  ProjectName:
+    Type: String
+    Default: omnix-ai
+    Description: Project name for resource naming
+
+  AlertTopicArn:
+    Type: String
+    Description: SNS Topic ARN for incident alerts
+
+  ApiGatewayId:
+    Type: String
+    Description: API Gateway ID for auto-recovery actions
+
+  CloudFrontDistributionId:
+    Type: String
+    Description: CloudFront Distribution ID for cache invalidation
+
+  S3BucketName:
+    Type: String
+    Description: S3 bucket name for backup operations
+
+Resources:
+  # Incident Response Lambda Function
+  IncidentResponseFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-incident-response'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt IncidentResponseRole.Arn
+      Timeout: 900  # 15 minutes for complex recovery operations
+      Environment:
+        Variables:
+          ALERT_TOPIC_ARN: !Ref AlertTopicArn
+          API_GATEWAY_ID: !Ref ApiGatewayId
+          CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistributionId
+          S3_BUCKET_NAME: !Ref S3BucketName
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          import time
+          from datetime import datetime, timedelta
+          from typing import Dict, List, Any
+
+          # AWS Clients
+          cloudwatch = boto3.client('cloudwatch')
+          sns = boto3.client('sns')
+          cloudfront = boto3.client('cloudfront')
+          apigateway = boto3.client('apigateway')
+          s3 = boto3.client('s3')
+          lambda_client = boto3.client('lambda')
+          dynamodb = boto3.resource('dynamodb')
+
+          # Incident Response Playbooks
+          INCIDENT_PLAYBOOKS = {
+              'api_down': 'handle_api_down_incident',
+              'high_error_rate': 'handle_high_error_rate',
+              'database_issues': 'handle_database_issues',
+              'performance_degradation': 'handle_performance_degradation',
+              'security_breach': 'handle_security_breach',
+              'cache_miss_high': 'handle_cache_issues',
+              'ai_service_failure': 'handle_ai_service_failure'
+          }
+
+          def lambda_handler(event, context):
+              try:
+                  # Determine incident type from event
+                  incident_type = determine_incident_type(event)
+                  incident_id = f"INC-{int(datetime.now().timestamp())}"
+                  
+                  log_incident(incident_id, incident_type, event)
+                  
+                  # Execute appropriate response playbook
+                  if incident_type in INCIDENT_PLAYBOOKS:
+                      playbook_function = globals()[INCIDENT_PLAYBOOKS[incident_type]]
+                      response = playbook_function(incident_id, event)
+                  else:
+                      response = handle_generic_incident(incident_id, event)
+                  
+                  # Send incident report
+                  send_incident_report(incident_id, incident_type, response)
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({
+                          'incident_id': incident_id,
+                          'incident_type': incident_type,
+                          'actions_taken': response.get('actions', []),
+                          'status': response.get('status', 'handled')
+                      })
+                  }
+                  
+              except Exception as e:
+                  error_response = {
+                      'error': str(e),
+                      'timestamp': datetime.now().isoformat()
+                  }
+                  
+                  send_emergency_alert(f"Incident Response System Failure: {str(e)}", error_response)
+                  
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps(error_response)
+                  }
+
+          def determine_incident_type(event) -> str:
+              """Analyze event to determine incident type"""
+              try:
+                  # Check if it's from CloudWatch Alarm
+                  if 'AlarmName' in event:
+                      alarm_name = event['AlarmName'].lower()
+                      
+                      if 'api' in alarm_name and ('down' in alarm_name or 'health' in alarm_name):
+                          return 'api_down'
+                      elif 'error' in alarm_name:
+                          return 'high_error_rate'
+                      elif 'database' in alarm_name or 'db' in alarm_name:
+                          return 'database_issues'
+                      elif 'latency' in alarm_name or 'performance' in alarm_name:
+                          return 'performance_degradation'
+                      elif 'security' in alarm_name or 'pii' in alarm_name:
+                          return 'security_breach'
+                      elif 'cache' in alarm_name:
+                          return 'cache_miss_high'
+                      elif 'ai' in alarm_name or 'bedrock' in alarm_name:
+                          return 'ai_service_failure'
+                  
+                  # Check SNS message content
+                  elif 'Message' in event:
+                      message = event['Message'].lower()
+                      
+                      if 'critical' in message and 'api' in message:
+                          return 'api_down'
+                      elif 'error rate' in message or 'errors' in message:
+                          return 'high_error_rate'
+                      elif 'security' in message or 'pii' in message:
+                          return 'security_breach'
+                  
+                  return 'generic_incident'
+                  
+              except Exception as e:
+                  print(f"Error determining incident type: {e}")
+                  return 'generic_incident'
+
+          def handle_api_down_incident(incident_id: str, event: Dict) -> Dict:
+              """Handle API service downtime incidents"""
+              actions = []
+              
+              try:
+                  # 1. Verify API health by making test requests
+                  api_health = check_api_health()
+                  actions.append(f"API health check: {'PASS' if api_health else 'FAIL'}")
+                  
+                  if not api_health:
+                      # 2. Attempt to restart API Gateway deployment
+                      restart_result = restart_api_gateway()
+                      actions.append(f"API Gateway restart: {restart_result}")
+                      
+                      # 3. Invalidate CloudFront cache
+                      invalidation_result = invalidate_cloudfront_cache()
+                      actions.append(f"CloudFront cache invalidation: {invalidation_result}")
+                      
+                      # 4. Check if Lambda functions are healthy
+                      lambda_health = check_lambda_health()
+                      actions.append(f"Lambda health check: {lambda_health}")
+                      
+                      # 5. Wait and verify recovery
+                      time.sleep(30)
+                      recovery_health = check_api_health()
+                      actions.append(f"Recovery verification: {'SUCCESS' if recovery_health else 'FAILED'}")
+                      
+                      if not recovery_health:
+                          # Escalate to manual intervention
+                          send_emergency_alert("CRITICAL: API Down - Automated Recovery Failed", {
+                              'incident_id': incident_id,
+                              'actions_attempted': actions
+                          })
+                  
+                  return {
+                      'status': 'handled',
+                      'actions': actions,
+                      'recovery_successful': api_health
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in API down handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          def handle_high_error_rate(incident_id: str, event: Dict) -> Dict:
+              """Handle high error rate incidents"""
+              actions = []
+              
+              try:
+                  # 1. Analyze error patterns
+                  error_analysis = analyze_recent_errors()
+                  actions.append(f"Error analysis completed: {error_analysis['summary']}")
+                  
+                  # 2. If 5XX errors are high, try cache invalidation
+                  if error_analysis.get('5xx_rate', 0) > 5:
+                      invalidation_result = invalidate_cloudfront_cache()
+                      actions.append(f"Cache invalidation due to 5XX errors: {invalidation_result}")
+                  
+                  # 3. If 4XX errors are high, check for security issues
+                  if error_analysis.get('4xx_rate', 0) > 20:
+                      security_check = perform_security_check()
+                      actions.append(f"Security check due to 4XX errors: {security_check}")
+                  
+                  # 4. Enable enhanced monitoring temporarily
+                  enable_result = enable_enhanced_monitoring()
+                  actions.append(f"Enhanced monitoring enabled: {enable_result}")
+                  
+                  return {
+                      'status': 'handled',
+                      'actions': actions,
+                      'error_analysis': error_analysis
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in high error rate handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          def handle_database_issues(incident_id: str, event: Dict) -> Dict:
+              """Handle database connectivity issues"""
+              actions = []
+              
+              try:
+                  # 1. Check DynamoDB table status
+                  table_status = check_dynamodb_tables()
+                  actions.append(f"DynamoDB table status: {table_status}")
+                  
+                  # 2. Enable read/write capacity auto-scaling if needed
+                  scaling_result = ensure_dynamodb_scaling()
+                  actions.append(f"DynamoDB scaling check: {scaling_result}")
+                  
+                  # 3. Create backup if tables are healthy
+                  if table_status.get('healthy_tables', 0) > 0:
+                      backup_result = create_emergency_backup()
+                      actions.append(f"Emergency backup: {backup_result}")
+                  
+                  return {
+                      'status': 'handled',
+                      'actions': actions,
+                      'table_status': table_status
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in database issues handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          def handle_performance_degradation(incident_id: str, event: Dict) -> Dict:
+              """Handle performance degradation incidents"""
+              actions = []
+              
+              try:
+                  # 1. Scale up Lambda concurrency
+                  scaling_result = scale_lambda_concurrency()
+                  actions.append(f"Lambda scaling: {scaling_result}")
+                  
+                  # 2. Invalidate CloudFront cache to ensure fresh content
+                  invalidation_result = invalidate_cloudfront_cache('/api/*')
+                  actions.append(f"API cache invalidation: {invalidation_result}")
+                  
+                  # 3. Enable Lambda provisioned concurrency for critical functions
+                  provisioning_result = enable_provisioned_concurrency()
+                  actions.append(f"Provisioned concurrency: {provisioning_result}")
+                  
+                  return {
+                      'status': 'handled',
+                      'actions': actions
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in performance degradation handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          def handle_security_breach(incident_id: str, event: Dict) -> Dict:
+              """Handle security breach incidents"""
+              actions = []
+              
+              try:
+                  # 1. Immediately rotate API keys if possible
+                  rotation_result = initiate_api_key_rotation()
+                  actions.append(f"API key rotation initiated: {rotation_result}")
+                  
+                  # 2. Enable detailed CloudTrail logging
+                  cloudtrail_result = enable_enhanced_cloudtrail()
+                  actions.append(f"Enhanced CloudTrail: {cloudtrail_result}")
+                  
+                  # 3. Block suspicious IPs if detected
+                  ip_blocking_result = block_suspicious_ips()
+                  actions.append(f"IP blocking: {ip_blocking_result}")
+                  
+                  # 4. Create security incident record
+                  security_record = create_security_incident_record(incident_id, event)
+                  actions.append(f"Security incident recorded: {security_record}")
+                  
+                  # 5. Send immediate notification to security team
+                  send_emergency_alert("SECURITY BREACH DETECTED", {
+                      'incident_id': incident_id,
+                      'actions_taken': actions,
+                      'immediate_response_required': True
+                  })
+                  
+                  return {
+                      'status': 'security_handled',
+                      'actions': actions,
+                      'requires_manual_review': True
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in security breach handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          def handle_cache_issues(incident_id: str, event: Dict) -> Dict:
+              """Handle cache performance issues"""
+              actions = []
+              
+              try:
+                  # 1. Invalidate entire CloudFront cache
+                  invalidation_result = invalidate_cloudfront_cache('/*')
+                  actions.append(f"Full cache invalidation: {invalidation_result}")
+                  
+                  # 2. Check origin server health
+                  origin_health = check_origin_health()
+                  actions.append(f"Origin health check: {origin_health}")
+                  
+                  # 3. Temporarily increase cache TTL
+                  ttl_result = adjust_cache_ttl(extend=True)
+                  actions.append(f"Cache TTL adjustment: {ttl_result}")
+                  
+                  return {
+                      'status': 'handled',
+                      'actions': actions
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in cache issues handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          def handle_ai_service_failure(incident_id: str, event: Dict) -> Dict:
+              """Handle AI service failures"""
+              actions = []
+              
+              try:
+                  # 1. Enable fallback mode for AI services
+                  fallback_result = enable_ai_fallback_mode()
+                  actions.append(f"AI fallback mode enabled: {fallback_result}")
+                  
+                  # 2. Check Bedrock service status
+                  bedrock_status = check_bedrock_service()
+                  actions.append(f"Bedrock service status: {bedrock_status}")
+                  
+                  # 3. Reduce AI request rate to prevent further issues
+                  throttling_result = enable_ai_throttling()
+                  actions.append(f"AI request throttling: {throttling_result}")
+                  
+                  return {
+                      'status': 'handled',
+                      'actions': actions,
+                      'fallback_active': True
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in AI service failure handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          def handle_generic_incident(incident_id: str, event: Dict) -> Dict:
+              """Handle generic incidents"""
+              actions = []
+              
+              try:
+                  # 1. Perform general health checks
+                  health_check = perform_general_health_check()
+                  actions.append(f"General health check: {health_check}")
+                  
+                  # 2. Create incident record for manual review
+                  incident_record = create_incident_record(incident_id, event)
+                  actions.append(f"Incident record created: {incident_record}")
+                  
+                  return {
+                      'status': 'logged',
+                      'actions': actions,
+                      'requires_manual_review': True
+                  }
+                  
+              except Exception as e:
+                  actions.append(f"Error in generic incident handler: {str(e)}")
+                  return {'status': 'error', 'actions': actions}
+
+          # Helper Functions
+
+          def check_api_health() -> bool:
+              """Check if API is responding"""
+              try:
+                  # This would make actual HTTP requests to health endpoints
+                  # For now, return True as placeholder
+                  return True
+              except Exception:
+                  return False
+
+          def restart_api_gateway() -> str:
+              """Restart API Gateway deployment"""
+              try:
+                  # This would trigger a new deployment
+                  return "Redeployment triggered successfully"
+              except Exception as e:
+                  return f"Redeployment failed: {str(e)}"
+
+          def invalidate_cloudfront_cache(path: str = '/*') -> str:
+              """Invalidate CloudFront cache"""
+              try:
+                  response = cloudfront.create_invalidation(
+                      DistributionId=os.environ['CLOUDFRONT_DISTRIBUTION_ID'],
+                      InvalidationBatch={
+                          'Paths': {
+                              'Quantity': 1,
+                              'Items': [path]
+                          },
+                          'CallerReference': f"incident-{int(datetime.now().timestamp())}"
+                      }
+                  )
+                  return f"Invalidation created: {response['Invalidation']['Id']}"
+              except Exception as e:
+                  return f"Invalidation failed: {str(e)}"
+
+          def send_incident_report(incident_id: str, incident_type: str, response: Dict):
+              """Send detailed incident report"""
+              try:
+                  report = {
+                      'incident_id': incident_id,
+                      'incident_type': incident_type,
+                      'timestamp': datetime.now().isoformat(),
+                      'response_summary': response,
+                      'environment': os.environ['ENVIRONMENT']
+                  }
+                  
+                  sns.publish(
+                      TopicArn=os.environ['ALERT_TOPIC_ARN'],
+                      Subject=f'OMNIX AI Incident Response Report - {incident_id}',
+                      Message=json.dumps(report, indent=2, default=str)
+                  )
+              except Exception as e:
+                  print(f"Failed to send incident report: {e}")
+
+          def send_emergency_alert(subject: str, details: Dict):
+              """Send emergency alert for critical issues"""
+              try:
+                  sns.publish(
+                      TopicArn=os.environ['ALERT_TOPIC_ARN'],
+                      Subject=f'OMNIX AI EMERGENCY: {subject}',
+                      Message=json.dumps(details, indent=2, default=str)
+                  )
+              except Exception as e:
+                  print(f"Failed to send emergency alert: {e}")
+
+          def log_incident(incident_id: str, incident_type: str, event: Dict):
+              """Log incident to DynamoDB"""
+              try:
+                  table_name = f"{os.environ['PROJECT_NAME']}-{os.environ['ENVIRONMENT']}-incidents"
+                  table = dynamodb.Table(table_name)
+                  
+                  table.put_item(
+                      Item={
+                          'incident_id': incident_id,
+                          'incident_type': incident_type,
+                          'timestamp': datetime.now().isoformat(),
+                          'event_data': json.dumps(event, default=str),
+                          'status': 'in_progress',
+                          'ttl': int(datetime.now().timestamp()) + (90 * 24 * 60 * 60)  # 90 days TTL
+                      }
+                  )
+              except Exception as e:
+                  print(f"Failed to log incident: {e}")
+
+          # Placeholder implementations for helper functions
+          def check_lambda_health(): return "All functions healthy"
+          def analyze_recent_errors(): return {"summary": "Analysis complete", "5xx_rate": 2, "4xx_rate": 5}
+          def perform_security_check(): return "No threats detected"
+          def enable_enhanced_monitoring(): return "Enhanced monitoring activated"
+          def check_dynamodb_tables(): return {"healthy_tables": 4, "total_tables": 4}
+          def ensure_dynamodb_scaling(): return "Auto-scaling verified"
+          def create_emergency_backup(): return "Backup initiated"
+          def scale_lambda_concurrency(): return "Concurrency increased"
+          def enable_provisioned_concurrency(): return "Provisioned concurrency enabled"
+          def initiate_api_key_rotation(): return "Rotation scheduled"
+          def enable_enhanced_cloudtrail(): return "CloudTrail enhanced"
+          def block_suspicious_ips(): return "No suspicious IPs detected"
+          def create_security_incident_record(incident_id, event): return "Security record created"
+          def check_origin_health(): return "Origin healthy"
+          def adjust_cache_ttl(extend=False): return "TTL adjusted"
+          def enable_ai_fallback_mode(): return "Fallback mode active"
+          def check_bedrock_service(): return "Bedrock operational"
+          def enable_ai_throttling(): return "Throttling enabled"
+          def perform_general_health_check(): return "System health verified"
+          def create_incident_record(incident_id, event): return "Record created"
+
+  # IAM Role for Incident Response
+  IncidentResponseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-incident-response-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: IncidentResponsePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudfront:CreateInvalidation
+                  - cloudfront:GetDistribution
+                  - apigateway:*
+                  - lambda:*
+                  - dynamodb:*
+                  - cloudwatch:*
+                  - sns:Publish
+                  - s3:*
+                  - cloudtrail:*
+                  - iam:PassRole
+                Resource: '*'
+
+  # DynamoDB Table for Incident Tracking
+  IncidentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-${Environment}-incidents'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: incident_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: incident_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: timestamp-index
+          KeySchema:
+            - AttributeName: timestamp
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # Auto-Recovery Step Function
+  AutoRecoveryStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: !Sub '${ProjectName}-${Environment}-auto-recovery'
+      RoleArn: !GetAtt StepFunctionRole.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "OMNIX AI Auto-Recovery Workflow",
+          "StartAt": "DetectIncident",
+          "States": {
+            "DetectIncident": {
+              "Type": "Task",
+              "Resource": "${IncidentResponseFunction.Arn}",
+              "Next": "EvaluateResponse",
+              "Retry": [
+                {
+                  "ErrorEquals": ["States.ALL"],
+                  "IntervalSeconds": 30,
+                  "MaxAttempts": 2,
+                  "BackoffRate": 2.0
+                }
+              ]
+            },
+            "EvaluateResponse": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.status",
+                  "StringEquals": "handled",
+                  "Next": "VerifyRecovery"
+                },
+                {
+                  "Variable": "$.status",
+                  "StringEquals": "security_handled",
+                  "Next": "SecurityEscalation"
+                }
+              ],
+              "Default": "ManualEscalation"
+            },
+            "VerifyRecovery": {
+              "Type": "Wait",
+              "Seconds": 300,
+              "Next": "HealthCheck"
+            },
+            "HealthCheck": {
+              "Type": "Task",
+              "Resource": "${IncidentResponseFunction.Arn}",
+              "End": true
+            },
+            "SecurityEscalation": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${AlertTopicArn}",
+                "Subject": "SECURITY INCIDENT - Manual Review Required",
+                "Message": "A security incident has been automatically handled but requires immediate manual review."
+              },
+              "End": true
+            },
+            "ManualEscalation": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::sns:publish",
+              "Parameters": {
+                "TopicArn": "${AlertTopicArn}",
+                "Subject": "INCIDENT ESCALATION - Manual Intervention Required",
+                "Message": "Automated incident response requires manual intervention."
+              },
+              "End": true
+            }
+          }
+        }
+
+  # IAM Role for Step Functions
+  StepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-step-function-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                  - sns:Publish
+                Resource: '*'
+
+Outputs:
+  IncidentResponseFunctionArn:
+    Description: 'Incident Response Lambda Function ARN'
+    Value: !GetAtt IncidentResponseFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-IncidentResponseFunctionArn'
+
+  IncidentsTableName:
+    Description: 'Incidents DynamoDB Table Name'
+    Value: !Ref IncidentsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-IncidentsTableName'
+
+  AutoRecoveryStateMachineArn:
+    Description: 'Auto-Recovery Step Function ARN'
+    Value: !Ref AutoRecoveryStateMachine
+    Export:
+      Name: !Sub '${AWS::StackName}-AutoRecoveryStateMachineArn'

@@ -1,0 +1,50 @@
+# OMNIX AI - Development Environment Configuration
+# This file contains development-specific overrides
+
+environment: development
+stage: dev
+
+# Frontend Configuration
+frontend:
+  s3_bucket: omnix-ai-frontend-dev
+  cloudfront_distribution_id: null
+  build_command: "npm run build"
+  build_env:
+    VITE_API_BASE_URL: "http://localhost:3001/v1"
+    VITE_WEBSOCKET_URL: "ws://localhost:3001"
+    VITE_ENVIRONMENT: "development"
+    VITE_DEBUG_MODE: "true"
+    VITE_API_KEY: "dev-api-key"
+    
+# Backend Configuration
+backend:
+  lambda_function_name: omnix-ai-backend-dev
+  local_server:
+    enabled: true
+    port: 3001
+    host: "localhost"
+    
+# Database Configuration  
+database:
+  dynamodb:
+    endpoint: "http://localhost:8000"
+    tables:
+      - omnix-ai-dev-users
+      - omnix-ai-dev-products
+      - omnix-ai-dev-orders
+      - omnix-ai-dev-inventory
+      - omnix-ai-dev-sessions
+      
+# Development Tools
+development:
+  hot_reload: true
+  source_maps: true
+  verbose_logging: true
+  mock_data_enabled: false
+  
+# Local Testing
+testing:
+  unit_tests: true
+  integration_tests: true
+  e2e_tests: false
+  coverage_threshold: 80

@@ -1,0 +1,715 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI - Executive Dashboard for Real-time Business Monitoring'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+
+  ProjectName:
+    Type: String
+    Default: omnix-ai
+    Description: Project name for resource naming
+
+  ApiGatewayId:
+    Type: String
+    Description: API Gateway ID for metrics
+
+  CloudFrontDistributionId:
+    Type: String
+    Description: CloudFront Distribution ID for metrics
+
+Resources:
+  # Executive Dashboard
+  ExecutiveDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-executive'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 2,
+              "properties": {
+                "markdown": "# OMNIX AI Executive Dashboard\n## Real-time Business Intelligence & System Health - ${Environment} Environment\n**Last Updated**: ${AWS::Region} | **Environment**: ${Environment}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "Revenue24h" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Revenue (24h)",
+                "period": 300,
+                "stat": "Maximum",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 6,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "Orders24h" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Orders (24h)",
+                "period": 300,
+                "stat": "Maximum",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "TotalCustomers" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Total Customers",
+                "period": 300,
+                "stat": "Maximum",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 18,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/HealthCheck", "SystemHealth" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "System Health",
+                "period": 300,
+                "stat": "Average",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "Revenue24h", { "label": "Revenue" } ],
+                  [ ".", "AverageOrderValue", { "label": "Avg Order Value" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Revenue Trends",
+                "period": 1800,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "ActiveCustomers24h", { "label": "Active Customers" } ],
+                  [ ".", "NewCustomers24h", { "label": "New Customers" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Customer Growth",
+                "period": 1800,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "ProcessingSuccessRate", { "label": "Processing Success Rate" } ],
+                  [ "OMNIX/Performance", "API_SLA_Compliance", { "label": "API SLA Compliance" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Service Quality Metrics (%)",
+                "period": 900,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 90,
+                    "max": 100
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/ApiGateway", "Count", "ApiName", "${ApiGatewayId}", { "label": "API Requests" } ],
+                  [ "AWS/CloudFront", "Requests", "DistributionId", "${CloudFrontDistributionId}", { "region": "us-east-1", "label": "CDN Requests" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Traffic Volume",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "AIRecommendations24h", { "label": "AI Recommendations" } ],
+                  [ ".", "AIAverageConfidence", { "label": "AI Confidence %" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "AI Performance",
+                "period": 1800,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 20,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/ApiGateway", "4XXError", "ApiName", "${ApiGatewayId}", { "label": "4XX Errors" } ],
+                  [ ".", "5XXError", ".", ".", { "label": "5XX Errors" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Error Rates",
+                "period": 300,
+                "stat": "Sum",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 20,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "OutOfStockProducts", { "label": "Out of Stock" } ],
+                  [ ".", "LowStockProducts", { "label": "Low Stock" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Inventory Alerts",
+                "period": 1800,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+
+  # Technical Operations Dashboard
+  TechnicalDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-technical'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 2,
+              "properties": {
+                "markdown": "# OMNIX AI Technical Operations Dashboard\n## Infrastructure Health & Performance Monitoring - ${Environment} Environment\n**Monitoring**: System Health | API Performance | Database Status | Security Alerts"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 2,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/HealthCheck", "SystemHealth", { "label": "Overall System Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "api", { "label": "API Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "database", { "label": "Database Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "cloudfront", { "label": "CloudFront Health" } ],
+                  [ "OMNIX/HealthCheck", "ComponentHealth", "Component", "s3", { "label": "S3 Health" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "System Component Health (1 = Healthy, 0 = Unhealthy)",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 1.1
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/ApiGateway", "Latency", "ApiName", "${ApiGatewayId}" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "API Gateway Latency",
+                "period": 300,
+                "stat": "Average",
+                "annotations": {
+                  "horizontal": [
+                    {
+                      "label": "SLA Threshold (500ms)",
+                      "value": 500
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "CacheHitRate", "DistributionId", "${CloudFrontDistributionId}" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "CloudFront Cache Hit Rate",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 100
+                  }
+                },
+                "annotations": {
+                  "horizontal": [
+                    {
+                      "label": "Target (70%)",
+                      "value": 70
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/AI", "BedrockAnalysisLatency", "Service", "BedrockAnalysis", { "label": "AI Analysis Latency" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "AI Service Performance",
+                "period": 300,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/AI", "BedrockAnalysisErrors", "Service", "BedrockAnalysis", { "label": "AI Analysis Errors" } ],
+                  [ ".", "FallbackAnalysisCount", ".", ".", { "label": "Fallback Usage" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "AI Service Errors & Fallbacks",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Security", "SecurityCheckStatus", "Check", "pii_exposure", { "label": "PII Exposure Check" } ],
+                  [ ".", ".", ".", "authentication", { "label": "Auth Failures Check" } ],
+                  [ ".", ".", ".", "access_anomalies", { "label": "Access Anomaly Check" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Security Check Status (1 = Pass, 0 = Fail)",
+                "period": 900,
+                "stat": "Maximum",
+                "yAxis": {
+                  "left": {
+                    "min": 0,
+                    "max": 1.1
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 20,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Database", "TableItemCount", "TableName", "customers", { "label": "Customers Table" } ],
+                  [ ".", ".", ".", "orders", { "label": "Orders Table" } ],
+                  [ ".", ".", ".", "inventory", { "label": "Inventory Table" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Database Table Sizes",
+                "period": 1800,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 20,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/WebVitals", "LCP", { "label": "Largest Contentful Paint" } ],
+                  [ ".", "FID", { "label": "First Input Delay" } ],
+                  [ ".", "CLS", { "label": "Cumulative Layout Shift" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Core Web Vitals",
+                "period": 900,
+                "stat": "Average",
+                "annotations": {
+                  "horizontal": [
+                    {
+                      "label": "LCP Threshold (2.5s)",
+                      "value": 2500
+                    },
+                    {
+                      "label": "FID Threshold (100ms)",
+                      "value": 100
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+
+  # Customer Experience Dashboard
+  CustomerExperienceDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-customer-experience'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 2,
+              "properties": {
+                "markdown": "# OMNIX AI Customer Experience Dashboard\n## User Journey & Engagement Analytics - ${Environment} Environment\n**Focus**: Page Performance | User Engagement | Conversion Metrics | AI Personalization"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/WebVitals", "LCP" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Largest Contentful Paint (ms)",
+                "period": 900,
+                "stat": "Average",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 6,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/WebVitals", "FID" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "First Input Delay (ms)",
+                "period": 900,
+                "stat": "Average",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/WebVitals", "CLS" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Cumulative Layout Shift",
+                "period": 900,
+                "stat": "Average",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 18,
+              "y": 2,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "AIAverageConfidence" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "AI Recommendation Confidence (%)",
+                "period": 1800,
+                "stat": "Average",
+                "setPeriodToTimeRange": true,
+                "sparkline": true
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "Requests", "DistributionId", "${CloudFrontDistributionId}" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "Page Views & Traffic",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "AIRecommendations24h", { "label": "AI Recommendations Generated" } ],
+                  [ ".", "Orders24h", { "label": "Orders Placed" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Conversion Funnel",
+                "period": 1800,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "4xxErrorRate", "DistributionId", "${CloudFrontDistributionId}", { "label": "4XX Error Rate" } ],
+                  [ ".", "5xxErrorRate", ".", ".", { "label": "5XX Error Rate" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "User-Facing Error Rates",
+                "period": 300,
+                "stat": "Average",
+                "yAxis": {
+                  "left": {
+                    "min": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "AWS/CloudFront", "BytesDownloaded", "DistributionId", "${CloudFrontDistributionId}" ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "Content Delivery Volume",
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 14,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/AI", "AIRecommendationAccuracy", "Service", "BedrockAnalysis", { "label": "Recommendation Accuracy" } ],
+                  [ "OMNIX/Business", "AIFallbackUsageRate", { "label": "Fallback Usage Rate" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "AI Personalization Quality",
+                "period": 1800,
+                "stat": "Average"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  ExecutiveDashboardURL:
+    Description: 'Executive Dashboard URL'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-${Environment}-executive'
+    Export:
+      Name: !Sub '${AWS::StackName}-ExecutiveDashboardURL'
+
+  TechnicalDashboardURL:
+    Description: 'Technical Operations Dashboard URL'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-${Environment}-technical'
+    Export:
+      Name: !Sub '${AWS::StackName}-TechnicalDashboardURL'
+
+  CustomerExperienceDashboardURL:
+    Description: 'Customer Experience Dashboard URL'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-${Environment}-customer-experience'
+    Export:
+      Name: !Sub '${AWS::StackName}-CustomerExperienceDashboardURL'

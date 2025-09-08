@@ -1,0 +1,783 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'OMNIX AI - Business Metrics Monitoring & Analytics'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+    Description: Environment name
+
+  ProjectName:
+    Type: String
+    Default: omnix-ai
+    Description: Project name for resource naming
+
+  AlertTopicArn:
+    Type: String
+    Description: SNS Topic ARN for business alerts
+
+  DynamoDBTableNames:
+    Type: CommaDelimitedList
+    Description: List of DynamoDB table names to monitor
+    Default: "customers,orders,inventory,analytics"
+
+Resources:
+  # Business Metrics Collection Lambda
+  BusinessMetricsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}-business-metrics'
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt BusinessMetricsRole.Arn
+      Timeout: 300
+      Environment:
+        Variables:
+          ALERT_TOPIC_ARN: !Ref AlertTopicArn
+          ENVIRONMENT: !Ref Environment
+          PROJECT_NAME: !Ref ProjectName
+          DYNAMODB_TABLES: !Join [",", !Ref DynamoDBTableNames]
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime, timedelta
+          from decimal import Decimal
+
+          dynamodb = boto3.resource('dynamodb')
+          cloudwatch = boto3.client('cloudwatch')
+          sns = boto3.client('sns')
+
+          def lambda_handler(event, context):
+              try:
+                  results = {
+                      'timestamp': datetime.now().isoformat(),
+                      'business_metrics': {}
+                  }
+                  
+                  # 1. Database integration metrics
+                  db_metrics = collect_database_metrics()
+                  results['business_metrics']['database'] = db_metrics
+                  
+                  # 2. Customer analytics metrics
+                  customer_metrics = collect_customer_metrics()
+                  results['business_metrics']['customers'] = customer_metrics
+                  
+                  # 3. Revenue and order processing metrics
+                  revenue_metrics = collect_revenue_metrics()
+                  results['business_metrics']['revenue'] = revenue_metrics
+                  
+                  # 4. Inventory management metrics
+                  inventory_metrics = collect_inventory_metrics()
+                  results['business_metrics']['inventory'] = inventory_metrics
+                  
+                  # 5. AI recommendation effectiveness
+                  ai_metrics = collect_ai_effectiveness_metrics()
+                  results['business_metrics']['ai_effectiveness'] = ai_metrics
+                  
+                  # Check for critical business issues
+                  critical_issues = []
+                  for metric_category, metrics in results['business_metrics'].items():
+                      if metrics.get('critical_alert', False):
+                          critical_issues.append(f"{metric_category}: {metrics.get('alert_message', 'Critical issue')}")
+                  
+                  if critical_issues:
+                      send_business_alert('Critical Business Metrics Alert', {
+                          'issues': critical_issues,
+                          'details': results
+                      })
+                  
+                  # Publish all business metrics to CloudWatch
+                  publish_business_metrics(results)
+                  
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps(results, indent=2, default=decimal_default)
+                  }
+                  
+              except Exception as e:
+                  error_result = {
+                      'timestamp': datetime.now().isoformat(),
+                      'error': str(e)
+                  }
+                  
+                  send_business_alert('Business Metrics Collection Error', error_result)
+                  
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps(error_result)
+                  }
+
+          def collect_database_metrics():
+              try:
+                  table_names = os.environ['DYNAMODB_TABLES'].split(',')
+                  db_metrics = {
+                      'tables_monitored': len(table_names),
+                      'total_items': 0,
+                      'healthy_tables': 0,
+                      'critical_alert': False
+                  }
+                  
+                  for table_name in table_names:
+                      try:
+                          table = dynamodb.Table(f"{os.environ['PROJECT_NAME']}-{os.environ['ENVIRONMENT']}-{table_name}")
+                          
+                          # Get table item count (approximate)
+                          response = table.describe()
+                          item_count = response['Table']['ItemCount']
+                          db_metrics['total_items'] += item_count
+                          db_metrics['healthy_tables'] += 1
+                          
+                          # Publish per-table metrics
+                          cloudwatch.put_metric_data(
+                              Namespace='OMNIX/Database',
+                              MetricData=[
+                                  {
+                                      'MetricName': 'TableItemCount',
+                                      'Value': item_count,
+                                      'Unit': 'Count',
+                                      'Dimensions': [
+                                          {
+                                              'Name': 'TableName',
+                                              'Value': table_name
+                                          }
+                                      ],
+                                      'Timestamp': datetime.now()
+                                  }
+                              ]
+                          )
+                          
+                      except Exception as e:
+                          print(f"Error accessing table {table_name}: {e}")
+                  
+                  # Alert if less than 80% of tables are accessible
+                  if db_metrics['healthy_tables'] < (db_metrics['tables_monitored'] * 0.8):
+                      db_metrics['critical_alert'] = True
+                      db_metrics['alert_message'] = f"Only {db_metrics['healthy_tables']}/{db_metrics['tables_monitored']} tables accessible"
+                  
+                  return db_metrics
+                  
+              except Exception as e:
+                  return {
+                      'error': str(e),
+                      'critical_alert': True,
+                      'alert_message': 'Database metrics collection failed'
+                  }
+
+          def collect_customer_metrics():
+              try:
+                  customer_metrics = {
+                      'total_customers': 0,
+                      'active_customers_24h': 0,
+                      'new_customers_24h': 0,
+                      'customer_segments': {},
+                      'critical_alert': False
+                  }
+                  
+                  try:
+                      customers_table = dynamodb.Table(f"{os.environ['PROJECT_NAME']}-{os.environ['ENVIRONMENT']}-customers")
+                      
+                      # Get total customer count
+                      response = customers_table.describe()
+                      customer_metrics['total_customers'] = response['Table']['ItemCount']
+                      
+                      # Get recent activity (would need to scan for real implementation)
+                      # For demo purposes, using placeholder values
+                      customer_metrics['active_customers_24h'] = max(0, customer_metrics['total_customers'] // 10)
+                      customer_metrics['new_customers_24h'] = max(0, customer_metrics['total_customers'] // 50)
+                      
+                      # Mock segment distribution
+                      customer_metrics['customer_segments'] = {
+                          'premium': customer_metrics['total_customers'] // 5,
+                          'standard': customer_metrics['total_customers'] // 2,
+                          'basic': customer_metrics['total_customers'] - (customer_metrics['total_customers'] // 5) - (customer_metrics['total_customers'] // 2)
+                      }
+                      
+                  except Exception as e:
+                      print(f"Error collecting customer metrics: {e}")
+                      customer_metrics['error'] = str(e)
+                  
+                  return customer_metrics
+                  
+              except Exception as e:
+                  return {
+                      'error': str(e),
+                      'critical_alert': True,
+                      'alert_message': 'Customer metrics collection failed'
+                  }
+
+          def collect_revenue_metrics():
+              try:
+                  revenue_metrics = {
+                      'total_orders_24h': 0,
+                      'total_revenue_24h': 0.0,
+                      'average_order_value': 0.0,
+                      'processing_success_rate': 100.0,
+                      'critical_alert': False
+                  }
+                  
+                  try:
+                      orders_table = dynamodb.Table(f"{os.environ['PROJECT_NAME']}-{os.environ['ENVIRONMENT']}-orders")
+                      
+                      # In a real implementation, you would scan for orders in the last 24h
+                      # For demo purposes, using table item count as proxy
+                      response = orders_table.describe()
+                      total_orders = response['Table']['ItemCount']
+                      
+                      # Mock recent orders (would be actual scan in production)
+                      revenue_metrics['total_orders_24h'] = max(0, total_orders // 30)  # Assume 1/30th are daily
+                      revenue_metrics['total_revenue_24h'] = revenue_metrics['total_orders_24h'] * 45.67  # Mock AOV
+                      
+                      if revenue_metrics['total_orders_24h'] > 0:
+                          revenue_metrics['average_order_value'] = revenue_metrics['total_revenue_24h'] / revenue_metrics['total_orders_24h']
+                      
+                      # Mock processing success rate (would be calculated from actual data)
+                      revenue_metrics['processing_success_rate'] = 98.5
+                      
+                      # Alert if success rate drops below 95%
+                      if revenue_metrics['processing_success_rate'] < 95.0:
+                          revenue_metrics['critical_alert'] = True
+                          revenue_metrics['alert_message'] = f"Order processing success rate: {revenue_metrics['processing_success_rate']:.1f}%"
+                      
+                  except Exception as e:
+                      print(f"Error collecting revenue metrics: {e}")
+                      revenue_metrics['error'] = str(e)
+                  
+                  return revenue_metrics
+                  
+              except Exception as e:
+                  return {
+                      'error': str(e),
+                      'critical_alert': True,
+                      'alert_message': 'Revenue metrics collection failed'
+                  }
+
+          def collect_inventory_metrics():
+              try:
+                  inventory_metrics = {
+                      'total_products': 0,
+                      'out_of_stock_count': 0,
+                      'low_stock_count': 0,
+                      'inventory_turnover_rate': 0.0,
+                      'critical_alert': False
+                  }
+                  
+                  try:
+                      inventory_table = dynamodb.Table(f"{os.environ['PROJECT_NAME']}-{os.environ['ENVIRONMENT']}-inventory")
+                      
+                      response = inventory_table.describe()
+                      inventory_metrics['total_products'] = response['Table']['ItemCount']
+                      
+                      # Mock inventory status (would be actual scan in production)
+                      inventory_metrics['out_of_stock_count'] = max(0, inventory_metrics['total_products'] // 20)
+                      inventory_metrics['low_stock_count'] = max(0, inventory_metrics['total_products'] // 10)
+                      inventory_metrics['inventory_turnover_rate'] = 4.2  # Mock turnover rate
+                      
+                      # Alert if more than 10% of products are out of stock
+                      if inventory_metrics['total_products'] > 0:
+                          out_of_stock_percentage = (inventory_metrics['out_of_stock_count'] / inventory_metrics['total_products']) * 100
+                          if out_of_stock_percentage > 10:
+                              inventory_metrics['critical_alert'] = True
+                              inventory_metrics['alert_message'] = f"{out_of_stock_percentage:.1f}% of products out of stock"
+                      
+                  except Exception as e:
+                      print(f"Error collecting inventory metrics: {e}")
+                      inventory_metrics['error'] = str(e)
+                  
+                  return inventory_metrics
+                  
+              except Exception as e:
+                  return {
+                      'error': str(e),
+                      'critical_alert': True,
+                      'alert_message': 'Inventory metrics collection failed'
+                  }
+
+          def collect_ai_effectiveness_metrics():
+              try:
+                  # Get AI metrics from CloudWatch
+                  end_time = datetime.now()
+                  start_time = end_time - timedelta(hours=24)
+                  
+                  ai_metrics = {
+                      'recommendations_generated_24h': 0,
+                      'average_confidence': 0.0,
+                      'fallback_usage_rate': 0.0,
+                      'prediction_accuracy': 0.0,
+                      'critical_alert': False
+                  }
+                  
+                  try:
+                      # Get AI recommendation count
+                      response = cloudwatch.get_metric_statistics(
+                          Namespace='OMNIX/AI',
+                          MetricName='RecommendationsGenerated',
+                          StartTime=start_time,
+                          EndTime=end_time,
+                          Period=3600,
+                          Statistics=['Sum']
+                      )
+                      
+                      if response['Datapoints']:
+                          ai_metrics['recommendations_generated_24h'] = sum(dp['Sum'] for dp in response['Datapoints'])
+                      
+                      # Get AI confidence
+                      response = cloudwatch.get_metric_statistics(
+                          Namespace='OMNIX/AI',
+                          MetricName='AIRecommendationAccuracy',
+                          StartTime=start_time,
+                          EndTime=end_time,
+                          Period=3600,
+                          Statistics=['Average']
+                      )
+                      
+                      if response['Datapoints']:
+                          ai_metrics['average_confidence'] = sum(dp['Average'] for dp in response['Datapoints']) / len(response['Datapoints'])
+                      
+                      # Get fallback usage
+                      response = cloudwatch.get_metric_statistics(
+                          Namespace='OMNIX/AI',
+                          MetricName='FallbackAnalysisCount',
+                          StartTime=start_time,
+                          EndTime=end_time,
+                          Period=3600,
+                          Statistics=['Sum']
+                      )
+                      
+                      fallback_count = sum(dp['Sum'] for dp in response['Datapoints']) if response['Datapoints'] else 0
+                      
+                      if ai_metrics['recommendations_generated_24h'] > 0:
+                          ai_metrics['fallback_usage_rate'] = (fallback_count / ai_metrics['recommendations_generated_24h']) * 100
+                      
+                      # Mock prediction accuracy
+                      ai_metrics['prediction_accuracy'] = 87.3  # Would be calculated from actual data
+                      
+                      # Alert if AI effectiveness drops
+                      if ai_metrics['average_confidence'] < 70 or ai_metrics['fallback_usage_rate'] > 30:
+                          ai_metrics['critical_alert'] = True
+                          ai_metrics['alert_message'] = f"AI effectiveness degraded: {ai_metrics['average_confidence']:.1f}% confidence, {ai_metrics['fallback_usage_rate']:.1f}% fallback usage"
+                      
+                  except Exception as e:
+                      print(f"Error collecting AI effectiveness metrics: {e}")
+                      ai_metrics['error'] = str(e)
+                  
+                  return ai_metrics
+                  
+              except Exception as e:
+                  return {
+                      'error': str(e),
+                      'critical_alert': True,
+                      'alert_message': 'AI effectiveness metrics collection failed'
+                  }
+
+          def send_business_alert(subject, details):
+              try:
+                  sns.publish(
+                      TopicArn=os.environ['ALERT_TOPIC_ARN'],
+                      Subject=f'OMNIX AI BUSINESS ALERT: {subject}',
+                      Message=json.dumps(details, indent=2, default=decimal_default)
+                  )
+              except Exception as e:
+                  print(f"Failed to send business alert: {e}")
+
+          def publish_business_metrics(results):
+              try:
+                  namespace = 'OMNIX/Business'
+                  
+                  # Database metrics
+                  db_metrics = results['business_metrics'].get('database', {})
+                  if 'total_items' in db_metrics:
+                      cloudwatch.put_metric_data(
+                          Namespace=namespace,
+                          MetricData=[
+                              {
+                                  'MetricName': 'TotalDatabaseItems',
+                                  'Value': db_metrics['total_items'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'HealthyTables',
+                                  'Value': db_metrics['healthy_tables'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              }
+                          ]
+                      )
+                  
+                  # Customer metrics
+                  customer_metrics = results['business_metrics'].get('customers', {})
+                  if 'total_customers' in customer_metrics:
+                      cloudwatch.put_metric_data(
+                          Namespace=namespace,
+                          MetricData=[
+                              {
+                                  'MetricName': 'TotalCustomers',
+                                  'Value': customer_metrics['total_customers'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'ActiveCustomers24h',
+                                  'Value': customer_metrics['active_customers_24h'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'NewCustomers24h',
+                                  'Value': customer_metrics['new_customers_24h'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              }
+                          ]
+                      )
+                  
+                  # Revenue metrics
+                  revenue_metrics = results['business_metrics'].get('revenue', {})
+                  if 'total_revenue_24h' in revenue_metrics:
+                      cloudwatch.put_metric_data(
+                          Namespace=namespace,
+                          MetricData=[
+                              {
+                                  'MetricName': 'Revenue24h',
+                                  'Value': revenue_metrics['total_revenue_24h'],
+                                  'Unit': 'None',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'Orders24h',
+                                  'Value': revenue_metrics['total_orders_24h'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'AverageOrderValue',
+                                  'Value': revenue_metrics['average_order_value'],
+                                  'Unit': 'None',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'ProcessingSuccessRate',
+                                  'Value': revenue_metrics['processing_success_rate'],
+                                  'Unit': 'Percent',
+                                  'Timestamp': datetime.now()
+                              }
+                          ]
+                      )
+                  
+                  # Inventory metrics
+                  inventory_metrics = results['business_metrics'].get('inventory', {})
+                  if 'total_products' in inventory_metrics:
+                      cloudwatch.put_metric_data(
+                          Namespace=namespace,
+                          MetricData=[
+                              {
+                                  'MetricName': 'TotalProducts',
+                                  'Value': inventory_metrics['total_products'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'OutOfStockProducts',
+                                  'Value': inventory_metrics['out_of_stock_count'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'LowStockProducts',
+                                  'Value': inventory_metrics['low_stock_count'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              }
+                          ]
+                      )
+                  
+                  # AI effectiveness metrics
+                  ai_metrics = results['business_metrics'].get('ai_effectiveness', {})
+                  if 'recommendations_generated_24h' in ai_metrics:
+                      cloudwatch.put_metric_data(
+                          Namespace=namespace,
+                          MetricData=[
+                              {
+                                  'MetricName': 'AIRecommendations24h',
+                                  'Value': ai_metrics['recommendations_generated_24h'],
+                                  'Unit': 'Count',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'AIAverageConfidence',
+                                  'Value': ai_metrics['average_confidence'],
+                                  'Unit': 'Percent',
+                                  'Timestamp': datetime.now()
+                              },
+                              {
+                                  'MetricName': 'AIFallbackUsageRate',
+                                  'Value': ai_metrics['fallback_usage_rate'],
+                                  'Unit': 'Percent',
+                                  'Timestamp': datetime.now()
+                              }
+                          ]
+                      )
+                  
+              except Exception as e:
+                  print(f"Failed to publish business metrics: {e}")
+
+          def decimal_default(obj):
+              if isinstance(obj, Decimal):
+                  return float(obj)
+              raise TypeError
+
+  # IAM Role for Business Metrics Lambda
+  BusinessMetricsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-business-metrics-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: BusinessMetricsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeTable
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                  - cloudwatch:PutMetricData
+                  - cloudwatch:GetMetricStatistics
+                  - sns:Publish
+                Resource: '*'
+
+  # Business Metrics Schedule (every 30 minutes)
+  BusinessMetricsSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${ProjectName}-${Environment}-business-metrics-schedule'
+      Description: 'Schedule for business metrics collection'
+      ScheduleExpression: 'rate(30 minutes)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt BusinessMetricsFunction.Arn
+          Id: 'BusinessMetricsTarget'
+
+  # Lambda Permission for Business Metrics
+  BusinessMetricsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BusinessMetricsFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt BusinessMetricsSchedule.Arn
+
+  # Business Alarms
+  RevenueProcessingAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-revenue-processing'
+      AlarmDescription: 'Revenue processing success rate below threshold'
+      MetricName: ProcessingSuccessRate
+      Namespace: OMNIX/Business
+      Statistic: Average
+      Period: 1800
+      EvaluationPeriods: 2
+      Threshold: 95
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref AlertTopicArn
+      TreatMissingData: breaching
+
+  InventoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${ProjectName}-${Environment}-inventory-stock'
+      AlarmDescription: 'High number of out-of-stock products'
+      MetricName: OutOfStockProducts
+      Namespace: OMNIX/Business
+      Statistic: Maximum
+      Period: 1800
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref AlertTopicArn
+      TreatMissingData: notBreaching
+
+  # Business Dashboard
+  BusinessDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub '${ProjectName}-${Environment}-business'
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "Revenue24h" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Revenue (24h)",
+                "period": 1800,
+                "stat": "Maximum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "Orders24h" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Orders (24h)",
+                "period": 1800,
+                "stat": "Maximum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "TotalCustomers" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Total Customers",
+                "period": 1800,
+                "stat": "Maximum"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 18,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "ProcessingSuccessRate" ]
+                ],
+                "view": "singleValue",
+                "region": "${AWS::Region}",
+                "title": "Processing Success Rate (%)",
+                "period": 1800,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "Revenue24h", { "label": "Daily Revenue" } ],
+                  [ ".", "AverageOrderValue", { "label": "Average Order Value" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Revenue Metrics",
+                "period": 1800,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 6,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "ActiveCustomers24h", { "label": "Active Customers (24h)" } ],
+                  [ ".", "NewCustomers24h", { "label": "New Customers (24h)" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Customer Metrics",
+                "period": 1800,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "TotalProducts", { "label": "Total Products" } ],
+                  [ ".", "OutOfStockProducts", { "label": "Out of Stock" } ],
+                  [ ".", "LowStockProducts", { "label": "Low Stock" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "Inventory Status",
+                "period": 1800,
+                "stat": "Average"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  [ "OMNIX/Business", "AIRecommendations24h", { "label": "AI Recommendations (24h)" } ],
+                  [ ".", "AIAverageConfidence", { "label": "AI Confidence (%)" } ],
+                  [ ".", "AIFallbackUsageRate", { "label": "Fallback Usage Rate (%)" } ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "${AWS::Region}",
+                "title": "AI Effectiveness",
+                "period": 1800,
+                "stat": "Average"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  BusinessDashboardURL:
+    Description: 'Business Metrics Dashboard URL'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${ProjectName}-${Environment}-business'
+    Export:
+      Name: !Sub '${AWS::StackName}-BusinessDashboardURL'
+
+  BusinessMetricsFunctionArn:
+    Description: 'Business Metrics Lambda Function ARN'
+    Value: !GetAtt BusinessMetricsFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BusinessMetricsFunctionArn'

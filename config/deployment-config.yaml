@@ -1,0 +1,291 @@
+# OMNIX AI - Master Deployment Configuration
+# This is the single source of truth for all deployment settings
+# Version: 2.0
+# Last Updated: 2025-09-08
+
+# Global settings applied to all environments
+global:
+  project_name: omnix-ai
+  aws_profile: default
+  default_region: eu-central-1
+  
+  # Build settings
+  build:
+    node_version: "18"
+    build_timeout: 300  # seconds
+    optimize_bundle: true
+    source_maps: false
+    
+  # Deployment settings
+  deployment:
+    validate_before_deploy: true
+    health_check_enabled: true
+    health_check_timeout: 60  # seconds
+    auto_rollback: true
+    rollback_on_alarm: true
+    keep_failed_deployments: false
+    max_deployment_history: 10
+    
+  # Monitoring
+  monitoring:
+    cloudwatch_enabled: true
+    metrics_namespace: "OMNIX-AI"
+    alarm_email: "devops@omnix-ai.com"
+    
+  # Security
+  security:
+    enforce_https: true
+    cors_enabled: true
+    api_key_required: true
+    rate_limiting: true
+
+# Environment-specific configurations
+environments:
+  # Development Environment
+  development:
+    aws_region: eu-central-1
+    stage: dev
+    
+    frontend:
+      s3_bucket: omnix-ai-frontend-dev
+      cloudfront_distribution_id: null  # No CloudFront in dev
+      build_mode: development
+      source_maps: true
+      api_base_url: "http://localhost:3001"
+      websocket_url: "ws://localhost:3001"
+      
+    backend:
+      lambda_function_name: omnix-ai-backend-dev
+      lambda_memory: 512
+      lambda_timeout: 30
+      api_gateway_id: null  # Use local server
+      api_gateway_stage: dev
+      dynamodb_endpoint: "http://localhost:8000"  # Local DynamoDB
+      
+    environment_variables:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+      ENABLE_MOCK_DATA: false
+      API_KEY: dev-api-key-not-required
+      JWT_SECRET: dev-jwt-secret
+      
+  # Staging Environment
+  staging:
+    aws_region: eu-central-1
+    stage: staging
+    
+    frontend:
+      s3_bucket: omnix-ai-staging-frontend-minimal
+      cloudfront_distribution_id: E1HN3Y5MSQJFFC
+      cloudfront_domain: dtdnwq4annvk2.cloudfront.net
+      build_mode: production
+      source_maps: false
+      api_base_url: "https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/staging"
+      websocket_url: "wss://5oo31khrrj.execute-api.eu-central-1.amazonaws.com/staging"
+      cache_control:
+        html: "no-cache, no-store, must-revalidate"
+        assets: "max-age=31536000, immutable"
+      
+    backend:
+      lambda_function_name: omnix-ai-backend-staging
+      lambda_memory: 1024
+      lambda_timeout: 60
+      api_gateway_id: 4j4yb4b844
+      api_gateway_stage: staging
+      api_gateway_url: "https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/staging"
+      
+    environment_variables:
+      NODE_ENV: staging
+      LOG_LEVEL: info
+      ENABLE_MOCK_DATA: false
+      API_KEY: "omnix-api-key-staging-2024"
+      JWT_SECRET_ARN: "arn:aws:secretsmanager:eu-central-1:631844602411:secret:omnix-jwt-staging"
+      CORS_ORIGINS: "https://dtdnwq4annvk2.cloudfront.net"
+      
+    dynamodb:
+      tables_prefix: "omnix-ai-staging-"
+      read_capacity: 5
+      write_capacity: 5
+      
+  # Production Environment
+  production:
+    aws_region: eu-central-1
+    stage: prod
+    
+    frontend:
+      s3_bucket: omnix-ai-frontend-animations-1755860292
+      cloudfront_distribution_id: E2MCXLNXS3ZTKY  # Needs verification
+      cloudfront_domain: d1vu6p9f5uc16.cloudfront.net
+      build_mode: production
+      source_maps: false
+      api_base_url: "https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod"
+      websocket_url: "wss://5oo31khrrj.execute-api.eu-central-1.amazonaws.com/prod"
+      cache_control:
+        html: "no-cache, no-store, must-revalidate"
+        assets: "max-age=31536000, immutable"
+      cdn_invalidation:
+        enabled: true
+        paths: ["/*"]
+        wait_for_completion: true
+      
+    backend:
+      lambda_function_name: omnix-ai-backend-prod
+      lambda_memory: 2048
+      lambda_timeout: 60
+      lambda_reserved_concurrent_executions: 100
+      api_gateway_id: 4j4yb4b844
+      api_gateway_stage: prod
+      api_gateway_url: "https://4j4yb4b844.execute-api.eu-central-1.amazonaws.com/prod"
+      api_throttle_rate_limit: 10000
+      api_throttle_burst_limit: 5000
+      
+    environment_variables:
+      NODE_ENV: production
+      LOG_LEVEL: warn
+      ENABLE_MOCK_DATA: false
+      API_KEY: "omnix-api-key-production-2024"
+      JWT_SECRET_ARN: "arn:aws:secretsmanager:eu-central-1:631844602411:secret:omnix-jwt-prod"
+      CORS_ORIGINS: "https://d1vu6p9f5uc16.cloudfront.net,https://omnix-ai.com"
+      
+    dynamodb:
+      tables_prefix: "omnix-ai-prod-"
+      billing_mode: "PAY_PER_REQUEST"  # On-demand for production
+      point_in_time_recovery: true
+      encryption: true
+      
+    monitoring:
+      enhanced_monitoring: true
+      xray_tracing: true
+      alarm_thresholds:
+        error_rate: 1  # percent
+        latency_p99: 3000  # milliseconds
+        concurrent_executions: 80  # percent of reserved
+        
+    backup:
+      enabled: true
+      retention_days: 30
+      backup_schedule: "0 2 * * *"  # Daily at 2 AM
+      
+# Deployment profiles for different scenarios
+deployment_profiles:
+  quick:
+    skip_tests: true
+    skip_health_checks: false
+    parallel_deployment: true
+    
+  safe:
+    skip_tests: false
+    skip_health_checks: false
+    parallel_deployment: false
+    canary_deployment: true
+    canary_percentage: 10
+    canary_duration: 300  # seconds
+    
+  emergency:
+    skip_tests: true
+    skip_health_checks: true
+    parallel_deployment: true
+    force_deployment: true
+    
+# Resource naming conventions
+naming:
+  pattern: "{project_name}-{component}-{environment}"
+  components:
+    frontend: "frontend"
+    backend: "backend"
+    api: "api"
+    database: "db"
+    monitoring: "monitor"
+    
+# Health check endpoints
+health_checks:
+  api:
+    endpoint: "/health"
+    expected_status: 200
+    timeout: 5000
+    
+  frontend:
+    paths:
+      - "/"
+      - "/index.html"
+      - "/manifest.json"
+    expected_status: 200
+    
+  database:
+    tables:
+      - users
+      - products
+      - orders
+      - inventory
+      
+# Rollback configuration
+rollback:
+  auto_rollback_triggers:
+    - health_check_failed
+    - alarm_triggered
+    - deployment_timeout
+    - manual_intervention
+    
+  snapshot_retention: 5  # Keep last 5 snapshots
+  rollback_timeout: 300  # seconds
+  
+# Notification settings
+notifications:
+  channels:
+    - type: email
+      addresses:
+        - devops@omnix-ai.com
+        - team@omnix-ai.com
+    - type: slack
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+      channel: "#deployments"
+      
+  events:
+    - deployment_started
+    - deployment_succeeded
+    - deployment_failed
+    - rollback_initiated
+    - rollback_completed
+    
+# Version management
+versioning:
+  strategy: "semantic"  # semantic | timestamp | git-sha
+  tag_pattern: "v{major}.{minor}.{patch}"
+  auto_increment: true
+  
+# Dependencies and prerequisites
+prerequisites:
+  tools:
+    - name: aws-cli
+      version: ">=2.0.0"
+    - name: node
+      version: ">=18.0.0"
+    - name: npm
+      version: ">=8.0.0"
+    
+  aws_services:
+    - s3
+    - lambda
+    - apigateway
+    - cloudfront
+    - dynamodb
+    - cloudwatch
+    - iam
+    
+# Validation rules
+validation:
+  pre_deployment:
+    - check_aws_credentials
+    - verify_s3_bucket_exists
+    - verify_lambda_function_exists
+    - check_api_gateway_configuration
+    - validate_environment_variables
+    - check_build_artifacts
+    - verify_dependencies_installed
+    
+  post_deployment:
+    - verify_health_endpoints
+    - check_api_responses
+    - validate_frontend_loading
+    - verify_database_connectivity
+    - check_monitoring_metrics

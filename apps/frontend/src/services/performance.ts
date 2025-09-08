@@ -34,6 +34,7 @@ class PerformanceMonitoringService {
   private reportCallback?: (metrics: PerformanceMetric[]) => void;
   private analyticsEnabled: boolean = true;
   private debugMode: boolean = false;
+  private lastAnalyticsSent: number = 0;
   
   // Web Vitals thresholds based on Google's recommendations
   private readonly thresholds: PerformanceThresholds = {
@@ -358,9 +359,14 @@ class PerformanceMonitoringService {
       });
     }
     
-    // Send to custom analytics endpoint
-    if (process.env.NODE_ENV === 'production') {
-      this.sendToEndpoint(metric);
+    // Send to custom analytics endpoint (disabled in production to avoid costs)
+    if (process.env.NODE_ENV !== 'production' && this.analyticsEnabled) {
+      // Rate limit: Only send analytics every 30 seconds max
+      const now = Date.now();
+      if (!this.lastAnalyticsSent || now - this.lastAnalyticsSent > 30000) {
+        this.lastAnalyticsSent = now;
+        this.sendToEndpoint(metric);
+      }
     }
   }
 
