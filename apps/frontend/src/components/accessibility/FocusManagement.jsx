@@ -101,7 +101,7 @@ const useFocusTrap = (isActive = false, options = {}) => {
   const previouslyFocusedElementRef = useRef(null);
   const isActiveRef = useRef(isActive);
 
-  const { pushFocusScope, popFocusScope } = useFocusContext();
+  const { pushFocusScope: _pushFocusScope, popFocusScope: _popFocusScope } = useFocusContext();
 
   // Get all focusable elements within the container
   const getFocusableElements = useCallback(() => {
@@ -364,7 +364,7 @@ const useFocusVisible = () => {
     };
   }, []);
 
-  const handleFocus = useCallback((e) => {
+  const handleFocus = useCallback((_e) => {
     setIsFocused(true);
     setIsFocusVisible(hadKeyboardEventRef.current);
   }, []);
@@ -457,7 +457,7 @@ const SkipToContent = ({ targetId = 'main-content', children = 'Skip to main con
 };
 
 // Focus debugging utility (development only)
-const FocusDebugger = ({ enabled = process.env.NODE_ENV === 'development' }) => {
+const FocusDebugger = ({ enabled = import.meta.env.DEV }) => {
   useEffect(() => {
     if (!enabled) return;
 

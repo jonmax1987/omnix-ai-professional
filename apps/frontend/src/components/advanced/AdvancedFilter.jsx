@@ -684,7 +684,7 @@ const AdvancedFilter = ({
                 
                 <TagsContainer>
                   <AnimatePresence>
-                    {activeFilterTags.map((tag, index) => (
+                    {activeFilterTags.map((tag, _index) => (
                       <FilterTag
                         key={`${tag.key}-${tag.value || 'range'}`}
                         initial={{ opacity: 0, scale: 0.8 }}

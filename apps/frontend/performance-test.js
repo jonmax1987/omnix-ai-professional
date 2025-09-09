@@ -21,7 +21,7 @@ const colors = {
 };
 
 function log(color, message) {
-  console.log(`${color}${message}${colors.reset}`);
+  console.warn(`${color}${message}${colors.reset}`);
 }
 
 async function measureResourceLoadTime(url, description) {
@@ -221,7 +221,7 @@ async function testMemoryOptimization() {
   log(colors.cyan, '\n=== MEMORY OPTIMIZATION VERIFICATION ===');
   
   try {
-    const memBefore = process.memoryUsage();
+    const memBefore = typeof process !== 'undefined' ? process.memoryUsage() : { heapUsed: 0 };
     
     // Simulate heavy operations by making multiple API requests
     const heavyRequests = [];
@@ -232,11 +232,11 @@ async function testMemoryOptimization() {
     await Promise.all(heavyRequests);
     
     // Force garbage collection if available
-    if (global.gc) {
+    if (typeof global !== 'undefined' && global.gc) {
       global.gc();
     }
     
-    const memAfter = process.memoryUsage();
+    const memAfter = typeof process !== 'undefined' ? process.memoryUsage() : { heapUsed: 0 };
     const memDiff = Math.round((memAfter.heapUsed - memBefore.heapUsed) / 1024 / 1024 * 100) / 100;
     
     log(colors.cyan, 'Memory Usage:');
@@ -263,7 +263,7 @@ async function runPerformanceTests() {
   
   const resourceResults = await testResourceLoading();
   const apiResults = await testAPIPerformance();
-  const cacheResults = await testCachePerformance();
+  const _cacheResults = await testCachePerformance();
   const concurrentResults = await testConcurrentRequests();
   const memoryResults = await testMemoryOptimization();
   
