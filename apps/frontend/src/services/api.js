@@ -43,7 +43,7 @@ export const authAPI = {
     } catch (error) {
       // Fallback to legacy API if unified client fails
       console.warn('Unified API login failed, falling back to legacy:', error.message);
-      return await api.post('/auth/login', credentials);
+      return await api.post('/v1/auth/login', credentials);
     }
   },
   logout: async () => {
@@ -51,7 +51,7 @@ export const authAPI = {
       return await unifiedAPI.auth.logout();
     } catch (error) {
       console.warn('Unified API logout failed, falling back to legacy:', error.message);
-      return await api.post('/auth/logout');
+      return await api.post('/v1/auth/logout');
     }
   },
   refreshToken: async (refreshToken) => {
@@ -59,7 +59,7 @@ export const authAPI = {
       return await unifiedAPI.auth.refreshToken(refreshToken);
     } catch (error) {
       console.warn('Unified API refresh failed, falling back to legacy:', error.message);
-      return await api.post('/auth/refresh', { refreshToken });
+      return await api.post('/v1/auth/refresh', { refreshToken });
     }
   },
   resetPassword: (email) => api.post('/auth/reset-password', { email }),
@@ -89,9 +89,9 @@ export const userAPI = {
 
 // Products API
 export const productsAPI = {
-  getProducts: (params = {}) => api.get('/products', params),
+  getProducts: (params = {}) => api.get('/v1/products', params),
   getProduct: (id) => api.get(`/products/${id}`),
-  createProduct: (data) => api.post('/products', data),
+  createProduct: (data) => api.post('/v1/products', data),
   updateProduct: (id, data) => api.patch(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),
   
@@ -138,37 +138,37 @@ export const inventoryAPI = {
 
 // Orders API
 export const ordersAPI = {
-  getOrders: (params = {}) => api.get('/orders', params),
-  getOrder: (id) => api.get(`/orders/${id}`),
-  createOrder: (data) => api.post('/orders', data),
-  updateOrder: (id, data) => api.patch(`/orders/${id}`, data),
-  cancelOrder: (id, reason) => api.post(`/orders/${id}/cancel`, { reason }),
+  getOrders: (params = {}) => api.get('/v1/orders', params),
+  getOrder: (id) => api.get(`/v1/orders/${id}`),
+  createOrder: (data) => api.post('/v1/orders', data),
+  updateOrder: (id, data) => api.patch(`/v1/orders/${id}`, data),
+  cancelOrder: (id, reason) => api.post(`/v1/orders/${id}/cancel`, { reason }),
   fulfillOrder: (id, data) => api.post(`/orders/${id}/fulfill`, data),
   getOrderHistory: (id) => api.get(`/orders/${id}/history`),
   exportOrders: (params = {}) => api.get('/orders/export', params),
   // NOTE: Backend has a routing issue where /orders/statistics is incorrectly matched by /orders/:id
   // This causes a 404 error saying "Order with ID statistics not found"
   // Backend fix needed: Define /orders/statistics route BEFORE /orders/:id route
-  getOrderStatistics: (params = {}) => api.get('/orders/statistics', params)
+  getOrderStatistics: (params = {}) => api.get('/v1/orders/statistics', params)
 };
 
 // Alerts API (aligned with backend spec)
 export const alertsAPI = {
-  getAlerts: (params = {}) => api.get('/alerts', params),
-  getAlert: (id) => api.get(`/alerts/${id}`),
-  createAlert: (data) => api.post('/alerts', data),
-  dismissAlert: (id) => api.post(`/alerts/${id}/dismiss`), // Backend uses dismiss instead of acknowledge
-  acknowledgeAlert: (id) => api.post(`/alerts/${id}/dismiss`), // Map to backend endpoint
-  resolveAlert: (id, resolution) => api.post(`/alerts/${id}/resolve`, { resolution }),
-  bulkAcknowledge: (ids) => api.post('/alerts/bulk-acknowledge', { ids }),
-  bulkResolve: (ids, resolution) => api.post('/alerts/bulk-resolve', { ids, resolution }),
-  deleteAlert: (id) => api.delete(`/alerts/${id}`),
-  getAlertStatistics: () => api.get('/alerts/statistics'),
-  getAlertCategories: () => api.get('/alerts/categories'),
-  createRule: (rule) => api.post('/alerts/rules', rule),
-  updateRule: (id, rule) => api.patch(`/alerts/rules/${id}`, rule),
-  deleteRule: (id) => api.delete(`/alerts/rules/${id}`),
-  getRules: () => api.get('/alerts/rules')
+  getAlerts: (params = {}) => api.get('/v1/alerts', params),
+  getAlert: (id) => api.get(`/v1/alerts/${id}`),
+  createAlert: (data) => api.post('/v1/alerts', data),
+  dismissAlert: (id) => api.post(`/v1/alerts/${id}/dismiss`), // Backend uses dismiss instead of acknowledge
+  acknowledgeAlert: (id) => api.post(`/v1/alerts/${id}/dismiss`), // Map to backend endpoint
+  resolveAlert: (id, resolution) => api.post(`/v1/alerts/${id}/resolve`, { resolution }),
+  bulkAcknowledge: (ids) => api.post('/v1/alerts/bulk-acknowledge', { ids }),
+  bulkResolve: (ids, resolution) => api.post('/v1/alerts/bulk-resolve', { ids, resolution }),
+  deleteAlert: (id) => api.delete(`/v1/alerts/${id}`),
+  getAlertStatistics: () => api.get('/v1/alerts/statistics'),
+  getAlertCategories: () => api.get('/v1/alerts/categories'),
+  createRule: (rule) => api.post('/v1/alerts/rules', rule),
+  updateRule: (id, rule) => api.patch(`/v1/alerts/rules/${id}`, rule),
+  deleteRule: (id) => api.delete(`/v1/alerts/rules/${id}`),
+  getRules: () => api.get('/v1/alerts/rules')
 };
 
 // Dashboard API - UNIFIED VERSION
@@ -178,7 +178,7 @@ export const dashboardAPI = {
       return await unifiedAPI.dashboard.getSummary(params);
     } catch (error) {
       console.warn('Unified API dashboard summary failed, falling back to legacy:', error.message);
-      return await api.get('/dashboard/summary', params);
+      return await api.get('/v1/dashboard/summary', params);
     }
   },
   getInventoryGraph: async (params = {}) => {
@@ -189,7 +189,7 @@ export const dashboardAPI = {
     } catch (error) {
       console.warn('Unified API inventory graph failed, falling back to legacy:', error.message);
       const { timeRange, ...backendParams } = params;
-      return await api.get('/dashboard/inventory-graph', backendParams);
+      return await api.get('/v1/dashboard/inventory-graph', backendParams);
     }
   }
 };
@@ -197,11 +197,11 @@ export const dashboardAPI = {
 // Analytics API (preserving original functionality + extended capabilities)
 export const analyticsAPI = {
   // Original methods (preserved exactly as they were)
-  getDashboardMetrics: (params = {}) => api.get('/dashboard/summary', params), // Maps to backend endpoint
+  getDashboardMetrics: (params = {}) => api.get('/v1/dashboard/summary', params), // Maps to backend endpoint
   getInventoryGraph: (params = {}) => {
     // Backend doesn't accept timeRange parameter, so don't pass it
     const { timeRange, ...backendParams } = params;
-    return api.get('/dashboard/inventory-graph', backendParams);
+    return api.get('/v1/dashboard/inventory-graph', backendParams);
   }, // Maps to backend endpoint
   // Legacy endpoints (may need backend implementation)
   getRevenueMetrics: (params = {}) => api.get('/analytics/revenue', params),
@@ -216,7 +216,7 @@ export const analyticsAPI = {
   deleteReport: (reportId) => api.delete(`/analytics/reports/${reportId}`),
 
   // Extended analytics capabilities (new methods)
-  getDashboardSummary: (params = {}) => api.get('/dashboard/summary', params),
+  getDashboardSummary: (params = {}) => api.get('/v1/dashboard/summary', params),
   getRevenueAnalytics: (params = {}) => api.get('/analytics/revenue', params),
   getRevenueForecast: (params = {}) => api.get('/analytics/revenue/forecast', params),
 
@@ -261,8 +261,8 @@ export const analyticsAPI = {
 
 // Recommendations API (matches backend spec)
 export const recommendationsAPI = {
-  getOrderRecommendations: (params = {}) => api.get('/recommendations/orders', params),
-  getRecommendations: (params = {}) => api.get('/recommendations/orders', params), // Map existing calls
+  getOrderRecommendations: (params = {}) => api.get('/v1/recommendations/orders', params),
+  getRecommendations: (params = {}) => api.get('/v1/recommendations/orders', params), // Map existing calls
   getRecommendation: (id) => api.get(`/recommendations/${id}`),
   acceptRecommendation: (id) => api.post(`/recommendations/${id}/accept`),
   dismissRecommendation: (id) => api.post(`/recommendations/${id}/dismiss`),

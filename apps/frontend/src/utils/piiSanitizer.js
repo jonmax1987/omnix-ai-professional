@@ -33,7 +33,7 @@ export function sanitizeCustomerId(customerId) {
   }
   
   // For development environments, show partial ID
-  if (process.env.NODE_ENV === 'development' && customerId.length > 8) {
+  if (import.meta.env.DEV && customerId.length > 8) {
     const start = customerId.substring(0, 4);
     const end = customerId.substring(customerId.length - 4);
     return `${start}****${end}`;
@@ -197,7 +197,7 @@ export function createSanitizedError(error, context = {}) {
     message: error.message ? sanitizeErrorMessage(error.message) : 'Unknown error',
     type: error.name || 'Error',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'unknown'
+    environment: import.meta.env.MODE || 'unknown'
   };
   
   // Add sanitized context
@@ -230,7 +230,7 @@ export function createSanitizedError(error, context = {}) {
  */
 export function securelog(level, message, data = {}) {
   // Only log in development or if explicitly enabled
-  if (process.env.NODE_ENV === 'production' && !process.env.ENABLE_SECURE_LOGGING) {
+  if (import.meta.env.PROD && !import.meta.env.VITE_ENABLE_SECURE_LOGGING) {
     return;
   }
   
@@ -278,7 +278,7 @@ export function securelog(level, message, data = {}) {
  * @returns {boolean} - Whether logging is enabled
  */
 export function isLoggingEnabled() {
-  return process.env.NODE_ENV === 'development' || process.env.ENABLE_SECURE_LOGGING === 'true';
+  return import.meta.env.DEV || import.meta.env.VITE_ENABLE_SECURE_LOGGING === 'true';
 }
 
 // Default export with all functions

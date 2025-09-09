@@ -196,3 +196,35 @@ All agents follow OMNIX AI principles:
 - **Real-time Capabilities**: WebSocket-powered live updates
 
 This agents system ensures consistent quality, security, and performance across the entire OMNIX AI platform while maintaining the dual-interface architecture for both managers and customers.
+
+---
+
+# ENVIRONMENT PROTECTION SYSTEM
+
+## 🛡️ CRITICAL PROTECTION RULES
+- **NEVER edit .env.staging or .env.production manually**
+- **ALWAYS use deployment scripts: `./deploy-multi-env.sh [staging|production]`**
+- **Environment settings protected by comprehensive validation system**
+- **See ENVIRONMENT_PROTECTION_GUIDE.md for complete protection details**
+
+## 🚀 Deployment Commands
+```bash
+# Staging deployment (SAFE)
+./deploy-multi-env.sh staging
+
+# Production deployment (SAFE)  
+./deploy-multi-env.sh production
+
+# Health check
+./check-deployment-status.sh
+```
+
+## 🔒 Protection Systems Active
+- ✅ Git hooks prevent secret commits
+- ✅ Deployment scripts validate all environment variables  
+- ✅ .gitignore protects actual .env files
+- ✅ Template system for safe environment management
+- ✅ Production backup system
+- ✅ Health monitoring and rollback capability
+
+**CRITICAL: Use deployment scripts for any environment changes - NEVER edit .env files manually.**

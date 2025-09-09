@@ -354,7 +354,7 @@ export const styledWithProps = (element, propsToFilter = []) => {
  * Helper function to create filtered styled components
  * Usage: const StyledDiv = filteredStyled.div`...`
  */
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
 export const filteredStyled = new Proxy({}, {
   get(target, element) {
@@ -486,7 +486,7 @@ export const borderRadius = (size) => (props) => {
 
 // Development-only theme proxy that warns on unsafe access
 export const createThemeValidator = (theme) => {
-  if (process.env.NODE_ENV !== 'development') {
+  if (!import.meta.env.DEV) {
     return theme;
   }
   
@@ -534,7 +534,7 @@ export const createThemeValidator = (theme) => {
  */
 export const getThemePath = (theme, path, fallback = '', warn = true) => {
   if (!theme) {
-    if (warn && process.env.NODE_ENV === 'development') {
+    if (warn && import.meta.env.DEV) {
       console.warn(`🎨 Theme Warning: No theme provided for path "${path}"`);
     }
     return fallback;
@@ -549,7 +549,7 @@ export const getThemePath = (theme, path, fallback = '', warn = true) => {
     if (current && typeof current === 'object' && key in current) {
       current = current[key];
     } else {
-      if (warn && process.env.NODE_ENV === 'development') {
+      if (warn && import.meta.env.DEV) {
         const attemptedPath = keys.slice(0, i + 1).join('.');
         console.warn(`🎨 Theme Warning: Path "${attemptedPath}" not found in theme. Using fallback: "${fallback}"`);
       }
@@ -583,7 +583,7 @@ export const safeTheme = (props, ...paths) => {
  * Validate entire theme structure against expected schema
  */
 export const validateThemeStructure = (theme) => {
-  if (process.env.NODE_ENV !== 'development') {
+  if (!import.meta.env.DEV) {
     return;
   }
   
@@ -626,7 +626,7 @@ export const validateThemeStructure = (theme) => {
     console.warn('🎨 Theme Structure Warning: Missing required theme paths:', missing);
   }
   
-  console.log('🎨 Theme validation complete. Missing paths:', missing.length);
+  console.warn('🎨 Theme validation complete. Missing paths:', missing.length);
 };
 
 export default {

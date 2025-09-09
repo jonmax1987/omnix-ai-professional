@@ -166,7 +166,7 @@ unifiedClient.interceptors.response.use(
     // Handle 401 unauthorized - attempt token refresh
     if (error.response?.status === 401 && 
         !originalRequest._retry && 
-        !originalRequest.url?.includes('/auth/')) {
+        !originalRequest.url?.includes('/v1/auth/')) {
       
       originalRequest._retry = true;
 
@@ -175,7 +175,7 @@ unifiedClient.interceptors.response.use(
         const refreshToken = JSON.parse(localStorage.getItem('user-store') || '{}')?.state?.refreshToken;
         
         if (refreshToken) {
-          const refreshResponse = await unifiedClient.post('/auth/refresh', {
+          const refreshResponse = await unifiedClient.post('/v1/auth/refresh', {
             refreshToken
           });
 
@@ -277,19 +277,19 @@ export const unifiedAPI = {
   // Authentication endpoints
   auth: {
     async login(credentials) {
-      return await unifiedAPI.post('/auth/login', credentials);
+      return await unifiedAPI.post('/v1/auth/login', credentials);
     },
 
     async logout() {
-      return await unifiedAPI.post('/auth/logout');
+      return await unifiedAPI.post('/v1/auth/logout');
     },
 
     async refreshToken(refreshToken) {
-      return await unifiedAPI.post('/auth/refresh', { refreshToken });
+      return await unifiedAPI.post('/v1/auth/refresh', { refreshToken });
     },
 
     async resetPassword(email) {
-      return await unifiedAPI.post('/auth/reset-password', { email });
+      return await unifiedAPI.post('/v1/auth/reset-password', { email });
     }
   },
 
@@ -330,15 +330,15 @@ export const unifiedAPI = {
   // Alert endpoints
   alerts: {
     async list(params = {}) {
-      return await unifiedAPI.get('/alerts', params);
+      return await unifiedAPI.get('/v1/alerts', params);
     },
 
     async dismiss(id) {
-      return await unifiedAPI.post(`/alerts/${id}/dismiss`);
+      return await unifiedAPI.post(`/v1/alerts/${id}/dismiss`);
     },
 
     async resolve(id, resolution) {
-      return await unifiedAPI.post(`/alerts/${id}/resolve`, { resolution });
+      return await unifiedAPI.post(`/v1/alerts/${id}/resolve`, { resolution });
     }
   },
 

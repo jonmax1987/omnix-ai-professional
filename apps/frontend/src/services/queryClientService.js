@@ -474,17 +474,17 @@ class QueryClientService {
     const warmupQueries = [
       {
         queryKey: queryKeys.dashboardSummary({}),
-        queryFn: () => httpService.get('/dashboard/summary'),
+        queryFn: () => httpService.get('/v1/dashboard/summary'),
         ...cacheConfig.analytics
       },
       {
         queryKey: queryKeys.currentUser(),
-        queryFn: () => httpService.get('/auth/me'),
+        queryFn: () => httpService.get('/v1/auth/me'),
         ...cacheConfig.user
       },
       {
         queryKey: queryKeys.realTimeAnalytics({}),
-        queryFn: () => httpService.get('/analytics/realtime'),
+        queryFn: () => httpService.get('/v1/analytics/realtime'),
         ...cacheConfig.realtime
       }
     ];

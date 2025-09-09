@@ -359,8 +359,9 @@ class PerformanceMonitoringService {
       });
     }
     
-    // Send to custom analytics endpoint (disabled in production to avoid costs)
-    if (process.env.NODE_ENV !== 'production' && this.analyticsEnabled) {
+    // Send to custom analytics endpoint
+    // CRITICAL FIX: Only send analytics in NON-production to prevent API spam
+    if (import.meta.env.VITE_NODE_ENV !== 'production' && this.analyticsEnabled) {
       // Rate limit: Only send analytics every 30 seconds max
       const now = Date.now();
       if (!this.lastAnalyticsSent || now - this.lastAnalyticsSent > 30000) {

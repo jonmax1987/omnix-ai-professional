@@ -84,9 +84,21 @@ echo ""
 # 2. API Backend Health Check  
 echo -e "${PURPLE}🔧 API BACKEND STATUS${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-check_status "$API_URL/dashboard/summary" "Dashboard API"
-check_status "$API_URL/products" "Products API"
-check_status "$API_URL/auth/login" "Auth API"
+check_status "$API_URL/v1/dashboard/summary" "Dashboard API"
+check_status "$API_URL/v1/products" "Products API"
+# Auth API requires POST request, so we test it separately
+auth_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST -H "Content-Type: application/json" -d '{"username":"test","password":"test"}' "$API_URL/v1/auth/login")
+auth_time=$(curl -s -o /dev/null -w "%{time_total}" --max-time 10 -X POST -H "Content-Type: application/json" -d '{"username":"test","password":"test"}' "$API_URL/v1/auth/login")
+
+if [ "$auth_status" = "401" ]; then
+    echo -e "${GREEN}✅ Auth API: ${NC}HTTP $auth_status ${GREEN}(${auth_time}s) - Auth endpoint working${NC}"
+elif [ "$auth_status" = "200" ]; then
+    echo -e "${GREEN}✅ Auth API: ${NC}HTTP $auth_status ${GREEN}(${auth_time}s)${NC}"
+elif [ "$auth_status" = "000" ]; then
+    echo -e "${RED}❌ Auth API: ${NC}Connection timeout/failed"
+else
+    echo -e "${YELLOW}⚠️  Auth API: ${NC}HTTP $auth_status ${YELLOW}(${auth_time}s)${NC}"
+fi
 
 echo ""
 
@@ -96,7 +108,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 # Test CORS headers
 echo -e "${CYAN}🔒 CORS Check:${NC}"
-cors_test=$(curl -s -I -H "Origin: https://d1vu6p9f5uc16.cloudfront.net" "$API_URL/dashboard/summary" | grep -i "access-control-allow-origin" | cut -d' ' -f2- | tr -d '\r')
+cors_test=$(curl -s -I -H "Origin: https://d1vu6p9f5uc16.cloudfront.net" "$API_URL/v1/dashboard/summary" | grep -i "access-control-allow-origin" | cut -d' ' -f2- | tr -d '\r')
 if [ ! -z "$cors_test" ]; then
     echo -e "${GREEN}✅ CORS enabled:${NC} $cors_test"
 else
@@ -105,7 +117,7 @@ fi
 
 # Test API response size
 echo -e "${CYAN}📊 API Response Test:${NC}"
-api_response=$(curl -s "$API_URL/dashboard/summary")
+api_response=$(curl -s "$API_URL/v1/dashboard/summary")
 if [ ! -z "$api_response" ]; then
     response_size=$(echo "$api_response" | wc -c)
     echo -e "${GREEN}✅ Dashboard API responding${NC} (${response_size} bytes)"
@@ -131,7 +143,7 @@ frontend_time=$(curl -s -o /dev/null -w "%{time_total}" "$FRONTEND_URL/")
 echo -e "${CYAN}🏠 Frontend load time:${NC} ${frontend_time}s"
 
 # API response time  
-api_time=$(curl -s -o /dev/null -w "%{time_total}" "$API_URL/dashboard/summary")
+api_time=$(curl -s -o /dev/null -w "%{time_total}" "$API_URL/v1/dashboard/summary")
 echo -e "${CYAN}🔧 API response time:${NC} ${api_time}s"
 
 # DNS resolution time
@@ -163,11 +175,11 @@ echo -e "${PURPLE}📊 DEPLOYMENT SUMMARY${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Count successful checks
-total_checks=6
+total_checks=5
 passed_checks=0
 
 # Check each service
-services=("$FRONTEND_URL/" "$FRONTEND_URL/products" "$FRONTEND_URL/dashboard" "$API_URL/dashboard/summary" "$API_URL/products" "$API_URL/auth/login")
+services=("$FRONTEND_URL/" "$FRONTEND_URL/products" "$FRONTEND_URL/dashboard" "$API_URL/v1/dashboard/summary" "$API_URL/v1/products")
 for service in "${services[@]}"; do
     if curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$service" | grep -q "200"; then
         ((passed_checks++))

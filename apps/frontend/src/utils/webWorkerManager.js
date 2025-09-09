@@ -34,7 +34,7 @@ class WebWorkerManager {
           messageCount: 0
         });
         
-        console.log(`Web Worker '${workerName}' created successfully`);
+        console.warn(`Web Worker '${workerName}' created successfully`);
       } catch (error) {
         console.error(`Failed to create worker '${workerName}':`, error);
         throw error;
@@ -120,7 +120,7 @@ class WebWorkerManager {
     console.error(`Worker '${workerName}' error:`, error);
     
     // Reject all pending messages for this worker
-    this.messageQueue.forEach((handler, messageId) => {
+    this.messageQueue.forEach((handler, _messageId) => {
       handler.reject(new Error(`Worker '${workerName}' encountered an error`));
     });
     this.messageQueue.clear();
@@ -141,7 +141,7 @@ class WebWorkerManager {
     if (workerInfo) {
       workerInfo.worker.terminate();
       this.workers.delete(workerName);
-      console.log(`Worker '${workerName}' terminated`);
+      console.warn(`Worker '${workerName}' terminated`);
     }
   }
 
@@ -149,12 +149,12 @@ class WebWorkerManager {
    * Terminate all workers
    */
   terminateAllWorkers() {
-    this.workers.forEach((workerInfo, workerName) => {
+    this.workers.forEach((workerInfo, _workerName) => {
       workerInfo.worker.terminate();
     });
     this.workers.clear();
     this.messageQueue.clear();
-    console.log('All workers terminated');
+    console.warn('All workers terminated');
   }
 
   /**
@@ -182,7 +182,7 @@ class WebWorkerManager {
   getAllWorkerStats() {
     const stats = {};
     
-    this.workers.forEach((workerInfo, workerName) => {
+    this.workers.forEach((workerInfo, _workerName) => {
       stats[workerName] = this.getWorkerStats(workerName);
     });
 

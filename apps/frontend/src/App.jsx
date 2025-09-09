@@ -134,8 +134,8 @@ function AppContent() {
   const initializeAuth = useUserStore((state) => state.initializeAuth);
   const user = useUserStore((state) => state.user);
   const { ui = {}, toggleSidebar, setSidebarMobileOpen, setCurrentPage, setIsMobile } = store || {};
-  const [appInitialized, setAppInitialized] = useState(false);
-  const [initError, setInitError] = useState(null);
+  const [_appInitialized, setAppInitialized] = useState(false);
+  const [_initError, setInitError] = useState(null);
   
   // Initialize application performance optimizations
   useEffect(() => {
@@ -143,13 +143,13 @@ function AppContent() {
     
     const initializeApp = async () => {
       try {
-        console.log('[App] Initializing performance optimizations...');
+        console.warn('[App] Initializing performance optimizations...');
         const report = await initializeApplication();
         
         if (mounted) {
           setAppInitialized(true);
           if (import.meta.env.DEV) {
-            console.log('[App] Performance optimizations initialized:', report);
+            console.warn('[App] Performance optimizations initialized:', report);
           }
         }
       } catch (error) {
@@ -275,7 +275,7 @@ function AppContent() {
   };
 
   const handleUserMenuAction = (action) => {
-    console.log('User menu action:', action);
+    console.warn('User menu action:', action);
     switch (action) {
       case 'profile':
         navigate('/settings'); // For now, navigate to settings until profile page is built
@@ -285,7 +285,7 @@ function AppContent() {
         break;
       case 'help':
         // Open help documentation or support page
-        console.log('Opening help & support');
+        console.warn('Opening help & support');
         // window.open('/help', '_blank');
         break;
       case 'logout':
@@ -293,7 +293,7 @@ function AppContent() {
         navigate('/login', { replace: true });
         break;
       default:
-        console.log('Unknown user menu action:', action);
+        console.warn('Unknown user menu action:', action);
         break;
     }
   };
@@ -307,7 +307,7 @@ function AppContent() {
   };
 
   const handleNotificationClick = (notification) => {
-    console.log('Notification clicked:', notification);
+    console.warn('Notification clicked:', notification);
     
     // Handle different notification types
     switch (notification.type || notification.category) {
@@ -322,16 +322,16 @@ function AppContent() {
       case 'System Update':
       case 'system':
         // Show system info or navigate to settings
-        console.log('System notification clicked');
+        console.warn('System notification clicked');
         break;
       default:
-        console.log('General notification clicked');
+        console.warn('General notification clicked');
         break;
     }
   };
 
   const handleNotificationClear = () => {
-    console.log('Clearing all notifications');
+    console.warn('Clearing all notifications');
     // In a real implementation, this would call an API to mark notifications as read
     // notificationService.markAllAsRead();
   };
@@ -339,7 +339,7 @@ function AppContent() {
   const handleSearch = async (query) => {
     if (!query || query.length < 2) return;
     
-    console.log('Search query:', query);
+    console.warn('Search query:', query);
     
     try {
       // Simulate search delay

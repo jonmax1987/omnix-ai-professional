@@ -31,7 +31,7 @@ class AuthService {
    */
   async login(credentials) {
     try {
-      const response = await httpService.post('/auth/login', {
+      const response = await httpService.post('/v1/auth/login', {
         email: credentials.email,
         password: credentials.password,
         rememberMe: credentials.rememberMe || false
@@ -84,7 +84,7 @@ class AuthService {
    */
   async register(userData) {
     try {
-      const response = await httpService.post('/auth/register', userData);
+      const response = await httpService.post('/v1/auth/register', userData);
       
       return {
         success: true,
@@ -109,7 +109,7 @@ class AuthService {
    */
   async resetPassword(email) {
     try {
-      const response = await httpService.post('/auth/reset-password', { email });
+      const response = await httpService.post('/v1/auth/reset-password', { email });
       
       return {
         success: true,
@@ -137,7 +137,7 @@ class AuthService {
    */
   async confirmPasswordReset(resetData) {
     try {
-      const response = await httpService.post('/auth/reset-password/confirm', resetData);
+      const response = await httpService.post('/v1/auth/reset-password/confirm', resetData);
       
       return {
         success: true,
@@ -161,7 +161,7 @@ class AuthService {
    */
   async changePassword(passwordData) {
     try {
-      const response = await httpService.post('/auth/change-password', passwordData);
+      const response = await httpService.post('/v1/auth/change-password', passwordData);
       
       return {
         success: true,
@@ -192,7 +192,7 @@ class AuthService {
     this.isRefreshing = true;
 
     try {
-      const response = await httpService.post('/auth/refresh', { refreshToken });
+      const response = await httpService.post('/v1/auth/refresh', { refreshToken });
 
       if (response.data) {
         const authData = {
@@ -242,7 +242,7 @@ class AuthService {
     try {
       if (refreshToken) {
         // Invalidate refresh token on server
-        await httpService.post('/auth/logout', { refreshToken });
+        await httpService.post('/v1/auth/logout', { refreshToken });
       }
 
       // Emit logout event
@@ -270,7 +270,7 @@ class AuthService {
    */
   async verifyEmail(token) {
     try {
-      const response = await httpService.post('/auth/verify-email', { token });
+      const response = await httpService.post('/v1/auth/verify-email', { token });
       
       return {
         success: true,
@@ -292,7 +292,7 @@ class AuthService {
    */
   async resendVerificationEmail(email) {
     try {
-      const response = await httpService.post('/auth/resend-verification', { email });
+      const response = await httpService.post('/v1/auth/resend-verification', { email });
       
       return {
         success: true,
